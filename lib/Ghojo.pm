@@ -1,0 +1,891 @@
+use v5.24;
+use feature qw(signatures);
+no warnings qw(experimental::signatures);
+
+=head1 NAME
+
+Ghojo - a Mojo-based interface to the GitHub Developer API
+
+=head1 SYNOPSIS
+
+	use Ghojo;
+
+	my $ghojo = Ghojo->new( {
+		username => ...,
+		password => ...,
+		});
+
+	my $ghojo = Ghojo->new( {
+		token => ...,
+		} );
+
+
+
+=head1 DESCRIPTION
+
+=cut
+
+package Ghojo;
+
+our $VERSION = '1.001001';
+
+use Log::Log4perl;
+
+sub new ( $class, $args = {} ) {
+	my $self = bless {}, $class;
+	$self->setup_logging;
+
+	if( exists $args->{token} ) {
+		$self->{token} = $args->{token};
+		}
+	elsif( exists $args->{username} and exists $args->{password} ) {
+		my @keys = qw(username password);
+		$self->@{@keys} = $args->@{@keys};
+
+		$self->{last_tx} = $self->ua->get(
+			$self->api_url =>
+			{ $self->auth_string },
+			);
+
+		$self->create_authorization;
+
+		delete $self->{password};
+		}
+	elsif( -e $self->token_file ) {
+		$self->logger->trace( 'Reading token from file' );
+		my $token = do { local( @ARGV, $/ ) = $self->token_file; <> };
+		$self->logger->trace( "Token from file is $token" );
+		$self->add_token( $token );
+		}
+
+	return $self;
+	}
+
+=head2  Object thingys
+
+=back
+
+=head2 Logging
+
+
+=cut
+
+sub setup_logging ( $self, $conf = __PACKAGE__->logging_conf ) {
+	require Log::Log4perl;
+
+	$self->{logger} = do
+	if( eval "require Log::Log4perl; 1" ) {
+
+		}
+	else
+	unless(
+	Log::Log4perl::init( $conf );
+	$self->{logger} = Log::Log4perl->get_logger;
+	}
+
+sub logging_conf ( $class ) {
+	my $conf = q(
+		log4perl.rootLogger          = ERROR, Screen
+
+		log4perl.appender.Logfile          = Log::Log4perl::Appender::File
+		log4perl.appender.Logfile.filename = test.log
+		log4perl.appender.Logfile.layout   = Log::Log4perl::Layout::PatternLayout
+		log4perl.appender.Logfile.layout.ConversionPattern = [%r] %F %L %m%n
+
+		log4perl.appender.Screen         = Log::Log4perl::Appender::Screen
+		log4perl.appender.Screen.stderr  = 1
+		log4perl.appender.Screen.layout = Log::Log4perl::Layout::SimpleLayout
+		);
+
+	\$conf;
+	}
+
+sub logger ( $self ) { $self->{logger} }
+
+sub traceif ( $self, $flag, $message ) { $flag ? $self->logger->trace( $message )   : $flag }
+sub debugif ( $self, $flag, $message ) { $flag ? $self->logger->debug( $message )   : $flag }
+sub infoif  ( $self, $flag, $message ) { $flag ? $self->logger->info( $message )    : $flag }
+sub warnif  ( $self, $flag, $message ) { $flag ? $self->logger->warn( $message )    : $flag }
+sub errorif ( $self, $flag, $message ) { $flag ? $self->logger->logwarn( $message ) : $flag }
+sub fatalif ( $self, $flag, $message ) { $flag ? $self->logger->logdie( $message )  : $flag }
+
+
+=head2 Queries
+
+
+=cut
+
+sub api_url ( $self ) { Mojo::URL->new( 'https://api.github.com/' ) }
+
+sub query_url ( $self, $path, $params=[], $query={} ) {
+	state $api = $self->api_url;
+	my $modified = sprintf $path, $params->@*;
+	my $url = $api->clone->path( $modified )->query( $query );
+	}
+
+sub ua ( $self ) {
+	state $rc = require Mojo::UserAgent;
+	state $ua = Mojo::UserAgent->new;
+	$ua;
+	}
+
+sub post_json( $self, $query_url, $headers = {}, $hash = {} ) {
+	$self->{last_tx} = $self->ua->post( $query_url => $headers => json => $hash );
+	}
+
+sub last_tx ( $self ) { $self->{last_tx} }
+
+sub auth_header ( $self ) {
+
+
+	}
+
+sub auth_string ( $self ) {
+	if( $self->has_token )         { $self->token_auth_string }
+	elsif( $self->has_basic_auth ) { $self->basic_auth_string }
+	}
+
+sub has_basic_auth ( $self ) {
+	$self->warnif( ! $self->has_username, "Missing username for basic authorization!" );
+	$self->warnif( ! $self->has_password, "Missing password for basic authorization!" );
+	$self->has_username && $self->has_password
+	}
+
+sub basic_auth_string ( $self ) {
+	my $rc = require MIME::Base64;
+	return unless $self->has_basic_auth;
+	'Basic ' . MIME::Base64::encode_base64(
+		join( ':', $self->username, $self->password ),
+		''
+		);
+	}
+
+sub token_auth_string ( $self ) {
+	$self->warnif( ! $self->has_token, "Missing token for token authorization!" );
+	return unless $self->has_token;
+	'token ' . $self->token;
+	}
+
+=item * token_file
+
+Returns the value of either the environment variable C<GITHUB_DEV_TOKEN>
+or C<.github_token>. If you want some other value, I suggest a subclass
+that overrides this method.
+
+=cut
+
+
+sub token_file ( $self ) { $ENV{GITHUB_DEV_TOKEN} // '.github_token' }
+
+sub add_token ( $self, $token ) {
+	chomp $token;
+	unless( $token ) {
+		$self->logger->error( "There's not token!" );
+		return;
+		}
+
+	$self->{token} = $token;
+	$self->remember_token;
+	$self->add_token_auth_to_all_requests;
+	return $token;
+	}
+
+
+sub add_token_auth_to_all_requests ( $self ) {
+	$self->ua->on( start => sub {
+		my( $ua, $tx ) = @_;
+		$tx->req->headers->header( Authorization => $self->token_auth_string );
+		} );
+	}
+
+sub remember_token ( $self ) {
+	unless( $self->token ) {
+		$self->logger->warn( "There is no token to remember!" );
+		return;
+		}
+
+	if( open my $fh, '>:utf8', $self->token_file ) {
+		print $fh $self->token;
+		close $fh;
+		}
+	else {
+		$self->logger->warn( "Could not open token file! $!" );
+		$self->logger->warn( "Token is " . $self->token );
+		}
+	}
+
+sub set_paged_get_sleep_time ( $self, $seconds = 3 ) {
+	$self->{paged_get}{'sleep'} = 0 + $seconds;
+	}
+sub paged_get_sleep_time ( $self ) { $self->{paged_get}{'sleep'} }
+
+sub set_paged_get_results_limit ( $self, $count = 10_000 ) {
+	$self->{paged_get}{'results_limit'} = $count;
+	}
+sub paged_get_results_limit ( $self ) { $self->{paged_get}{'results_limit'} }
+
+sub paged_get ( $self, $path, $params = [], $callback=sub{ $_[0] }, $query = {} ) {
+	$self->logger->trace( 'In paged_get' );
+	my @results;
+	my $limit = $self->paged_get_results_limit // 1_000;
+	my @next = $self->query_url( $path, $params, $query);
+		$self->logger->debug( "Queue is:\n\t", join "\n\t", @next );
+
+	while( @results < $limit and my $url = shift @next ) {
+		$self->logger->debug( "query_url is $url" );
+		my $tx = $self->ua->get( $url );
+		my $link_header = $self->parse_link_header( $tx );
+		push @next, $link_header->{next} if exists $link_header->{next};
+
+		my $array = $tx->res->json;
+		foreach my $hashref ( $array->@* ) {
+			push @results, $callback->( $hashref );
+			}
+		sleep $self->paged_get_sleep_time;
+		}
+
+	\@results;
+	}
+
+# <https://api.github.com/repositories?since=367>; rel="next", <https://api.github.com/repositories{?since}>; rel="first"';
+sub parse_link_header ( $self, $tx ) {
+	my $link_header = $tx->res->headers->header( 'Link' );
+	$self->logger->trace( "Link header is $link_header" );
+
+	my @parts = $link_header =~ m{
+		<(.*?)>; \s+ rel="(.*?)"
+		}xg;
+
+	my %hash = reverse @parts;
+	return \%hash;
+	}
+
+=back
+
+=head2 Authorizations
+
+
+=cut
+
+sub username ( $self )     { $self->{username} }
+sub has_username ( $self ) { !! defined $self->{username} }
+
+sub password ( $self )     { $self->{password} }
+sub has_password ( $self ) { !! defined $self->{password} }
+
+sub token ( $self )     { $self->{token} }
+sub has_token ( $self ) { !! defined $self->{token} }
+
+sub authorizations ( $self ) {
+	state $query_url = $self->query_url( "/authorizations" );
+	}
+
+sub get_authorization ( $self ) {
+	state $query_url = $self->query_url( "/authorizations/%s" );
+	}
+
+sub authorization ( $self, $id ) {
+	state $query_url = $self->query_url( "/authorizations/%s" );
+	}
+
+# scopes: https://developer.github.com/v3/oauth/#scopes
+sub valid_scopes ( $self ) {
+	state $scopes = [ qw(
+		user
+		user:email
+		user:follow
+		public_repo
+		repo
+		repo_deployment
+		repo:status
+		delete_repo
+		notifications
+		gist
+		read:repo_hook
+		write:repo_hook
+		admin:repo_hook
+		admin:org_hook
+		read:org
+		write:org
+		admin:org
+		read:public_key
+		write:public_key
+		admin:public_key
+		read:gpg_key
+		write:gpg_key
+		admin:gpg_key
+		) ];
+	}
+
+sub is_valid_scope ( $self, $scope ) {
+	state $scopes = { map { $_, undef } $self->valid_scopes };
+	exists $scopes->{ $scope };
+	}
+
+sub _make_hash_from_list ( $self, @list ) {
+	my %hash = map { $_ => undef } @list;
+	}
+
+# https://developer.github.com/v3/oauth_authorizations/#create-a-new-authorization
+sub create_authorization ( $self, $hash = {} ) {
+	state $query_url = $self->query_url( "/authorizations" );
+	state $allowed   = $self->_make_hash_from_list( qw(scopes note note_url client_id client_secret fingerprint) );
+	state $required  = $self->_make_hash_from_list( qw(note) );
+
+	$hash->{scopes} //= ['user', 'public_repo', 'repo', 'gist'];
+	$hash->{note}   //= 'test purpose ' . time;
+	$self->post_json( $query_url, { 'Authorization' => $self->basic_auth_string }, $hash );
+
+	unless( $self->last_tx->success ) {
+		my $err = $self->last_tx->error;
+		$self->logger->warn( "create_authorizaton failed!" );
+		$self->warnif( $err->{code}, "$err->{code} response: $err->{message}" );
+		return;
+		}
+
+	return unless $self->add_token( $self->last_tx->res->json->{token} );
+
+	$self->token;
+	}
+
+sub update_authorization ( $self ) {
+	state $query_url = $self->query_url( "/authorizations/%s" );
+	url => "/authorizations/%s", method => "PATCH", args => 1
+	}
+
+sub delete_authorization ( $self ) {
+	state $query_url = $self->query_url( sprintf "/authorizations/%s",  );
+	url => "/authorizations/%s", method => "DELETE", check_status => 204
+	}
+
+=head2 Users
+
+
+=cut
+
+sub user ( $self ) {
+	state $rc = require Ghojo::V3::Users;
+	$self->{user} = Ghojo::V3::Users->new( Ghojo::V3::Users->args );
+	}
+
+=head2 Labels
+
+    # http://developer.github.com/v3/issues/labels/
+    labels => { url => "/repos/%s/%s/labels" },
+    label  => { url => "/repos/%s/%s/labels/%s" },
+    create_label => { url => "/repos/%s/%s/labels", method => 'POST', args => 1 },
+    update_label => { url => "/repos/%s/%s/labels/%s", method => 'PATCH', args => 1 },
+    delete_label => { url => "/repos/%s/%s/labels/%s", method => 'DELETE', check_status => 204 },
+    issue_labels => { url => "/repos/%s/%s/issues/%s/labels" },
+    create_issue_label  => { url => "/repos/%s/%s/issues/%s/labels", method => 'POST', args => 1 },
+    delete_issue_label  => { url => "/repos/%s/%s/issues/%s/labels/%s", method => 'DELETE', check_status => 204 },
+    replace_issue_label => { url => "/repos/%s/%s/issues/%s/labels", method => 'PUT', args => 1 },
+    delete_issue_labels => { url => "/repos/%s/%s/issues/%s/labels", method => 'DELETE', check_status => 204 },
+    milestone_labels => { url => "/repos/%s/%s/milestones/%s/labels" },
+
+=cut
+
+=item * labels( USER, REPO )
+
+Get the information for all the labels of a repo.
+
+It returns an arrayref of hashrefs:
+
+	[
+		{
+		'color' => 'd4c5f9',
+		'url' => 'https://api.github.com/repos/briandfoy/test-file/labels/Perl%20Workaround',
+		'name' => 'Perl Workaround'
+		},
+		...
+	]
+
+This implements C<GET /repos/:owner/:repo/labels> from L<http://developer.github.com/v3/issues/labels/>.
+
+=cut
+
+sub labels ( $self, $user, $repo ) {
+	my $params = [ $user, $repo ];
+	my $query_url = $self->query_url( "/repos/%s/%s/labels", $params );
+	$self->logger->trace( "Query URL is $query_url" );
+	my $tx = $self->ua->get( $query_url );
+	$tx->res->json;
+	}
+
+=item * get_label( USER, REPO, LABEL )
+
+Get the information for a particular label.
+
+It returns a hashref:
+
+	{
+	'color' => '1d76db',
+	'url' => 'https://api.github.com/repos/briandfoy/test-file/labels/Win32',
+	'name' => 'Win32'
+	}
+
+This implements C<GET /repos/:owner/:repo/labels/:name> from L<http://developer.github.com/v3/issues/labels/>.
+
+=cut
+
+sub get_label ( $self, $user, $repo, $name ) {
+	my $params = [ $user, $repo, $name ];
+	my $query_url = $self->query_url( "/repos/%s/%s/labels/%s", $params );
+	$self->logger->trace( "Query URL is $query_url" );
+	my $tx = $self->ua->get( $query_url );
+	$tx->res->json;
+	}
+
+=item * create_label
+
+POST /repos/:owner/:repo/labels
+Parameters
+Name	Type	Description
+name	string	Required. The name of the label.
+color	string	Required. A 6 character hex code, without the leading #, identifying the color.
+
+Status: 201 Created
+
+=cut
+
+sub create_label ( $self, $owner, $repo, $name, $color ) {
+
+
+	}
+
+=item * update_label
+
+PATCH /repos/:owner/:repo/labels/:name
+Parameters
+Name	Type	Description
+name	string	The name of the label.
+color	string	A 6 character hex code, without the leading #, identifying the color.
+{
+  "name": "bug",
+  "color": "f29513"
+}
+Response
+Status: 200 OK
+{
+  "url": "https://api.github.com/repos/octocat/Hello-World/labels/bug",
+  "name": "bug",
+  "color": "f29513"
+}
+
+=cut
+
+sub update_label ( $self, $owner, $repo, $name, $color ) {
+
+	}
+
+=item * delete_label
+
+DELETE /repos/:owner/:repo/labels/:name
+Response
+Status: 204 No Content
+
+=cut
+
+sub delete_label ( $self, $owner, $repo, $name ) {
+
+
+	}
+
+
+=item * get_labels_for_issue
+
+GET /repos/:owner/:repo/issues/:number/labels
+Response
+Status: 200 OK
+Link: <https://api.github.com/resource?page=2>; rel="next",
+      <https://api.github.com/resource?page=5>; rel="last"
+[
+  {
+    "url": "https://api.github.com/repos/octocat/Hello-World/labels/bug",
+    "name": "bug",
+    "color": "f29513"
+  }
+]
+
+=cut
+
+sub get_label_for_issue {
+
+
+	}
+
+
+=item * get_labels_for_all_issus_in_milestone
+
+GET /repos/:owner/:repo/milestones/:number/labels
+Response
+Status: 200 OK
+Link: <https://api.github.com/resource?page=2>; rel="next",
+      <https://api.github.com/resource?page=5>; rel="last"
+[
+  {
+    "url": "https://api.github.com/repos/octocat/Hello-World/labels/bug",
+    "name": "bug",
+    "color": "f29513"
+  }
+]
+
+=cut
+
+sub get_labels_for_all_issus_in_milestone {
+
+
+	}
+
+
+=item * add_labels_to_issue
+
+POST /repos/:owner/:repo/issues/:number/labels
+Input
+[
+  "Label1",
+  "Label2"
+]
+Response
+Status: 200 OK
+[
+  {
+    "url": "https://api.github.com/repos/octocat/Hello-World/labels/bug",
+    "name": "bug",
+    "color": "f29513"
+  }
+]
+
+=cut
+
+sub add_labels_to_issue ( $self, $owner, $repo, $issue, @names ) {
+
+
+	}
+
+
+=item * remove_label_from_issue
+
+DELETE /repos/:owner/:repo/issues/:number/labels/:name
+Response
+Status: 204 No Content
+
+=cut
+
+sub remove_label_from_issue {
+
+
+	}
+
+
+=item * remove_all_labels_from_issue
+
+DELETE /repos/:owner/:repo/issues/:number/labels
+Response
+Status: 204 No Content
+
+=cut
+
+sub remove_all_labels_from_issue {
+
+
+	}
+
+
+=item * replace_all_labels_for_issue
+
+PUT /repos/:owner/:repo/issues/:number/labels
+Input
+[
+  "Label1",
+  "Label2"
+]
+Sending an empty array ([]) will remove all Labels from the Issue.
+
+Response
+Status: 200 OK
+[
+  {
+    "url": "https://api.github.com/repos/octocat/Hello-World/labels/bug",
+    "name": "bug",
+    "color": "f29513"
+  }
+]
+
+=cut
+
+sub replace_all_labels_for_issue {
+
+
+	}
+
+
+
+=back
+
+=head2 Issues
+
+=item * issues( USER, REPO, HASHREF )
+
+=item * all_issues( USER, REPO, HASHREF )
+
+=item * open_issues( USER, REPO, HASHREF )
+
+=item * closed_issues( USER, REPO, HASHREF )
+
+Get the information for all the labels of a repo.
+
+This implements C<GET /repos/:owner/:repo/issues> from L<https://developer.github.com/v3/issues/#list-issues-for-a-repository>.
+
+The keys of the HASHREF can be:
+
+	milestone   integer     If an integer is passed, it should
+	            or string   refer to a milestone by its number field.
+	                        If the string * is passed, issues
+	                        with any milestone are accepted.
+	                        If the string none is passed, issues
+	                        without milestones are returned.
+
+	state       string      Indicates the state of the issues
+	                        to return. Can be either open, closed,
+	                        or all. Default: open
+
+	assignee    string      Can be the name of a user. Pass in
+	                        none for issues with no assigned user,
+	                        and * for issues assigned to any user.
+
+	creator     string      The user who created the issue.
+
+	mentioned   string      A user who's mentioned in the issue.
+
+	labels      string      A list of comma separated label names.
+	                        Example: bug,ui,@high
+
+	sort        string      What to sort results by. Can be either created,
+	                        updated, comments. Default: created
+
+	direction   string      The direction of the sort. Can be either
+	                        asc or desc. Default: desc
+
+	since       string      Only issues updated at or after this time
+	                        are returned. This is a timestamp in ISO
+	                        8601 format: YYYY-MM-DDTHH:MM:SSZ.
+
+=cut
+
+sub _check_arguments ( $self, $hash ) {
+	}
+
+sub issues ( $self, $user, $repo, $hash = { state => 'open' } ) {
+	my $query_url = $self->query_url( "/repos/%s/%s/issues", $user, $repo );
+	$self->logger->trace( "Query URL is $query_url" );
+	my $tx = $self->ua->get( $query_url => json => $hash );
+	$tx->res->json;
+	}
+
+sub all_issues ( $self, $user, $repo, $hash = {} ) {
+	my $query_url = $self->query_url( "/repos/%s/%s/issues", $user, $repo );
+	$self->logger->trace( "Query URL is $query_url" );
+	my $tx = $self->ua->get( $query_url => json => { state => 'all' } );
+	$tx->res->json;
+	}
+
+sub open_issues ( $self, $user, $repo, $hash = {} ) {
+	my $query_url = $self->query_url( "/repos/%s/%s/issues", $user, $repo );
+	$self->logger->trace( "Query URL is $query_url" );
+	my $tx = $self->ua->get( $query_url );
+	$tx->res->json;
+	}
+
+sub closed_issues ( $self, $user, $repo, $hash = {} ) {
+	my $query_url = $self->query_url( "/repos/%s/%s/issues", $user, $repo );
+	$self->logger->trace( "Query URL is $query_url" => json => { state => 'closed' } );
+	my $tx = $self->ua->get( $query_url );
+	$tx->res->json;
+	}
+
+=item * issue( USER, REPO, NUMBER )
+
+Get the information for a particular label.
+
+It returns a hashref:
+
+	{
+	'color' => '1d76db',
+	'url' => 'https://api.github.com/repos/briandfoy/test-file/labels/Win32',
+	'name' => 'Win32'
+	}
+
+This implements C<GET /repos/:owner/:repo/labels/:name> from L<http://developer.github.com/v3/issues/labels/>.
+
+=cut
+
+sub issue ( $self, $user, $repo, $number ) {
+	my $query_url = $self->query_url( "/repos/%s/%s/issues/%d", $user, $repo, $number );
+	$self->logger->trace( "Query URL is $query_url" );
+	my $tx = $self->ua->get( $query_url );
+	$tx->res->json;
+	}
+
+=back
+
+=head2 Repositories
+
+=over 4
+
+=item * repos
+
+GET /user/repos
+
+	visibility      string
+	    Can be one of all, public, or private.
+	    Default: all
+
+	affiliation     string	Comma-separated list of values. Can include:
+	    * owner
+	    * collaborator
+	    * organization_member
+		Default: owner,collaborator,organization_member
+
+	type            string
+		Can be one of all, owner, public, private, member.
+		Default: all
+
+	    Will cause a 422 error if used in the same request as
+	    visibility or affiliation.
+
+	sort            string
+		Can be one of created, updated, pushed, full_name.
+		Default: full_name
+
+	direction       string
+		Can be one of asc or desc.
+		Default: when using full_name: asc; otherwise desc
+
+=cut
+
+
+
+sub repos ( $self, $callback = sub {}, $query = {} ) {
+	$self->logger->trace( 'In repos' );
+	my $perl = $self->paged_get( '/user/repos', [], $callback, $query );
+	}
+
+
+=item * repos_by_username( USERNAME )
+
+GET /users/:username/repos
+
+type	string	Can be one of all, owner, member. Default: owner
+sort	string	Can be one of created, updated, pushed, full_name. Default: full_name
+direction	string	Can be one of asc or desc. Default: when using full_name: asc, otherwise desc
+
+=cut
+
+sub repos_by_username( $self, $username ) {
+	$self->paged_get( '', [ $username ] );
+
+	}
+
+=item * repos_by_organization
+
+GET /orgs/:org/repos
+type	string	Can be one of all, public, private, forks, sources, member. Default: all
+
+=cut
+
+sub repos_by_organization( $self, $organization ) {
+
+
+	}
+
+=item * all_public_repos( CALLBACK, QUERY_HASH )
+
+GET /repositories
+
+since	string	The integer ID of the last Repository that you've seen.
+
+=cut
+
+sub all_public_repos ( $self, $callback = sub {}, $query = {} ) {
+	my $perl = $self->paged_get( '/repositories', [], $callback, $query );
+	}
+
+=item * edit_repo
+
+	PATCH /repos/:owner/:repo
+
+=cut
+
+sub edit_repo( $self, $owner, $repo, $hash = {} ) {
+
+	}
+
+=item * list_repo_contributors( OWNER, REPO )
+
+GET /repos/:owner/:repo/contributors
+
+anon	string	Set to 1 or true to include anonymous contributors in results.
+
+=cut
+
+sub get_repo_contributors ( $self, $owner, $repo ) {
+
+
+	}
+
+=item * get_repo_languages
+
+GET /repos/:owner/:repo/languages
+
+=cut
+
+sub get_repo_languages ( $self, $owner, $repo ) {
+
+
+	}
+
+=item * get_repo_teams
+
+GET /repos/:owner/:repo/teams
+
+=cut
+
+sub get_repo_teams ( $self, $owner, $repo ) {
+
+
+	}
+
+=item * get_repo_tags
+
+	GET /repos/:owner/:repo/tags
+
+
+=cut
+
+sub get_repo_tags ( $self, $owner, $repo ) {
+
+
+	}
+
+=item * delete_repo
+
+DELETE /repos/:owner/:repo
+
+Deleting a repository requires admin access. If OAuth is used, the delete_repo scope is required.
+
+=cut
+
+sub delete_repo ( $owner, $repo ) {
+
+	}
+
+=back
+
+=head2 Organizations
+
+=cut
+
+
+
+__PACKAGE__
