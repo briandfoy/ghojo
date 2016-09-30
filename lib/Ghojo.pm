@@ -31,11 +31,36 @@ Ghojo - a Mojo-based interface to the GitHub Developer API
 
 =head1 DESCRIPTION
 
+Here's a Mojo=based interface to the GitHub Developer's API. I'm
+reinventing L<Net::GitHub> and L<Pithub> because I feel like it. I
+want to make something for the work I do in the way I like to do it,
+but I'll let you use it. This started as a way to download all the GitHub
+repo meta data for some analysis of label frequency, then it got out
+of control for another customer.
+
+My design goals are:
+
+=over 4
+
+=item * Keep a low dependency development model
+
+=item * Make it easy for casual contributors (so no L<Dist::Zilla>)
+
+=item * Supply a more sophisticated interface over a thin layer over the REST stuff
+
+=item * Don't use Moo(se)? since most of the stuff I want to do is special
+
+=item * Validate the inputs to the API to give better error messages
+
+=item * Better response checking
+
+=back
+
+I'm implementing the parts of the API as I or my customers need them.
+
 =cut
 
-
-
-=head2  Object thingys
+=head2  General object thingys
 
 =over 4
 
