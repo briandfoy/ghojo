@@ -9,3 +9,4 @@ MYMETA.json
 .github_token
 *.bak
 *~
+*.old
