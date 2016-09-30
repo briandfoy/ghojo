@@ -2,6 +2,14 @@ use v5.24;
 use feature qw(signatures);
 no warnings qw(experimental::signatures);
 
+package Ghojo;
+
+our $VERSION = '1.001001';
+
+use Carp qw(carp);
+
+=encoding utf8
+
 =head1 NAME
 
 Ghojo - a Mojo-based interface to the GitHub Developer API
@@ -25,25 +33,69 @@ Ghojo - a Mojo-based interface to the GitHub Developer API
 
 =cut
 
-package Ghojo;
 
-our $VERSION = '1.001001';
 
-use Log::Log4perl;
+=head2  Object thingys
+
+=over 4
+
+=item * new
+
+You can create a new object with providing a username/password pair
+or a previously created token.
+
+	# Use a login pair. This will create a token for you.
+	my $ghojo = Ghojo->new( {
+		username => ...,
+		password => ...,
+		});
+
+	# pass the token as a string
+	my $ghojo = Ghojo->new( {
+		token => ...,
+		} )
+
+	# read a saved token from a file
+	my $ghojo = Ghojo->new( {
+		token_file => ...,
+		} )
+
+	# look in default token file for saved token
+	my $ghojo = Ghojo->new( {
+		} )
+
+To get a token, see "Personal Access Tokens" in your GitHub settings
+(L<https://github.com/settings/tokens>). Be careful! As soon as you
+create it GitHub will show you the token, but that's the last time
+you'll see it.
+
+With this constructor, Ghojo will create a new token for you (which will
+show up in "Personal Access Tokens"). It will save it in the value
+returned by C<token_file>.
+
+=cut
 
 sub new ( $class, $args = {} ) {
 	my $self = bless {}, $class;
 	$self->setup_logging;
 
 	if( exists $args->{token} ) {
-		$self->{token} = $args->{token};
+		$self->add_token( $args->{token} );
+		}
+	elsif( exists $args->{token_file } ) {
+		open my $fh, '<:utf8', $args->{token_file} or
+			carp "Could not read token file $args->{token_file}\n";
+		my $token = <$fh>;
+		chomp $token;
+		$self->logger->debug( "Token from token_file is <$token>" );
+		$self->add_token($token);
 		}
 	elsif( exists $args->{username} and exists $args->{password} ) {
 		my @keys = qw(username password);
 		$self->@{@keys} = $args->@{@keys};
 
 		$self->{last_tx} = $self->ua->get(
-			$self->api_url =>
+			$self->api_base_url =>
 			{ $self->auth_string },
 			);
 
@@ -54,34 +106,51 @@ sub new ( $class, $args = {} ) {
 	elsif( -e $self->token_file ) {
 		$self->logger->trace( 'Reading token from file' );
 		my $token = do { local( @ARGV, $/ ) = $self->token_file; <> };
-		$self->logger->trace( "Token from file is $token" );
+		$self->logger->trace( "Token from default token_file is <$token>" );
 		$self->add_token( $token );
 		}
 
 	return $self;
 	}
 
-=head2  Object thingys
-
 =back
 
 =head2 Logging
 
+If L<Log4perl> is installed, Ghojo will use that. Otherwise, it installed
+the null logger in L<Ghojo::NullLogger>. That responds to all logging
+messages but does nothing.
+
+=over 4
 
 =cut
 
 sub setup_logging ( $self, $conf = __PACKAGE__->logging_conf ) {
 	require Log::Log4perl;
 
-	$self->{logger} = do
-	if( eval "require Log::Log4perl; 1" ) {
-
-		}
-	else
-	unless(
-	Log::Log4perl::init( $conf );
-	$self->{logger} = Log::Log4perl->get_logger;
+	$self->{logger} = do {
+		if( eval "require Log::Log4perl; 1" ) {
+			Log::Log4perl::init( $conf );
+			Log::Log4perl->get_logger;
+			}
+		else {
+			# responds to all methods with nothing.
+			Ghojo::NullLogger->new;
+			}
+		};
 	}
+
+=item * logging_conf
+
+Returns the default configuration for L<Log::Log4perl>. If it returns
+a non-reference scalar, L<Log::Log4perl> uses that string as the filename
+for the configuration. If it's a reference,  L<Log::Log4perl> uses that
+as a string that holds the configuration. You can override this method
+in a subclass (or redefine it).
+
+To Do: Maybe add this value to the constructor
+
+=cut
 
 sub logging_conf ( $class ) {
 	my $conf = q(
@@ -100,7 +169,34 @@ sub logging_conf ( $class ) {
 	\$conf;
 	}
 
+=item * logger
+
+Returns the logger object. Wherever you want to log, you can get to the
+logging object through the Ghojo object:
+
+	$self->logger->debug( ... );
+
+=cut
+
 sub logger ( $self ) { $self->{logger} }
+
+=item * traceif( FLAG, MESSAGE )
+
+=item * debugif( FLAG, MESSAGE )
+
+=item * infoif( FLAG, MESSAGE )
+
+=item * warnif( FLAG, MESSAGE )
+
+=item * errorif( FLAG, MESSAGE )
+
+=item * fatalif( FLAG, MESSAGE )
+
+Like the L<Log4perl> methods but adds a FLAG argument. If that argument
+is true, it passes on the log message (which still might be logged based
+on the log level).
+
+=cut
 
 sub traceif ( $self, $flag, $message ) { $flag ? $self->logger->trace( $message )   : $flag }
 sub debugif ( $self, $flag, $message ) { $flag ? $self->logger->debug( $message )   : $flag }
@@ -109,47 +205,72 @@ sub warnif  ( $self, $flag, $message ) { $flag ? $self->logger->warn( $message )
 sub errorif ( $self, $flag, $message ) { $flag ? $self->logger->logwarn( $message ) : $flag }
 sub fatalif ( $self, $flag, $message ) { $flag ? $self->logger->logdie( $message )  : $flag }
 
+=back
 
-=head2 Queries
+=head2 Authorizing queries
 
+The GitHub API lets you authorize through Basic (with username and password)
+or token authorization. These methods handle most of those details.
+
+=over 4
 
 =cut
 
-sub api_url ( $self ) { Mojo::URL->new( 'https://api.github.com/' ) }
+=item * username
 
-sub query_url ( $self, $path, $params=[], $query={} ) {
-	state $api = $self->api_url;
-	my $modified = sprintf $path, $params->@*;
-	my $url = $api->clone->path( $modified )->query( $query );
-	}
+=item * has_username
 
-sub ua ( $self ) {
-	state $rc = require Mojo::UserAgent;
-	state $ua = Mojo::UserAgent->new;
-	$ua;
-	}
+=item * password
 
-sub post_json( $self, $query_url, $headers = {}, $hash = {} ) {
-	$self->{last_tx} = $self->ua->post( $query_url => $headers => json => $hash );
-	}
+=item * has_password
 
-sub last_tx ( $self ) { $self->{last_tx} }
+=item * token
 
-sub auth_header ( $self ) {
+=item * has_token
 
+Fetch or check that these properties have values.
 
-	}
+=cut
+
+sub username ( $self )     { $self->{username} }
+sub has_username ( $self ) { !! defined $self->{username} }
+
+sub password ( $self )     { $self->{password} }
+sub has_password ( $self ) { !! defined $self->{password} }
+
+sub token ( $self )     { $self->{token} }
+sub has_token ( $self ) { !! defined $self->{token} }
+
+=item * auth_string
+
+Returns the C<Authorization> header, whether it's the token or Basic
+authorization.
+
+=cut
 
 sub auth_string ( $self ) {
 	if( $self->has_token )         { $self->token_auth_string }
 	elsif( $self->has_basic_auth ) { $self->basic_auth_string }
 	}
 
+=item * has_basic_auth
+
+Checks that we know the username and password.
+
+=cut
+
 sub has_basic_auth ( $self ) {
 	$self->warnif( ! $self->has_username, "Missing username for basic authorization!" );
 	$self->warnif( ! $self->has_password, "Missing password for basic authorization!" );
 	$self->has_username && $self->has_password
 	}
+
+=item * token_auth_string
+
+Returns the value for the C<Authorization> request header, using
+Basic authorization. This requires username and password values.
+
+=cut
 
 sub basic_auth_string ( $self ) {
 	my $rc = require MIME::Base64;
@@ -159,6 +280,13 @@ sub basic_auth_string ( $self ) {
 		''
 		);
 	}
+
+=item * token_auth_string
+
+Returns the value for the C<Authorization> request header, using
+token authorization.
+
+=cut
 
 sub token_auth_string ( $self ) {
 	$self->warnif( ! $self->has_token, "Missing token for token authorization!" );
@@ -174,8 +302,14 @@ that overrides this method.
 
 =cut
 
-
 sub token_file ( $self ) { $ENV{GITHUB_DEV_TOKEN} // '.github_token' }
+
+=item * add_token( TOKEN )
+
+Adds the token to the object. After this, the object will try to use
+the token authorization in all queries.
+
+=cut
 
 sub add_token ( $self, $token ) {
 	chomp $token;
@@ -190,6 +324,12 @@ sub add_token ( $self, $token ) {
 	return $token;
 	}
 
+=item * add_token_auth_to_all_requests( TOKEN )
+
+Installs a start event for the L<Mojo::UserAgent> to add the C<Authorization>
+header. You don't need to do this yourself.
+
+=cut
 
 sub add_token_auth_to_all_requests ( $self ) {
 	$self->ua->on( start => sub {
@@ -197,6 +337,13 @@ sub add_token_auth_to_all_requests ( $self ) {
 		$tx->req->headers->header( Authorization => $self->token_auth_string );
 		} );
 	}
+
+=item * remember_token
+
+Put the token in a file to use later. You normally don't need to call
+this yourself.
+
+=cut
 
 sub remember_token ( $self ) {
 	unless( $self->token ) {
@@ -213,6 +360,54 @@ sub remember_token ( $self ) {
 		$self->logger->warn( "Token is " . $self->token );
 		}
 	}
+
+=back
+
+=head2 Queries
+
+=over 4
+
+=item * ua
+
+Returns the L<Mojo::UserAgent> object.
+
+=cut
+
+sub ua ( $self ) {
+	state $rc = require Mojo::UserAgent;
+	state $ua = Mojo::UserAgent->new;
+	$ua;
+	}
+
+=item * api_base_url
+
+The base URL for the API. By default this is C<https://api.github.com/>.
+
+=cut
+
+sub api_base_url ( $self ) { Mojo::URL->new( 'https://api.github.com/' ) }
+
+=item * query_url( PATH, PARAMS_ARRAY_REF, QUERY_HASH )
+
+Creates the query URL. Some of the data are in the PATH, so that's a
+sprintf type string that fill in the placeholders with the values in
+C<PARAMS_ARRAY_REF>. The C<QUERY_HASH> forms the query string for the URL.
+
+	my $url = query_url( '/foo/%s/%s', [ $user, $repo ], { since => $count } );
+
+=cut
+
+sub query_url ( $self, $path, $params=[], $query={} ) {
+	state $api = $self->api_base_url;
+	my $modified = sprintf $path, $params->@*;
+	my $url = $api->clone->path( $modified )->query( $query );
+	}
+
+sub post_json( $self, $query_url, $headers = {}, $hash = {} ) {
+	$self->{last_tx} = $self->ua->post( $query_url => $headers => json => $hash );
+	}
+
+sub last_tx ( $self ) { $self->{last_tx} }
 
 sub set_paged_get_sleep_time ( $self, $seconds = 3 ) {
 	$self->{paged_get}{'sleep'} = 0 + $seconds;
@@ -264,17 +459,13 @@ sub parse_link_header ( $self, $tx ) {
 
 =head2 Authorizations
 
+This section of the GitHub API allows you to create Personal Access Tokens.
+
+=over 4
+
+=item * authorizations
 
 =cut
-
-sub username ( $self )     { $self->{username} }
-sub has_username ( $self ) { !! defined $self->{username} }
-
-sub password ( $self )     { $self->{password} }
-sub has_password ( $self ) { !! defined $self->{password} }
-
-sub token ( $self )     { $self->{token} }
-sub has_token ( $self ) { !! defined $self->{token} }
 
 sub authorizations ( $self ) {
 	state $query_url = $self->query_url( "/authorizations" );
@@ -288,7 +479,14 @@ sub authorization ( $self, $id ) {
 	state $query_url = $self->query_url( "/authorizations/%s" );
 	}
 
-# scopes: https://developer.github.com/v3/oauth/#scopes
+=item * is_valid_scope( SCOPE )
+
+Returns a list of all valid scopes.
+
+https://developer.github.com/v3/oauth/#scopes
+
+=cut
+
 sub valid_scopes ( $self ) {
 	state $scopes = [ qw(
 		user
@@ -317,20 +515,29 @@ sub valid_scopes ( $self ) {
 		) ];
 	}
 
+=item * is_valid_scope( SCOPE )
+
+Returns true if SCOPE is a valid authorization scope.
+
+=cut
+
 sub is_valid_scope ( $self, $scope ) {
-	state $scopes = { map { $_, undef } $self->valid_scopes };
-	exists $scopes->{ $scope };
+	state $scopes = { map { lc $_, undef } $self->valid_scopes };
+	exists $scopes->{ lc $scope };
 	}
 
-sub _make_hash_from_list ( $self, @list ) {
-	my %hash = map { $_ => undef } @list;
-	}
+=item * create_authorization
 
-# https://developer.github.com/v3/oauth_authorizations/#create-a-new-authorization
+Creates a "Personal Access Token" for the logged in user.
+
+https://developer.github.com/v3/oauth_authorizations/#create-a-new-authorization
+
+=cut
+
 sub create_authorization ( $self, $hash = {} ) {
 	state $query_url = $self->query_url( "/authorizations" );
-	state $allowed   = $self->_make_hash_from_list( qw(scopes note note_url client_id client_secret fingerprint) );
-	state $required  = $self->_make_hash_from_list( qw(note) );
+	state $allowed   = [ qw(scopes note note_url client_id client_secret fingerprint) ];
+	state $required  = [ qw(note) ];
 
 	$hash->{scopes} //= ['user', 'public_repo', 'repo', 'gist'];
 	$hash->{note}   //= 'test purpose ' . time;
@@ -358,8 +565,11 @@ sub delete_authorization ( $self ) {
 	url => "/authorizations/%s", method => "DELETE", check_status => 204
 	}
 
+=back
+
 =head2 Users
 
+=over 4
 
 =cut
 
@@ -367,6 +577,8 @@ sub user ( $self ) {
 	state $rc = require Ghojo::V3::Users;
 	$self->{user} = Ghojo::V3::Users->new( Ghojo::V3::Users->args );
 	}
+
+=back
 
 =head2 Labels
 
@@ -382,6 +594,8 @@ sub user ( $self ) {
     replace_issue_label => { url => "/repos/%s/%s/issues/%s/labels", method => 'PUT', args => 1 },
     delete_issue_labels => { url => "/repos/%s/%s/issues/%s/labels", method => 'DELETE', check_status => 204 },
     milestone_labels => { url => "/repos/%s/%s/milestones/%s/labels" },
+
+=over 4
 
 =cut
 
@@ -624,6 +838,8 @@ sub replace_all_labels_for_issue {
 =back
 
 =head2 Issues
+
+=over 4
 
 =item * issues( USER, REPO, HASHREF )
 
@@ -884,8 +1100,27 @@ sub delete_repo ( $owner, $repo ) {
 
 =head2 Organizations
 
+=over 4
+
+=back
+
+=head1 SOURCE AVAILABILITY
+
+This module is in Github:
+
+	git://github.com/briandfoy/ghojo.git
+
+=head1 AUTHOR
+
+brian d foy, C<< <bdfoy@cpan.org> >>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2016, brian d foy <bdfoy@cpan.org>. All rights reserved.
+
+This program is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
 =cut
-
-
 
 __PACKAGE__
