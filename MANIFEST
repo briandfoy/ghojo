@@ -2,7 +2,7 @@
 github_repo_list.txt
 examples/hacktoberfest.pl
 lib/Ghojo.pm
-lib/Ghojo/Logger
+lib/Ghojo/NullLogger.pm
 LICENSE
 Makefile.PL
 MANIFEST			This list of files
