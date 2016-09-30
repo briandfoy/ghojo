@@ -1,6 +1,6 @@
 .github_token
 github_repo_list.txt
-hacktoberfest.pl
+examples/hacktoberfest.pl
 lib/Ghojo.pm
 lib/Ghojo/Logger
 LICENSE
