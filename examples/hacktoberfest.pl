@@ -11,8 +11,8 @@ use Data::Dumper;
 
 # BurnItToTheGround is my throw-away account for GitHub API testing
 my $hash = {
-	password => 'tritonX100',
 	username => $ARGV[0] // 'BurnItToTheGround',
+	password => $ENV{PASSWORD} // prompt_for_password(),
 	};
 
 my $ghojo = Ghojo->new( $hash );
@@ -31,6 +31,7 @@ my $callback = sub ( $item ) {
 	my $repo = get_repo_object( $owner, $repo );
 
 	# get the labels for that repo
+	my $labels = $repo->labels;
 	my %labels = map { $_->@{ qw(name color) } } $labels->@*;
 	unless( exists $labels{'Hacktoberfest'} ) {
 		say "\tHacktoberfest label does not exist";
