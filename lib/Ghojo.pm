@@ -877,27 +877,35 @@ sub get_labels_for_all_issus_in_milestone ( $self, $owner, $repo, $name ) {
 	}
 
 
-=item * add_labels_to_issue
+=item * add_labels_to_issue( OWNER, REPO, NUMBER, @LABEL_NAMES )
+
+The NUMBER is the issue number as you see it in the website. It is not
+the ID number of the issue.
 
 POST /repos/:owner/:repo/issues/:number/labels
+
 Input
-[
-  "Label1",
-  "Label2"
-]
+
+	[
+	  "Label1",
+	  "Label2"
+	]
+
 Response
+
 Status: 200 OK
-[
-  {
-    "url": "https://api.github.com/repos/octocat/Hello-World/labels/bug",
-    "name": "bug",
-    "color": "f29513"
-  }
-]
+
+	[
+	  {
+		"url": "https://api.github.com/repos/octocat/Hello-World/labels/bug",
+		"name": "bug",
+		"color": "f29513"
+	  }
+	]
 
 =cut
 
-sub add_labels_to_issue ( $self, $owner, $repo, $issue, @names ) {
+sub add_labels_to_issue ( $self, $owner, $repo, $number, @names ) {
 	state $expected_status = 200;
 	my $params             = [ $owner, $repo, $issue ];
 
