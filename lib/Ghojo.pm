@@ -735,7 +735,7 @@ Status: 201 Created
 =cut
 
 sub create_label ( $self, $owner, $repo, $name, $color ) {
-	state $expected_status = 204;
+	state $expected_status = 201;
 	my $params             = [ $owner, $repo ];
 
 	$color =~ s/\A#//;
