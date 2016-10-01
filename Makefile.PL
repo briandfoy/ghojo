@@ -68,7 +68,8 @@ my %WriteMakefile = (
 		},
 
 	'PREREQ_PM' => {
-		"Mojolicious" => 0,
+		"Mojolicious"   => '0',
+		"Log::Log4perl" => '0',
 		},
 
 	'META_MERGE' => {
