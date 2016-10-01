@@ -13,6 +13,8 @@ my $hash = {
 	password => $ENV{PASSWORD} // prompt_for_password(),
 	};
 
+my $label_name = 'Hacktoberfest';
+
 my $ghojo = Ghojo->new( $hash );
 $ghojo->logger->level( $ENV{GHOJO_LOG_LEVEL} // 'OFF' );
 
@@ -49,9 +51,7 @@ my $callback = sub ( $item ) {
 	return 1;
 	};
 
-my $query = {};
-
-my $repos = $ghojo->repos( $callback, $query );
+$ghojo->repos( $callback, {} );
 
 sub prompt_for_password {
 	state $rc = require Term::ReadKey;
