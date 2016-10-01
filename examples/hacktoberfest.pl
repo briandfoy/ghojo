@@ -14,6 +14,7 @@ hacktoberfest.pl - Add the Hacktoberfest label to all open issues in GitHub
 =head1 SYNOPSIS
 
 	# run it out of the cloned repo. It's not ready for installation
+	% cpan Term::ReadKey Log::Log4perl Mojolicious
 	% perl5.24 examples/hacktoberfest.pl github_username
 	Type in your secret password:  ...
 

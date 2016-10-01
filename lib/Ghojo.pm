@@ -7,6 +7,7 @@ package Ghojo;
 our $VERSION = '1.001001';
 
 use Carp qw(carp);
+use Mojo::URL;
 
 =encoding utf8
 
