@@ -1045,11 +1045,14 @@ The keys of the HASHREF can be:
 sub issues ( $self, $owner, $repo, $callback = sub { } , $query = { 'state' => 'open' } ) {
 	state $expected_status = 200;
 
-sub issues ( $self, $user, $repo, $hash = { state => 'open' } ) {
-	my $query_url = $self->query_url( "/repos/%s/%s/issues", $user, $repo );
-	$self->logger->trace( "Query URL is $query_url" );
-	my $tx = $self->ua->get( $query_url => json => $hash );
-	$tx->res->json;
+	my $url = $self->query_url( "/repos/%s/%s/issues", [ $owner, $repo ], $query );
+	$self->logger->trace( "Query URL is $url" );
+	my $results = $self->paged_get(
+		"/repos/%s/%s/issues",
+		[ $owner, $repo ],
+		$callback,
+		$query
+		);
 	}
 
 sub all_issues ( $self, $user, $repo, $hash = {} ) {
