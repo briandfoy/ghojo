@@ -7,8 +7,6 @@ use lib qw(lib);
 
 use Ghojo;
 
-use Data::Dumper;
-
 # BurnItToTheGround is my throw-away account for GitHub API testing
 my $hash = {
 	username => $ARGV[0] // 'BurnItToTheGround',
