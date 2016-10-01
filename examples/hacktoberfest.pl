@@ -31,16 +31,11 @@ my $callback = sub ( $item ) {
 	my $repo = get_repo_object( $owner, $repo );
 
 	# get the labels for that repo
-	my $labels = $repo->labels;
-	my %labels = map { $_->@{ qw(name color) } } $labels->@*;
-	unless( exists $labels{'Hacktoberfest'} ) {
-		say "\tHacktoberfest label does not exist";
-		$repo->create_label( 'Hacktoberfest', 'ff5500' );
-		}
+	my %labels = map { $_->@{ qw(name color) } } $repo->labels->@*;
 
-	if( exists $labels{'bug'} ) {
-		say "\tbug label does exist";
-		$ghojo->update_label( 'bug',  'New bug', 'ff0000' );
+	unless( exists $labels{$label_name} ) {
+		my $rc = $repo->create_label( $label_name, 'ff5500' );
+		say "\tCreated $label_name label" if $rc;
 		}
 
 	my $callback = sub ( $item ) {
