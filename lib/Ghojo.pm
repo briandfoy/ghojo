@@ -360,7 +360,7 @@ header. You don't need to do this yourself.
 sub add_token_auth_to_all_requests ( $self ) {
 	$self->ua->on( start => sub {
 		my( $ua, $tx ) = @_;
-		$tx->req->headers->header( Authorization => $self->token_auth_string );
+		$tx->req->headers->authorization( $self->token_auth_string );
 		} );
 	}
 
