@@ -14,7 +14,7 @@ my $hash = {
 	};
 
 my $ghojo = Ghojo->new( $hash );
-$ghojo->logger->level( $ENV{GHOJO_LOG_LEVEL} // 'TRACE' );
+$ghojo->logger->level( $ENV{GHOJO_LOG_LEVEL} // 'OFF' );
 
 my $callback = sub ( $item ) {
 	unless( ref $item eq ref {} ) {
