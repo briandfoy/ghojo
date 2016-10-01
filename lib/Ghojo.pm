@@ -1042,8 +1042,8 @@ The keys of the HASHREF can be:
 
 =cut
 
-sub _check_arguments ( $self, $hash ) {
-	}
+sub issues ( $self, $owner, $repo, $callback = sub { } , $query = { 'state' => 'open' } ) {
+	state $expected_status = 200;
 
 sub issues ( $self, $user, $repo, $hash = { state => 'open' } ) {
 	my $query_url = $self->query_url( "/repos/%s/%s/issues", $user, $repo );
