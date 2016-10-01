@@ -27,16 +27,14 @@ Ghojo - a Mojo-based interface to the GitHub Developer API
 		token => ...,
 		} );
 
-
-
 =head1 DESCRIPTION
 
 Here's a Mojo=based interface to the GitHub Developer's API. I'm
 reinventing L<Net::GitHub> and L<Pithub> because I feel like it. I
 want to make something for the work I do in the way I like to do it,
-but I'll let you use it. This started as a way to download all the GitHub
-repo meta data for some analysis of label frequency, then it got out
-of control for another customer.
+but I'll let you use it. This started as a way to download all the
+GitHub repo meta data for some analysis of label frequency, then it
+got out of control for another customer.
 
 My design goals are:
 
@@ -57,6 +55,12 @@ My design goals are:
 =back
 
 I'm implementing the parts of the API as I or my customers need them.
+
+If you would like to play with this to change things on GitHub, I
+suggest setting up a new user and some repos you don't care about
+(perhaps forked from interesting ones). Play with those until you are
+satisfied that this code isn't going to delete your life. I also keep
+backup clones at Bitbucket just in case.
 
 =cut
 
