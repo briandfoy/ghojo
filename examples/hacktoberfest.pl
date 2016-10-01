@@ -32,4 +32,12 @@ my $query = {};
 
 my $repos = $ghojo->repos( $callback, $query );
 
-say Dumper( $repos );
+sub prompt_for_password {
+	state $rc = require Term::ReadKey;
+	Term::ReadKey::ReadMode('noecho');
+	print "Type in your secret password: ";
+	my $password = Term::ReadKey::ReadLine(0);
+	Term::ReadKey::ReadMode('restore');
+	chomp $password;
+	$password;
+	}
