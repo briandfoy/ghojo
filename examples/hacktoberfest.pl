@@ -14,8 +14,8 @@ my $hash = {
 	password => 'tritonX100',
 	};
 
-my $ghojo = Ghojo->new( {} );
-$ghojo->logger->level( 'TRACE' );
+my $ghojo = Ghojo->new( $hash );
+$ghojo->logger->level( $ENV{GHOJO_LOG_LEVEL} // 'TRACE' );
 
 my $callback = sub ( $item ) {
 	unless( ref $item eq ref {} ) {
