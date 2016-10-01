@@ -472,7 +472,8 @@ sub paged_get ( $self, $path, $params = [], $callback=sub{ $_[0] }, $query = {} 
 # <https://api.github.com/repositories?since=367>; rel="next", <https://api.github.com/repositories{?since}>; rel="first"';
 sub parse_link_header ( $self, $tx ) {
 	my $link_header = $tx->res->headers->header( 'Link' );
-	$self->logger->trace( "Link header is $link_header" );
+	$self->logger->trace( "Link header is <$link_header>" );
+	return {} unless $link_header;
 
 	my @parts = $link_header =~ m{
 		<(.*?)>; \s+ rel="(.*?)"
