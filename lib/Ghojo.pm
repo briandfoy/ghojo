@@ -503,8 +503,8 @@ sub paged_get ( $self, $path, $params = [], $callback=sub{ $_[0] }, $query = {} 
 		push @next, $link_header->{'next'} if exists $link_header->{'next'};
 
 		my $array = $tx->res->json;
-		foreach my $hashref ( $array->@* ) {
-			push @results, $callback->( $hashref );
+		foreach my $item ( $array->@* ) {
+			push @results, $callback->( $item );
 			}
 		sleep $self->paged_get_sleep_time;
 		}
