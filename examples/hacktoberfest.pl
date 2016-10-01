@@ -9,9 +9,10 @@ use Ghojo;
 
 use Data::Dumper;
 
+# BurnItToTheGround is my throw-away account for GitHub API testing
 my $hash = {
-	username => 'briandfoy',
 	password => 'tritonX100',
+	username => $ARGV[0] // 'BurnItToTheGround',
 	};
 
 my $ghojo = Ghojo->new( $hash );
@@ -27,10 +28,9 @@ my $callback = sub ( $item ) {
 	return unless $ghojo->logged_in_user eq $owner;
 	say "Repo is $item->{full_name}";
 
-	# get the labels for that repo
 	my $repo = get_repo_object( $owner, $repo );
 
-	my $labels = $repo->labels;
+	# get the labels for that repo
 	my %labels = map { $_->@{ qw(name color) } } $labels->@*;
 	unless( exists $labels{'Hacktoberfest'} ) {
 		say "\tHacktoberfest label does not exist";
