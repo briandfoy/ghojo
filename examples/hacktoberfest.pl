@@ -43,13 +43,16 @@ my $callback = sub ( $item ) {
 		$ghojo->update_label( 'bug',  'New bug', 'ff0000' );
 		}
 
-	if( exists $labels{'New bug'} ) {
-		say "\tbug label does exist";
-		$ghojo->update_label( 'New bug',  'bug', '00ff00' );
-		}
+	my $callback = sub ( $item ) {
+		my( $number, $title ) = $item->@{ qw(number title) };
+		say "\t$number: $title";
+		$repo->add_labels_to_issue( $number, $label_name );
+		return $item;
+		};
 
 	return 1;
 	};
+	my $issues = $repo->issues( $callback );
 
 $ghojo->repos( $callback, {} );
 
