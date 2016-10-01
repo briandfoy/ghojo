@@ -28,16 +28,23 @@ my $callback = sub ( $item ) {
 	say "Repo is $item->{full_name}";
 
 	# get the labels for that repo
-	my $labels = $ghojo->labels( $owner, $repo );
+	my $repo = get_repo_object( $owner, $repo );
+
+	my $labels = $repo->labels;
 	my %labels = map { $_->@{ qw(name color) } } $labels->@*;
 	unless( exists $labels{'Hacktoberfest'} ) {
 		say "\tHacktoberfest label does not exist";
-		$ghojo->create_label( $owner, $repo, 'Hacktoberfest', 'ff5500' );
+		$repo->create_label( 'Hacktoberfest', 'ff5500' );
 		}
 
 	if( exists $labels{'bug'} ) {
 		say "\tbug label does exist";
-		$ghojo->update_label( $owner, $repo, 'Hacktoberfest', 'ff5500' );
+		$ghojo->update_label( 'bug',  'New bug', 'ff0000' );
+		}
+
+	if( exists $labels{'New bug'} ) {
+		say "\tbug label does exist";
+		$ghojo->update_label( 'New bug',  'bug', '00ff00' );
 		}
 
 	return 1;

@@ -27,6 +27,9 @@ Ghojo - a Mojo-based interface to the GitHub Developer API
 		token => ...,
 		} );
 
+	# anonymous, not logged in
+	my $ghojo = Ghojo->new( {} );
+
 =head1 DESCRIPTION
 
 Here's a Mojo=based interface to the GitHub Developer's API. I'm
@@ -137,6 +140,32 @@ sub new ( $class, $args = {} ) {
 		}
 
 	return $self;
+	}
+
+=item * get_repo_object
+
+Get a repo object which remembers its owner and repo name so you don't
+have to pass those parameters for all these general method. This is really
+a wrapper around L<Ghojo> that fills in some arguments for you.
+
+
+=cut
+
+sub get_repo_object ( $self, $owner, $repo ) {
+	state $rc = require Ghojo::Repo;
+	my $perl = $self->get_repo( $owner, $repo );
+	unless( $perl ) {
+		$self->logger->error( "Could not find the $owner/$repo repo" );
+		return;
+		}
+
+	my $obj = Ghojo::Repo->new_from_response( $self, $perl );
+	unless( $obj ) {
+		$self->logger->error( "Could not make object for $owner/$repo!" );
+		return;
+		}
+
+	$obj;
 	}
 
 =back
@@ -368,6 +397,11 @@ header. You don't need to do this yourself.
 =cut
 
 sub add_token_auth_to_all_requests ( $self ) {
+	unless( $self->has_token ) {
+		$self->logger->logdie( "There is no auth token, so I can't add it to every request!" );
+		return 0;
+		}
+
 	$self->ua->on( start => sub {
 		my( $ua, $tx ) = @_;
 		$tx->req->headers->authorization( $self->token_auth_string );
@@ -655,11 +689,11 @@ This implements C<GET /repos/:owner/:repo/labels> from L<http://developer.github
 
 =cut
 
-sub labels ( $self, $user, $repo ) {
-	my $params = [ $user, $repo ];
-	my $query_url = $self->query_url( "/repos/%s/%s/labels", $params );
-	$self->logger->trace( "Query URL is $query_url" );
-	my $tx = $self->ua->get( $query_url );
+sub labels ( $self, $owner, $repo ) {
+	my $params = [ $owner, $repo ];
+	my $url = $self->query_url( "/repos/%s/%s/labels", $params );
+	$self->logger->trace( "Query URL is $url" );
+	my $tx = $self->ua->get( $url );
 	$tx->res->json;
 	}
 
@@ -690,56 +724,105 @@ sub get_label ( $self, $user, $repo, $name ) {
 =item * create_label
 
 POST /repos/:owner/:repo/labels
-Parameters
-Name	Type	Description
-name	string	Required. The name of the label.
-color	string	Required. A 6 character hex code, without the leading #, identifying the color.
+
+JSON parameters
+
+	name	string	(Required) The name of the label.
+	color	string	(Required) A 6 character hex code, without the leading #, identifying the color.
 
 Status: 201 Created
 
 =cut
 
 sub create_label ( $self, $owner, $repo, $name, $color ) {
+	state $expected_status = 204;
+	my $params             = [ $owner, $repo ];
 
+	$color =~ s/\A#//;
 
+	my $query = {
+		name  => $name,
+		color => $color,
+		};
+	my $url = $self->query_url( "/repos/%s/%s/labels", $params, $query );
+
+	$self->logger->trace( "Query URL is $url" );
+	my $tx = $self->ua->post( $url => json => $query );
+	my $code = $tx->res->code;
+
+	unless( $code == $expected_status ) {
+		my $body = $tx->res->body;
+		$self->logger->error( "create_label did not return a $expected_status: $body" );
+		return 0;
+		}
+
+	return 1;
 	}
 
-=item * update_label
+=item * update_label( OWNER, REPO, NAME, NEW_NAME, NEW_COLOR )
 
 PATCH /repos/:owner/:repo/labels/:name
-Parameters
-Name	Type	Description
-name	string	The name of the label.
-color	string	A 6 character hex code, without the leading #, identifying the color.
-{
-  "name": "bug",
-  "color": "f29513"
-}
-Response
-Status: 200 OK
-{
-  "url": "https://api.github.com/repos/octocat/Hello-World/labels/bug",
-  "name": "bug",
-  "color": "f29513"
-}
+
+JSON parameters
+
+	name	string	The name of the label.
+	color	string	A 6 character hex code, without the leading #, identifying the color.
+
+Response Status: 200 OK
 
 =cut
 
-sub update_label ( $self, $owner, $repo, $name, $color ) {
+sub update_label ( $self, $owner, $repo, $name, $new_name, $color ) {
+	state $expected_status = 200;
+	my $params             = [ $owner, $repo, $name ];
 
+	$color =~ s/\A#//;
+
+	my $query = {};
+
+	$query->{name}  = $new_name if defined $new_name;
+	$query->{color} = $color    if defined $color;
+
+	my $url = $self->query_url( "/repos/%s/%s/labels/%s", $params );
+
+	$self->logger->trace( "update_label: URL is $url" );
+	my $tx = $self->ua->patch( $url => json => $query );
+	my $code = $tx->res->code;
+
+	unless( $code == $expected_status ) {
+		my $body = $tx->res->body;
+		$self->logger->error( "create_label did not return a $expected_status: $body" );
+		return 0;
+		}
+
+	return 1;
 	}
 
-=item * delete_label
+=item * delete_label( OWNER, REPO, $NAME )
 
 DELETE /repos/:owner/:repo/labels/:name
-Response
+
 Status: 204 No Content
 
 =cut
 
 sub delete_label ( $self, $owner, $repo, $name ) {
+	state $expected_status = 204;
+	my $params             = [ $owner, $repo, $name ];
 
+	my $url = $self->query_url( "/repos/%s/%s/labels/%s", $params );
 
+	$self->logger->trace( "delete_label: URL is $url" );
+	my $tx = $self->ua->delete( $url );
+	my $code = $tx->res->code;
+
+	unless( $code == $expected_status ) {
+		my $body = $tx->res->body;
+		$self->logger->error( "create_label did not return a $expected_status: $body" );
+		return 0;
+		}
+
+	return 1;
 	}
 
 
@@ -750,6 +833,7 @@ Response
 Status: 200 OK
 Link: <https://api.github.com/resource?page=2>; rel="next",
       <https://api.github.com/resource?page=5>; rel="last"
+
 [
   {
     "url": "https://api.github.com/repos/octocat/Hello-World/labels/bug",
@@ -760,7 +844,9 @@ Link: <https://api.github.com/resource?page=2>; rel="next",
 
 =cut
 
-sub get_label_for_issue {
+sub get_label_for_issue ( $self, $owner, $repo, $name ) {
+	state $expected_status = 200;
+	my $params             = [ $owner, $repo, $name ];
 
 
 	}
@@ -783,7 +869,9 @@ Link: <https://api.github.com/resource?page=2>; rel="next",
 
 =cut
 
-sub get_labels_for_all_issus_in_milestone {
+sub get_labels_for_all_issus_in_milestone ( $self, $owner, $repo, $name ) {
+	state $expected_status = 200;
+	my $params             = [ $owner, $repo, $name ];
 
 
 	}
@@ -810,6 +898,8 @@ Status: 200 OK
 =cut
 
 sub add_labels_to_issue ( $self, $owner, $repo, $issue, @names ) {
+	state $expected_status = 200;
+	my $params             = [ $owner, $repo, $issue ];
 
 
 	}
@@ -823,7 +913,9 @@ Status: 204 No Content
 
 =cut
 
-sub remove_label_from_issue {
+sub remove_label_from_issue ( $self, $owner, $repo, $name ) {
+	state $expected_status = 204;
+	my $params             = [ $owner, $repo, $name ];
 
 
 	}
@@ -837,7 +929,9 @@ Status: 204 No Content
 
 =cut
 
-sub remove_all_labels_from_issue {
+sub remove_all_labels_from_issue ( $self, $owner, $repo, $name ) {
+	state $expected_status = 204;
+	my $params             = [ $owner, $repo, $name ];
 
 
 	}
@@ -865,7 +959,9 @@ Status: 200 OK
 
 =cut
 
-sub replace_all_labels_for_issue {
+sub replace_all_labels_for_issue ( $self, $owner, $repo, $name ) {
+	state $expected_status = 200;
+	my $params             = [ $owner, $repo, $name ];
 
 
 	}
@@ -1017,13 +1113,42 @@ GET /user/repos
 
 =cut
 
-
-
 sub repos ( $self, $callback = sub {}, $query = {} ) {
 	$self->logger->trace( 'In repos' );
 	my $perl = $self->paged_get( '/user/repos', [], $callback, $query );
 	}
 
+
+=item * get_repo ( OWNER, REPO )
+
+GET /repos/:owner/:repo
+
+The parent and source objects are present when the repository is a
+fork. parent is the repository this repository was forked from, source
+is the ultimate source for the network.
+
+=cut
+
+sub get_repo ( $self, $owner, $repo ) {
+	state $expected_status = 200;
+
+	my $url = $self->query_url( '/repos/%s/%s', [ $owner, $repo ] );
+	my $tx  = $self->ua->get( $url );
+
+	unless( $tx->res->code == $expected_status ) {
+		my $json = $tx->res->json;
+		if( $json->{message} eq 'Not Found' ) {
+			$self->logger->error( "get_repo: repo $owner/$repo was not found" );
+			}
+		else {
+			$self->logger->error( "get_repo: unspecified error looking for $owner/$repo. Code " . $tx->res->code );
+			$self->logger->debug( "get_repo: " . $tx->res->body );
+			}
+		return;
+		}
+
+	my $perl = $tx->res->json;
+	}
 
 =item * repos_by_username( USERNAME )
 
