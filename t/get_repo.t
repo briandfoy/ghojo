@@ -21,6 +21,13 @@ subtest good_repo => sub {
 	can_ok( $repo, 'data' );
 	ok( exists $repo->data->{full_name}, "full_name key exists" );
 	diag( "Repo name is " . $repo->data->{full_name} );
+
+	subtest labels => sub {
+		$ghojo->logger->level( 'OFF' );
+		my $response = eval { $repo->labels };
+		ok( ref $response );
+		isa_ok( $response, ref [] );
+		};
 	};
 
 subtest bad_repo => sub {
