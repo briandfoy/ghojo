@@ -17,15 +17,30 @@ my $hash = {
 my $ghojo = Ghojo->new( {} );
 $ghojo->logger->level( 'TRACE' );
 
-my $callback = sub ( $hashref ) {
-	unless( ref $hashref eq ref {} ) {
+my $callback = sub ( $item ) {
+	unless( ref $item eq ref {} ) {
 		$ghojo->logger->error( "Not a hashref!" );
 		return;
 		}
-	my( $user, $repo ) = split m{/}, $hashref->{full_name};
-	my $owner = $hashref->{owner}{login};
-	return unless $self->username eq $owner;
-	[ $user, $repo ]
+	my( $user, $repo ) = split m{/}, $item->{full_name};
+	my $owner = $item->{owner}{login};
+	return unless $ghojo->logged_in_user eq $owner;
+	say "Repo is $item->{full_name}";
+
+	# get the labels for that repo
+	my $labels = $ghojo->labels( $owner, $repo );
+	my %labels = map { $_->@{ qw(name color) } } $labels->@*;
+	unless( exists $labels{'Hacktoberfest'} ) {
+		say "\tHacktoberfest label does not exist";
+		$ghojo->create_label( $owner, $repo, 'Hacktoberfest', 'ff5500' );
+		}
+
+	if( exists $labels{'bug'} ) {
+		say "\tbug label does exist";
+		$ghojo->update_label( $owner, $repo, 'Hacktoberfest', 'ff5500' );
+		}
+
+	return 1;
 	};
 
 my $query = {};
