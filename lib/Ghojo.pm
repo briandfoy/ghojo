@@ -907,9 +907,21 @@ Status: 200 OK
 
 sub add_labels_to_issue ( $self, $owner, $repo, $number, @names ) {
 	state $expected_status = 200;
-	my $params             = [ $owner, $repo, $issue ];
+	my $params             = [ $owner, $repo, $number ];
 
+	my $url = $self->query_url( "/repos/%s/%s/issues/%s/labels", $params );
 
+	$self->logger->trace( "add_labels_to_issue: URL is $url" );
+	my $tx = $self->ua->post( $url => json => \@names );
+	my $code = $tx->res->code;
+
+	unless( $code == $expected_status ) {
+		my $body = $tx->res->body;
+		$self->logger->error( "add_labels_to_issue did not return $expected_status: $body" );
+		return 0;
+		}
+
+	return 1;
 	}
 
 
