@@ -20,7 +20,7 @@ package Ghojo::Repo 0.001001 {
 	sub repo  ( $self ) { $self->{repo}  }
 	sub data  ( $self ) { $self->{data}  }
 
-	sub AUTOLOAD ( $self ) {
+	sub AUTOLOAD ( $self, @args ) {
 		our $AUTOLOAD;
 		my $method = $AUTOLOAD =~ s/.*:://r;
 		unless( $self->ghojo->can( $method ) ) {
@@ -28,11 +28,11 @@ package Ghojo::Repo 0.001001 {
 			}
 
 		$self->ghojo->logger->trace(
-			sprintf "Calling $method with <%s %s> <@_>",
+			sprintf "Calling $method with <%s %s> <@args>",
 				$self->owner,
 				$self->repo
 			 );
-		$self->ghojo->$method( $self->owner, $self->repo, @_ );
+		$self->ghojo->$method( $self->owner, $self->repo, @args );
 		}
 
 	sub DESTROY { }
