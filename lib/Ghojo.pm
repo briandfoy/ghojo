@@ -242,19 +242,28 @@ or token authorization. These methods handle most of those details.
 
 =cut
 
+=item * logged_in_user
+
 =item * username
 
 =item * has_username
+
+The C<username> and C<logged_in_user> are the same thing. I think the
+later is more clear, though.
 
 =item * password
 
 =item * has_password
 
+Note that after a switch to token authorization, the password might be
+deleted from the object.
+
 =item * token
 
 =item * has_token
 
-Fetch or check that these properties have values.
+Fetch or check that these properties have values. Be careful not to
+log these! The program needs to keep the value around!
 
 =cut
 
@@ -270,7 +279,7 @@ sub has_token ( $self ) { !! defined $self->{token} }
 
 =item * auth_string
 
-Returns the C<Authorization> header, whether it's the token or Basic
+Returns the C<Authorization> header value, whether it's the token or Basic
 authorization.
 
 =cut
