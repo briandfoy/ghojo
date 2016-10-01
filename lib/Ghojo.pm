@@ -123,10 +123,7 @@ sub new ( $class, $args = {} ) {
 		my @keys = qw(username password);
 		$self->@{@keys} = $args->@{@keys};
 
-		$self->{last_tx} = $self->ua->get(
-			$self->api_base_url =>
-			{ $self->auth_string },
-			);
+		$self->{last_tx} = $self->ua->get( $self->api_base_url );
 
 		$self->create_authorization;
 
