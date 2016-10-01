@@ -258,8 +258,9 @@ Fetch or check that these properties have values.
 
 =cut
 
-sub username ( $self )     { $self->{username} }
-sub has_username ( $self ) { !! defined $self->{username} }
+sub logged_in_user ( $self ) { $self->username }
+sub username ( $self )       { $self->{username} }
+sub has_username ( $self )   { !! defined $self->{username} }
 
 sub password ( $self )     { $self->{password} }
 sub has_password ( $self ) { !! defined $self->{password} }
