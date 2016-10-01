@@ -500,7 +500,7 @@ sub paged_get ( $self, $path, $params = [], $callback=sub{ $_[0] }, $query = {} 
 		$self->logger->debug( "query_url is $url" );
 		my $tx = $self->ua->get( $url );
 		my $link_header = $self->parse_link_header( $tx );
-		push @next, $link_header->{next} if exists $link_header->{next};
+		push @next, $link_header->{'next'} if exists $link_header->{'next'};
 
 		my $array = $tx->res->json;
 		foreach my $hashref ( $array->@* ) {
