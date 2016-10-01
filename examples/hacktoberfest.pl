@@ -23,12 +23,19 @@ my $callback = sub ( $item ) {
 		$ghojo->logger->error( "Not a hashref!" );
 		return;
 		}
+	$ghojo->logger->info( $item->{full_name} );
+
 	my( $user, $repo ) = split m{/}, $item->{full_name};
+
 	my $owner = $item->{owner}{login};
 	return unless $ghojo->logged_in_user eq $owner;
-	say "Repo is $item->{full_name}";
 
-	my $repo = get_repo_object( $owner, $repo );
+	say $item->{full_name};
+	my $repo = $ghojo->get_repo_object( $owner, $repo );
+	unless( $repo ) {
+		$ghojo->logger->error( "Problem creating repo thingy" );
+		return;
+		}
 
 	# get the labels for that repo
 	my %labels = map { $_->@{ qw(name color) } } $repo->labels->@*;
@@ -45,9 +52,9 @@ my $callback = sub ( $item ) {
 		return $item;
 		};
 
+	my $issues = $repo->issues( $callback );
 	return 1;
 	};
-	my $issues = $repo->issues( $callback );
 
 $ghojo->repos( $callback, {} );
 
