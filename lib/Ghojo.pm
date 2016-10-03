@@ -447,6 +447,7 @@ Returns the L<Mojo::UserAgent> object.
 sub ua ( $self ) {
 	state $rc = require Mojo::UserAgent;
 	state $ua = Mojo::UserAgent->new;
+	$ua->transactor->name("Ghojo $VERSION");
 	$ua;
 	}
 
