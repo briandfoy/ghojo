@@ -7,6 +7,7 @@ package Ghojo;
 our $VERSION = '1.001001';
 
 use Carp qw(carp);
+use Mojo::Collection;
 use Mojo::URL;
 
 =encoding utf8
@@ -514,7 +515,7 @@ sub paged_get ( $self, $path, $params = [], $callback=sub{ $_[0] }, $query = {} 
 		sleep $self->paged_get_sleep_time;
 		}
 
-	\@results;
+	Mojo::Collection->new( @results );
 	}
 
 # <https://api.github.com/repositories?since=367>; rel="next", <https://api.github.com/repositories{?since}>; rel="first"';
@@ -666,18 +667,16 @@ sub delete_authorization ( $self ) {
 
 Get the information for all the labels of a repo.
 
-It returns an arrayref of hashrefs:
+Returns a L<Mojo::Collection> object with the hashrefs representing
+labels:
 
-	[
-		{
-		'color' => 'd4c5f9',
-		'url' => 'https://api.github.com/repos/briandfoy/test-file/labels/Perl%20Workaround',
-		'name' => 'Perl Workaround'
-		},
-		...
-	]
+	{
+	'color' => 'd4c5f9',
+	'url' => 'https://api.github.com/repos/briandfoy/test-file/labels/Perl%20Workaround',
+	'name' => 'Perl Workaround'
+	}
 
-This implements C<GET /repos/:owner/:repo/labels> from L<http://developer.github.com/v3/issues/labels/>.
+Implements C</repos/:owner/:repo/labels>.
 
 =cut
 
@@ -686,14 +685,12 @@ sub labels ( $self, $owner, $repo ) {
 	my $url = $self->query_url( "/repos/%s/%s/labels", $params );
 	$self->logger->trace( "Query URL is $url" );
 	my $tx = $self->ua->get( $url );
-	$tx->res->json;
+	Mojo::Collection->new( $tx->res->json->@* );
 	}
 
 =item * get_label( USER, REPO, LABEL )
 
-Get the information for a particular label.
-
-It returns a hashref:
+Get the information for a particular label. It returns a hashref:
 
 	{
 	'color' => '1d76db',
