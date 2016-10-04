@@ -1290,6 +1290,85 @@ sub delete_repo ( $owner, $repo ) {
 
 =back
 
+=head2 Users
+
+=over 4
+
+=item * get_logged_in_user()
+
+Returns a hash reference representing the authenticated user.
+
+=cut
+
+sub get_logged_in_user ( $self ) {
+	$self->logger->trace( 'Getting the authenticated user record' );
+	state $expected_status = 200;
+
+	my $url = $self->query_url( '/user' );
+
+	my $tx = $self->ua->get( $url );
+	my $code = $tx->res->code;
+
+	unless( $code == $expected_status ) {
+		my $body = $tx->res->body;
+		$self->logger->error( "get_logged_in_user() did not return $expected_status" );
+		$self->logger->debug( $tx->res->body );
+		return {};
+		}
+
+	$tx->res->json;
+	}
+
+=item * update_user( QUERY )
+
+
+=cut
+
+sub update_user ( $self, $query = {} ) {
+	state $expected_status = 200;
+
+	}
+
+=item * get_user( USERNAME )
+
+Returns a hash reference representing the requested user.
+
+=cut
+
+sub get_user ( $self, $user ) {
+	state $expected_status = 200;
+
+	my $url = $self->query_url( '/users/%s', [ $user ] );
+
+	my $tx = $self->ua->get( $url );
+	my $code = $tx->res->code;
+
+	unless( $code == $expected_status ) {
+		my $body = $tx->res->body;
+		$self->logger->error( "get_user() did not return $expected_status" );
+		$self->logger->debug( $tx->res->body );
+		return {};
+		}
+
+	$tx->res->json;
+	}
+
+=item * get_all_users( CALLBACK )
+
+This will eventually return millions of rows!
+
+=cut
+
+sub get_all_users ( $self, $callback = sub { $_[0] } ) {
+	state $expected_status = 200;
+
+	my $results = $self->paged_get(
+		"/users", [], $callback, {}
+		);
+	}
+
+=back
+
 =head1 SOURCE AVAILABILITY
 
 This module is in Github:
