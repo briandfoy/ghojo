@@ -4,6 +4,10 @@ use feature qw(signatures);
 no warnings qw(experimental::signatures);
 
 use lib qw(lib);
+use FindBin;
+use lib $FindBin::Bin;
+
+BEGIN{ require 'common_things.pl' }
 
 use Ghojo;
 
@@ -75,17 +79,15 @@ it under the Artistic License 2.0.
 =cut
 
 
-
-# BurnItToTheGround is my throw-away account for GitHub API testing
 my $hash = {
-	username => $ARGV[0] // 'BurnItToTheGround',
-	password => $ENV{PASSWORD} // prompt_for_password(),
+	username => username(),
+	password => password(),
 	};
 
 my $label_name = 'Hacktoberfest';
 
 my $ghojo = Ghojo->new( $hash );
-$ghojo->logger->level( $ENV{GHOJO_LOG_LEVEL} // 'OFF' );
+$ghojo->logger->level( log_level() );
 
 my $callback = sub ( $item ) {
 	unless( ref $item eq ref {} ) {
@@ -127,12 +129,3 @@ my $callback = sub ( $item ) {
 
 $ghojo->repos( $callback, {} );
 
-sub prompt_for_password {
-	state $rc = require Term::ReadKey;
-	Term::ReadKey::ReadMode('noecho');
-	print "Type in your secret password: ";
-	my $password = Term::ReadKey::ReadLine(0);
-	Term::ReadKey::ReadMode('restore');
-	chomp $password;
-	$password;
-	}

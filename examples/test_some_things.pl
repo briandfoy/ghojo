@@ -4,21 +4,26 @@ use feature qw(signatures);
 no warnings qw(experimental::signatures);
 
 use lib qw(lib);
+use FindBin;
+use lib $FindBin::Bin;
+
+BEGIN { require 'common_things.pl' }
 
 use Ghojo;
 
 use Data::Dumper;
 
 my $hash = {
-	username => 'briandfoy',
-	password => 'tritonX100',
+	username => username(),
+	password => password(),
 	};
 
 my $ghojo = Ghojo->new( {} );
 $ghojo->logger->level( 'TRACE' );
 
-my $file = 'github_repo_list.txt';
+my $file = '/Users/brian/Dropbox/Deskbox/github_repo_list.txt';
 
+# Figure out where we left off.
 my $since = 0;
 open my $fh, '<:utf8', $file or die "Could not open $file: $!";
 while( <$fh> ) {
@@ -44,6 +49,6 @@ my $callback = sub ( $hashref ) {
 	};
 
 $ghojo->set_paged_get_sleep_time(13);
-$ghojo->set_paged_get_results_limit( 10_000_000 );
+$ghojo->set_paged_get_results_limit( 30_000_000 );
 
 my $json = $ghojo->all_public_repos( $callback, { since => $since } );
