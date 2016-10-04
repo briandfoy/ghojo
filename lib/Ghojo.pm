@@ -844,11 +844,16 @@ Link: <https://api.github.com/resource?page=2>; rel="next",
 
 =cut
 
-sub get_label_for_issue ( $self, $owner, $repo, $name ) {
+sub get_labels_for_issue ( $self, $owner, $repo, $number, $callback = sub { $_[0] } ) {
 	state $expected_status = 200;
-	my $params             = [ $owner, $repo, $name ];
+	my $params             = [ $owner, $repo, $number ];
 
-
+	my $results = $self->paged_get(
+		"/repos/%s/%s/issues/%d/labels",
+		[ $owner, $repo, $number ],
+		$callback,
+		{}
+		);
 	}
 
 
