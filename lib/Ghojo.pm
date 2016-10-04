@@ -826,9 +826,10 @@ sub delete_label ( $self, $owner, $repo, $name ) {
 	}
 
 
-=item * get_labels_for_issue
+=item * get_labels_for_issue( OWNER, REPO, ISSUE_NUMBER, CALLBACK )
 
 GET /repos/:owner/:repo/issues/:number/labels
+
 Response
 Status: 200 OK
 Link: <https://api.github.com/resource?page=2>; rel="next",
@@ -999,17 +1000,15 @@ sub replace_all_labels_for_issue ( $self, $owner, $repo, $name ) {
 
 =over 4
 
-=item * issues( USER, REPO, HASHREF )
+=item * issues( USER, REPO, CALLBACK, HASHREF )
 
-=item * all_issues( USER, REPO, HASHREF )
+=item * all_issues( USER, REPO, CALLBACK, HASHREF )
 
-=item * open_issues( USER, REPO, HASHREF )
+=item * open_issues( USER, REPO, CALLBACK, HASHREF )
 
-=item * closed_issues( USER, REPO, HASHREF )
+=item * closed_issues( USER, REPO, CALLBACK, HASHREF )
 
 Get the information for all the labels of a repo.
-
-This implements C<GET /repos/:owner/:repo/issues> from L<https://developer.github.com/v3/issues/#list-issues-for-a-repository>.
 
 The keys of the HASHREF can be:
 
@@ -1060,25 +1059,19 @@ sub issues ( $self, $owner, $repo, $callback = sub { } , $query = { 'state' => '
 		);
 	}
 
-sub all_issues ( $self, $user, $repo, $hash = {} ) {
-	my $query_url = $self->query_url( "/repos/%s/%s/issues", $user, $repo );
-	$self->logger->trace( "Query URL is $query_url" );
-	my $tx = $self->ua->get( $query_url => json => { state => 'all' } );
-	$tx->res->json;
+sub all_issues ( $self, $user, $repo, $callback = sub { $_[0] }, $query = {} ) {
+	$query->{'state'} = 'all';
+	$self->issues( $user, $repo, $callback, $query );
 	}
 
-sub open_issues ( $self, $user, $repo, $hash = {} ) {
-	my $query_url = $self->query_url( "/repos/%s/%s/issues", $user, $repo );
-	$self->logger->trace( "Query URL is $query_url" );
-	my $tx = $self->ua->get( $query_url );
-	$tx->res->json;
+sub open_issues ( $self, $user, $repo, $callback = sub { $_[0] }, $query = {} ) {
+	$query->{'state'} = 'open';
+	$self->issues( $user, $repo, $callback, $query );
 	}
 
-sub closed_issues ( $self, $user, $repo, $hash = {} ) {
-	my $query_url = $self->query_url( "/repos/%s/%s/issues", $user, $repo );
-	$self->logger->trace( "Query URL is $query_url" => json => { state => 'closed' } );
-	my $tx = $self->ua->get( $query_url );
-	$tx->res->json;
+sub closed_issues ( $self, $user, $repo, $callback = sub { $_[0] }, $query = {} ) {
+	$query->{'state'} = 'closed';
+	$self->issues( $user, $repo, $callback, $query );
 	}
 
 =item * issue( USER, REPO, NUMBER )
