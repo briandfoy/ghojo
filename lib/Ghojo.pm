@@ -719,10 +719,18 @@ This implements C<GET /repos/:owner/:repo/labels/:name> from L<http://developer.
 =cut
 
 sub get_label ( $self, $user, $repo, $name ) {
+	state $expected_status = 200;
 	my $params = [ $user, $repo, $name ];
-	my $query_url = $self->query_url( "/repos/%s/%s/labels/%s", $params );
-	$self->logger->trace( "Query URL is $query_url" );
-	my $tx = $self->ua->get( $query_url );
+	my $url = $self->query_url( "/repos/%s/%s/labels/%s", $params );
+	$self->logger->trace( "Query URL is $url" );
+
+	my $tx = $self->ua->get( $url );
+	unless( $tx->code eq $expected_status ) {
+		$self->logger->error( sprintf "get_label returned status %s but expected %s", $tx->code, $expected_status );
+		$self->logger->debug( "get_label response for [ $user, $repo, $name ] was\n", $tx->res->body );
+		return;
+		}
+
 	$tx->res->json;
 	}
 
