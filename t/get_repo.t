@@ -7,6 +7,8 @@ my $user       = 'BurnItToTheGround';
 my $repo       = 'test_repo';
 my $bad_repo   = 'is_not_there';
 
+$ENV{GHOJO_LOG_LEVEL} //= 'OFF';
+
 subtest setup => sub {
 	use_ok $class;
 	can_ok $class, $method;

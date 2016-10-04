@@ -2,6 +2,8 @@
 
 use Test::More 0.95;
 
+$ENV{GHOJO_LOG_LEVEL} //= 'OFF';
+
 my @classes = qw(
 	Ghojo
 	);
