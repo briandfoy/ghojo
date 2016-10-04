@@ -113,9 +113,11 @@ sub new ( $class, $args = {} ) {
 	$self->setup_logging;
 
 	if( exists $args->{token} ) {
+		$self->logger->trace( 'Authorizing with token' );
 		$self->add_token( $args->{token} );
 		}
 	elsif( exists $args->{token_file } ) {
+		$self->logger->trace( 'Authorizing with saved token in named file' );
 		open my $fh, '<:utf8', $args->{token_file} or
 			carp "Could not read token file $args->{token_file}\n";
 		my $token = <$fh>;
@@ -124,6 +126,7 @@ sub new ( $class, $args = {} ) {
 		$self->add_token($token);
 		}
 	elsif( exists $args->{username} and exists $args->{password} ) {
+		$self->logger->trace( 'Authorizing with username and password' );
 		my @keys = qw(username password);
 		$self->@{@keys} = $args->@{@keys};
 
@@ -134,6 +137,7 @@ sub new ( $class, $args = {} ) {
 		delete $self->{password};
 		}
 	elsif( -e $self->token_file ) {
+		$self->logger->trace( 'Authorizing with saved token in default file' );
 		$self->logger->trace( 'Reading token from file' );
 		my $token = do { local( @ARGV, $/ ) = $self->token_file; <> };
 		$self->logger->trace( "Token from default token_file is <$token>" );
