@@ -643,19 +643,6 @@ sub delete_authorization ( $self ) {
 
 =back
 
-=head2 Users
-
-=over 4
-
-=cut
-
-sub user ( $self ) {
-	state $rc = require Ghojo::V3::Users;
-	$self->{user} = Ghojo::V3::Users->new( Ghojo::V3::Users->args );
-	}
-
-=back
-
 =head2 Labels
 
     # http://developer.github.com/v3/issues/labels/
