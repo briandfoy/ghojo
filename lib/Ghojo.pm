@@ -723,18 +723,19 @@ sub get_label ( $self, $user, $repo, $name ) {
 
 =item * create_label
 
-POST /repos/:owner/:repo/labels
+Create a new label.
 
-JSON parameters
+Query parameters
 
 	name	string	(Required) The name of the label.
-	color	string	(Required) A 6 character hex code, without the leading #, identifying the color.
+	color	string	(Required) A 6 character RGB color
+	                Default is FF0000
 
-Status: 201 Created
+Implements C<POST /repos/:owner/:repo/labels>.
 
 =cut
 
-sub create_label ( $self, $owner, $repo, $name, $color ) {
+sub create_label ( $self, $owner, $repo, $name, $color = 'FF0000' ) {
 	state $expected_status = 201;
 	my $params             = [ $owner, $repo ];
 
