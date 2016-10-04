@@ -4,6 +4,7 @@ requires 'Mojolicious';
 requires 'Mojo::URL';
 requires 'Mojo::UserAgent';
 requires 'Log::Log4perl';
+requires 'IO::Socket::SSL', '>= 1.94';
 
 on configure => sub {
     requires 'ExtUtils::MakeMaker', '6.64';
