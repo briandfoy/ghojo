@@ -212,9 +212,9 @@ To Do: Maybe add this value to the constructor
 
 =cut
 
-sub logging_conf ( $class ) {
-	my $conf = q(
-		log4perl.rootLogger          = ERROR, Screen
+sub logging_conf ( $class, $level = $ENV{GHOJO_LOG_LEVEL} ) {
+	my $conf = qq(
+		log4perl.rootLogger          = $level, Screen
 
 		log4perl.appender.Logfile          = Log::Log4perl::Appender::File
 		log4perl.appender.Logfile.filename = test.log
