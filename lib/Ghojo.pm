@@ -6,7 +6,6 @@ package Ghojo;
 
 our $VERSION = '1.001001';
 
-use Carp qw(carp);
 use Mojo::Collection;
 use Mojo::URL;
 
@@ -120,7 +119,7 @@ sub new ( $class, $args = {} ) {
 	elsif( exists $args->{token_file } ) {
 		$self->logger->trace( 'Authorizing with saved token in named file' );
 		open my $fh, '<:utf8', $args->{token_file} or
-			carp "Could not read token file $args->{token_file}\n";
+			$self->logger->error( "Could not read token file $args->{token_file}" );
 		my $token = <$fh>;
 		chomp $token;
 		$self->logger->debug( "Token from token_file is <$token>" );
