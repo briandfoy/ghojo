@@ -255,8 +255,8 @@ sub login ( $self, $args={} ) {
 		my $otp_header = $self->last_tx->res->headers->header('x-github-otp') // '';
 		$self->logger->warn( "authentication failed!" );
 		$self->warnif( $err->{code}, "$err->{code} response: $err->{message}" );
-		$self->warnif( $otp_header =~ /required/, "You seem to have 2fa setup for your account. Create an access token for use with Ghojo from https://github.com/settings/tokens" );
-		return;
+		$self->warnif( my $flag = ($otp_header =~ /required/), "You seem to have 2fa setup for your account. Create an access token for use with Ghojo from https://github.com/settings/tokens" );
+		return $self;
 	}
 	if ($args->{authorize}) {
 		$self->{last_tx} = $self->ua->get( $self->api_base_url );
