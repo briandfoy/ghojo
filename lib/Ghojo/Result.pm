@@ -30,8 +30,11 @@ Ghojo::Result - Meta-data about the API response
 =cut
 
 sub _new ( $class, $hash ) {
+	my $self = bless $hash, $class;
 
+	$self->{caller}->@{qw(package filename line sub)}  = (caller(2))[0..3];
 
+	$self;
 	}
 
 =over 4
