@@ -1,2 +1,4 @@
+get_repo.t
 load.t
+logging.t
 pod.t

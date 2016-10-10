@@ -110,7 +110,9 @@ returned by C<token_file>.
 
 sub new ( $class, $args = {} ) {
 	my $self = bless {}, $class;
-	$self->setup_logging;
+	$self->setup_logging(
+		$args->{logging_conf} ? $args->{logging_conf} : $class->logging_conf
+	);
 
 	if( exists $args->{token} ) {
 		$self->add_token( $args->{token} );
@@ -177,6 +179,9 @@ If L<Log4perl> is installed, Ghojo will use that. Otherwise, it installed
 the null logger in L<Ghojo::NullLogger>. That responds to all logging
 messages but does nothing.
 
+The constructor accepts the C<logging_conf> argument using the same rules as
+C<logging_conf()>.
+
 =over 4
 
 =cut
@@ -203,8 +208,6 @@ a non-reference scalar, L<Log::Log4perl> uses that string as the filename
 for the configuration. If it's a reference,  L<Log::Log4perl> uses that
 as a string that holds the configuration. You can override this method
 in a subclass (or redefine it).
-
-To Do: Maybe add this value to the constructor
 
 =cut
 
