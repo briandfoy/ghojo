@@ -561,6 +561,7 @@ sub ua ( $self ) {
 			};
 		$ua
 		);
+	$ua->transactor->name( sprintf "Ghojo %s", __PACKAGE__->VERSION );
 	$ua;
 	}
 
