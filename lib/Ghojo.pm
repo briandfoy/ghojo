@@ -1425,6 +1425,83 @@ sub update_user ( $self, $query = {} ) {
 
 	}
 
+=item * get_logged_in_user_emails()
+
+Returns a L<Mojo::Collection> object of emails for the logged in user:
+
+	{
+	"email": "octocat@github.com",
+	"verified": true,
+	"primary": true
+	}
+
+
+Implements C<GET /user/emails>
+
+=cut
+
+sub get_logged_in_user_emails ( $self, $callback = sub { $_[0] } ) {
+	state $expected_status = 200;
+
+	my $results = $self->paged_get(
+		"/user/emails", [], $callback, {}
+		);
+	}
+
+=item * add_logged_in_user_emails( LIST_OF_EMAILS )
+
+Implements C<POST /user/emails>
+
+=cut
+
+sub add_logged_in_user_emails ( $self, @emails ) {
+	state $expected_status = 201;
+
+	my $url = $self->query_url( '/user/emails' );
+
+	my $tx = $self->ua->post( $url => json => \@emails );
+	my $code = $tx->res->code;
+
+	unless( $code == $expected_status ) {
+		my $body = $tx->res->body;
+		$self->logger->error( "add_logged_in_user_emails() did not return $expected_status" );
+		$self->logger->debug( $tx->res->body );
+		return Mojo::Collection->new;
+		}
+
+	Mojo::Collection$tx->res->json;
+	}
+
+=item * delete_logged_in_user_emails( LIST_OF_EMAILS )
+
+Implements C<DELETE /user/emails>,
+
+=cut
+
+sub delete_logged_in_user_emails ( $self, @emails ) {
+	state $expected_status = 204;
+
+	my $url = $self->query_url( '/user/emails' );
+
+	my $tx = $self->ua->delete( $url => json => \@emails );
+	my $code = $tx->res->code;
+
+	unless( $code == $expected_status ) {
+		my $body = $tx->res->body;
+		$self->logger->error( "add_logged_in_user_emails() did not return $expected_status" );
+		$self->logger->debug( $tx->res->body );
+		return Mojo::Collection->new;
+		}
+
+	Mojo::Collection$tx->res->json;
+	}
+
+=back
+
+=head 3 Other users
+
+=over 4
+
 =item * get_user( USERNAME )
 
 Returns a hash reference representing the requested user.
