@@ -314,7 +314,7 @@ To Do: Maybe add this value to the constructor
 
 =cut
 
-sub logging_conf ( $class, $level = $ENV{GHOJO_LOG_LEVEL} ) {
+sub logging_conf ( $class, $level = $ENV{GHOJO_LOG_LEVEL} // 'OFF' ) {
 	my $conf = qq(
 		log4perl.rootLogger          = $level, Screen
 
