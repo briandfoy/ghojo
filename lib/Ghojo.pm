@@ -807,7 +807,7 @@ Get the information for a particular label. It returns a hashref:
 	'name' => 'Win32'
 	}
 
-This implements C<GET /repos/:owner/:repo/labels/:name> from L<http://developer.github.com/v3/issues/labels/>.
+Implements C</repos/:owner/:repo/labels/:name>.
 
 =cut
 
