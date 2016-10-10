@@ -1,3 +1,7 @@
+use v5.24;
+use feature qw(signatures);
+no warnings qw(experimental::signatures);
+
 =encoding utf8
 
 =head1 NAME
