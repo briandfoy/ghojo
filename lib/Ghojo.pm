@@ -561,9 +561,9 @@ sub ua ( $self ) {
 			my( $ua, $tx ) = @_;
 			# https://developer.github.com/v3/#current-version
 			$tx->req->headers->accept( 'application/vnd.github.v3+json' );
-			};
-		$ua
-		);
+			});
+		$ua;
+	};
 	$ua->transactor->name( sprintf "Ghojo %s", __PACKAGE__->VERSION );
 	$ua;
 	}
@@ -1510,7 +1510,7 @@ sub delete_logged_in_user_emails ( $self, @emails ) {
 
 =back
 
-=head 3 Other users
+=head3 Other users
 
 =over 4
 
