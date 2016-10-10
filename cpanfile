@@ -1,4 +1,5 @@
 requires 'Carp';
+requires 'IO::Socket::SSL';
 requires 'Mojolicious';
 requires 'Mojo::URL';
 requires 'Mojo::UserAgent';
@@ -13,6 +14,6 @@ on test => sub {
     requires 'Test::More',            '0.95';
     requires 'Test::Builder::Tester', '1.04';
     requires 'Test::Builder',         '1.001006';
+    requires 'Test::Pod',             '1.00';
     requires 'Test::utf8';
 };
-
