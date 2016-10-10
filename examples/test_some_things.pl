@@ -19,7 +19,7 @@ my $hash = {
 	};
 
 my $ghojo = Ghojo->new( {} );
-$ghojo->logger->level( 'TRACE' );
+$ghojo->logger->level( log_level() );
 
 my $file = '/Users/brian/Dropbox/Deskbox/github_repo_list.txt';
 
