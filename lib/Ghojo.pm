@@ -552,7 +552,15 @@ Returns the L<Mojo::UserAgent> object.
 
 sub ua ( $self ) {
 	state $rc = require Mojo::UserAgent;
-	state $ua = Mojo::UserAgent->new;
+	state $ua = do {
+		my $ua = Mojo::UserAgent->new;
+		$ua->on( start => sub {
+			my( $ua, $tx ) = @_;
+			# https://developer.github.com/v3/#current-version
+			$tx->req->headers->accept( 'application/vnd.github.v3+json' );
+			};
+		$ua
+		);
 	$ua;
 	}
 
