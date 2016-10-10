@@ -14,5 +14,6 @@ MANIFEST.SKIP
 README.pod
 t/get_repo.t
 t/load.t
+t/logging.t
 t/pod.t
 t/test_manifest
