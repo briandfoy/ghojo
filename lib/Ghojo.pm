@@ -68,6 +68,108 @@ backup clones at Bitbucket just in case.
 
 =cut
 
+=head2 The API
+
+	Activity
+		Events
+		Feeds
+		Notifications
+		Starring
+		Watching
+
+	Gists
+		Comments
+
+	Git Data
+		Blobs
+		Commits
+		References
+		Tags
+		Trees
+
+	Integrations
+		Integrations
+		Installations
+
+	Issues
+		Assignees
+		Comments
+		Events
+		Labels
+		Milestones
+		Timeline
+
+	Migration
+		Migrations
+		Source Imports
+
+	Miscellaneous
+		Emojis
+		Gitignore
+		Licenses
+		Markdown
+		Meta
+		Rate Limit
+
+	Organizations
+		Members
+		Teams
+		Webhooks
+
+	Pull Requests
+		Review Comments
+
+	Reactions
+		Commit Comment
+		Issue
+		Issue Comment
+		Pull Request Review Comment
+
+	Repositories
+		Branches
+		Collaborators
+		Comments
+		Commits
+		Contents
+		Deploy Keys
+		Deployments
+		Downloads
+		Forks
+		Invitations
+		Merging
+		Pages
+		Projects
+		Releases
+		Statistics
+		Statuses
+		Traffic
+		Webhooks
+
+	Search
+		Repositories
+		Code
+		Issues
+		Users
+		Legacy Search
+
+	Users
+		Emails
+		Followers
+		Git SSH Keys
+		GPG Keys
+		Administration (Enterprise)
+
+	Enterprise
+		Admin Stats
+		LDAP
+		License
+		Management Console
+		Pre-receive Environments
+		Pre-receive Hooks
+		Search Indexing
+		Organization Administration
+
+
 =head2  General object thingys
 
 =over 4
