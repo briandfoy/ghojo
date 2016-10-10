@@ -186,6 +186,11 @@ This returns undef (or the empty list) is the result was an error.
 
 sub values ( $self ) { $self->success ? $self->values->size : () }
 
+=back
+
+=head3 Extras
+
+=over 4
 
 =item * extras
 
@@ -194,6 +199,21 @@ that the complainer thinks is interesting. For instance, it might
 include a reference to a L<Mojo::Transaction> object.
 
 This returns an empty hashref if the result was a success.
+
+These are suggestions for extras:
+
+	http_status - the http status. GitHub uses 400, 403, or 422 for errors
+		400 - Bad request for the general errors
+		403 - Over rate limit (https://developer.github.com/v3/#rate-limiting)
+		422 - Invalid fields were set
+
+	error_name - the names listed in the GitHub API
+		missing
+		missing_field
+		invalid
+		already_exists
+
+	tx - the L<Mojo::Transaction> object before the error
 
 =cut
 
