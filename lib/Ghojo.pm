@@ -1153,8 +1153,40 @@ The keys of the HASHREF can be:
 
 =cut
 
-sub issues ( $self, $owner, $repo, $callback = sub { } , $query = { 'state' => 'open' } ) {
+sub _verify_issues_query ( $self, $query ) {
+	state $profile = {
+		'state'   => [ qw(open closed all) ],
+		direction => [ qw(asc desc) ],
+		'sort'    => [ qw(created updated comments) ],
+		since     => qr/\d\d\d\d-(?:[0][0-9]|1[0-2])-[0-3][0-9]T(?:1[012]|[0][0-9]):[0-5][0-9]:[0-5][0-9]Z/,
+		milestone => qr/./,
+		assignee  => sub ( $user ) { $self->_is_github_user( $user ) },
+		creator   => sub ( $user ) { $self->_is_github_user( $user ) },
+		mentioned => sub ( $user ) { $self->_is_github_user( $user ) },
+		title     => qr/./,
+		};
+
+	$self->_verify_profile( $query, $profile );
+
+	}
+
+# GET /repos/:owner/:repo/issues>
+# https://developer.github.com/v3/issues/#list-issues-for-a-repository
+
+sub issues ( $self, $owner, $repo, $callback = sub { $_[0] } , $query = { 'state' => 'open' } ) {
 	state $expected_status = 200;
+	state $profile         = {
+		'state'   => [ qw(open closed all) ],
+		direction => [ qw(asc desc) ],
+		'sort'    => [ qw(created updated comments) ],
+		since     => qr/\d\d\d\d-(?:[0][0-9]|1[0-2])-[0-3][0-9]T(?:1[012]|[0][0-9]):[0-5][0-9]:[0-5][0-9]Z/,
+		milestone => qr/./,
+		assignee  => sub ( $user ) { $self->_is_github_user( $user ) },
+		creator   => sub ( $user ) { $self->_is_github_user( $user ) },
+		mentioned => sub ( $user ) { $self->_is_github_user( $user ) },
+		title     => qr/./,
+		};
+
 
 	my $url = $self->query_url( "/repos/%s/%s/issues", [ $owner, $repo ], $query );
 	$self->logger->trace( "Query URL is $url" );
