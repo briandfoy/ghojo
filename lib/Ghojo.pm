@@ -1540,7 +1540,7 @@ sub delete_logged_in_user_emails ( $self, @emails ) {
 
 =back
 
-=head 3 Other users
+=head3 Other users
 
 =over 4
 
