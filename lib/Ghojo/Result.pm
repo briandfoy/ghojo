@@ -208,7 +208,9 @@ These are suggestions for extras:
 	http_status - the http status. GitHub uses 400, 403, or 422 for errors
 		400 - Bad request for the general errors
 		403 - Over rate limit (https://developer.github.com/v3/#rate-limiting)
+		409 - Git repo is empty (https://developer.github.com/v3/git/)
 		422 - Invalid fields were set
+		502 - Bad Gateway (https://developer.github.com/v3/repos/releases/)
 
 	error_name - the names listed in the GitHub API
 		missing
@@ -222,6 +224,36 @@ These are suggestions for extras:
 
 sub extras ( $self ) { $self->success ? {} : $self->{extras} }
 
+=head3  Caller info
+
+=over 4
+
+=item * caller
+
+A hashref respresenting some caller info.
+
+=item * package
+
+=item * file
+
+=item * line
+
+=item * subroutine
+
+These return the caller information for the point where the result
+object was created. This might not be useful for finding the point of
+the error since this might be far away from it.
+
+=cut
+sub caller     ( $self ) { $self->{caller} }
+
+sub package    ( $self ) { $self->{caller}{'package'}    }
+sub file       ( $self ) { $self->{caller}{'file'}       }
+sub line       ( $self ) { $self->{caller}{'line'}       }
+sub subroutine ( $self ) { $self->{caller}{'subroutine'} }
+
+
+=cut
 
 =back
 
