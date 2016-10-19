@@ -209,6 +209,7 @@ These are suggestions for extras:
 		400 - Bad request for the general errors
 		403 - Over rate limit (https://developer.github.com/v3/#rate-limiting)
 		409 - Git repo is empty (https://developer.github.com/v3/git/)
+		409 - Merge Conflict (https://developer.github.com/v3/repos/deployments/)
 		422 - Invalid fields were set
 		502 - Bad Gateway (https://developer.github.com/v3/repos/releases/)
 
