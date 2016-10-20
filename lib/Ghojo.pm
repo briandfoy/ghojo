@@ -33,7 +33,7 @@ Ghojo - a Mojo-based interface to the GitHub Developer API
 
 =head1 DESCRIPTION
 
-Here's a Mojo=based interface to the GitHub Developer's API. I'm
+Here's a Mojo-based interface to the GitHub Developer's API. I'm
 reinventing L<Net::GitHub> and L<Pithub> because I feel like it. I
 want to make something for the work I do in the way I like to do it,
 but I'll let you use it. This started as a way to download all the
