@@ -3,6 +3,15 @@ use feature qw(signatures);
 no warnings qw(experimental::signatures);
 
 package Ghojo;
+# The endpoints are divided into public and authenticated parts
+# We'll use this inheritance chain to divide them. The public
+# class can't see the stuff in the authorized class, but the
+# authorized class can see the public stuff. The object that
+# the user gets will be one of these.
+#
+# There could be higher levels for Access and Authorization
+@Ghojo::PublicUser::ISA        = qw(Ghojo);
+@Ghojo::AuthenticatedUser::ISA = qw(Ghojo::PublicUser);
 
 our $VERSION = '1.001001';
 
@@ -19,11 +28,13 @@ Ghojo - a Mojo-based interface to the GitHub Developer API
 
 	use Ghojo;
 
+	# authenticated
 	my $ghojo = Ghojo->new( {
 		username => ...,
 		password => ...,
 		});
 
+	# authenticated
 	my $ghojo = Ghojo->new( {
 		token => ...,
 		} );
@@ -211,39 +222,102 @@ returned by C<token_file>.
 =cut
 
 sub new ( $class, $args = {} ) {
-	my $self = bless {}, $class;
+	# We start off with the public interface. If an authorization works
+	# it will rebless the object for the authenticated class name.
+	my $self = bless {}, $class->public_user_class;
+
 	$self->setup_logging(
 		$args->{logging_conf} ? $args->{logging_conf} : $class->logging_conf
 	);
 
 	if( exists $args->{token} ) {
-		$self->logger->trace( 'Authorizing with token' );
+		$self->logger->trace( 'Authenticating with token' );
 		$self->add_token( $args->{token} );
 		}
 	elsif( exists $args->{token_file} ) {
-		$self->logger->trace( 'Authorizing with saved token in named file' );
+		$self->logger->trace( 'Authenticating with saved token in named file' );
 		$self->read_token( $args->{token_file} );
 		}
 	elsif( exists $args->{username} and exists $args->{password} ) {
-		$self->logger->trace( 'Authorizing with username and password' );
-		$args->{authorize} //= 1;
+		$self->logger->trace( 'Authenticating with username and password' );
+		$args->{authenticate} //= 1;
 		$self->login( $args );
 		}
 	elsif( -e $self->token_file ) {
-		$self->logger->trace( 'Authorizing with saved token in default file' );
+		$self->logger->trace( 'Authenticating with saved token in default file' );
 		$self->logger->trace( 'Reading token from file' );
 		my $token = do { local( @ARGV, $/ ) = $self->token_file; <> };
 		$self->logger->trace( "Token from default token_file is <$token>" );
 		$self->add_token( $token );
 		}
 
-	return $self;
+	$self;
 	}
+
+=item * class_name
+
+Returns the class name of the object.
+
+=cut
+
+sub class_name ( $self ) { ref $self }
+
+=item * handles_public_api
+
+Returns true if the object can access the public API. This should
+always be true, although there might be a time when we need it.
+
+=item * handles_authenticated_api
+
+Returns true if the object can access the authenticated portions of
+the API. This does not guarantee access or authorization for a
+particular endpoint though.
+
+=cut
+
+sub handles_public_api ( $self )     { $self->isa( $self->public_user_class ) }
+
+sub handles_authenticated_api ( $self ) { $self->isa( $self->authenticated_user_class ) }
+
+=item * test_authenticated
+
+Returns true if the object is set up to access the authenticated user
+parts of the the API. This will be false unless the object is not the
+authenticated user class, but might also be false if it is the right
+class but the authentication did not work or was revoked (deleted
+token, GitHub ban, etc).
+
+The C</rate_limit> endpoint returns different limits for the public
+and authenticated user interface so that's a good way to check for now.
+
+See L<https://developer.github.com/v3/rate_limit/>.
+
+=cut
+
+sub test_authenticated ( $self ) {
+	return 0 unless $self->handles_authenticated_api;
+
+	return 1 if $self->is_authenticated_api_rate_limit;
+
+	return 0;
+	}
+
 
 =item * login
 
-Validate user credentials. Optionally generate an access token if the
-credentials are valid.
+Login to GitHub to access the parts of the API that require an
+authenticated user. You do not need to do this if you want to use the
+public parts of the API.
+
+	username  - (required) The GitHub username
+	password  - (required) The GitHub password
+	authenticate - (optional) If true, create a personal access token.
+	            Default: true
+
+If the login was successful, it returns
+
+If you pass C<username> and C<password> to C<new>, Ghojo will
+do this step for you.
 
 =cut
 
@@ -260,17 +334,41 @@ sub login ( $self, $args={} ) {
 		$self->logger->warn( "authentication failed!" );
 		$self->warnif( $err->{code}, "$err->{code} response: $err->{message}" );
 		$self->warnif( my $flag = ($otp_header =~ /required/), "You seem to have 2fa setup for your account. Create an access token for use with Ghojo from https://github.com/settings/tokens" );
+
+		# returns a object that can access the public interface
 		return $self;
 		}
 
-	if ($args->{authorize}) {
+	if ($args->{authenticate}) {
 		$self->{last_tx} = $self->ua->get( $self->api_base_url );
 		$self->create_authorization;
 		delete $self->{password};
 		}
 
-	$self;
+	bless $self, $self->authenticated_user_class;
 	}
+
+=item * public_user_class
+
+Returns the class name that comprises the parts of the API that
+don't need an authenticate user. This is the public part of the interface
+and is the default object type the C<< Ghojo->new >> returns if you
+don't login.
+
+=cut
+
+sub public_user_class ( $self ) { 'Ghojo::PublicUser' }
+
+=item * authenticate_user_class
+
+Returns the class name that comprises the parts of the API that
+require an authenticate user. After a successful C<login>, the Ghojo
+object automatically reblesses itself to this class. It's a superset
+of the public interface.
+
+=cut
+
+sub authenticated_user_class ( $self ) { 'Ghojo::AuthenticatedUser' }
 
 =item * read_token
 
@@ -298,7 +396,6 @@ sub read_token ( $self, $token_file ) {
 Get a repo object which remembers its owner and repo name so you don't
 have to pass those parameters for all these general method. This is really
 a wrapper around L<Ghojo> that fills in some arguments for you.
-
 
 =cut
 
@@ -414,10 +511,83 @@ sub fatalif ( $self, $flag, $message ) { $flag ? $self->logger->logdie( $message
 
 =back
 
-=head2 Authorizing queries
+=head2 Rate Limiting
 
-The GitHub API lets you authorize through Basic (with username and password)
-or token authorization. These methods handle most of those details.
+=cut
+
+sub rate_limit_cache_time { 60 }
+
+{
+my $cache = [];
+sub set_rate_limit_cache ( $self, $data ) { $cache = [ $data, time ]}
+sub get_rate_limit_cache ( $self )        { $cache }
+sub clear_rate_limit_cache ( $self )      { $cache = [] }
+}
+
+sub get_rate_limit ( $self ) {
+	my $cache = $self->get_rate_limit_cache;
+
+	if( ! defined $cache->[0] or time - $cache->[0] > $self->rate_limit_cache_time ) {
+		my $url = $self->query_url( '/rate_limit' );
+		$self->{last_tx} = $self->ua->get( $url );
+		my $data = $self->last_tx->res->json;
+		delete $data->{rate}; # delete because it's deprecated and we should never use it
+		$cache = [ $data, time ];
+		}
+
+	$cache->[0];
+	}
+
+sub is_public_api_rate_limit ( $self ) { $self->core_rate_limit < 100 }
+
+sub is_authenticated_api_rate_limit ( $self ) { $self->core_rate_limit == 5000 }
+
+sub core_rate_limit ( $self ) {
+	$self->get_rate_limit->{resources}{core}{limit};
+	}
+
+sub core_rate_limit_left ( $self ) {
+	$self->get_rate_limit->{resources}{core}{remaining};
+	}
+
+sub core_rate_limit_percent_left ( $self ) {
+	sprintf "%d",
+		100
+			*
+		( $self->core_rate_limit - $self->core_rate_limit_left )
+			/ #/
+		$self->core_rate_limit;
+	}
+
+sub seconds_until_core_rate_limit_reset ( $self ) {
+	$self->get_rate_limit->{resources}{core}{reset} - time
+	}
+
+sub search_rate_limit ( $self ) {
+	$self->get_rate_limit->{resources}{search}{limit};
+	}
+
+sub search_rate_limit_left ( $self ) {
+	$self->get_rate_limit->{resources}{search}{remaining};
+	}
+
+sub search_rate_limit_percent_left ( $self ) {
+	sprintf "%d",
+		100
+			*
+		( $self->search_rate_limit - $self->search_rate_limit_left )
+			/ #/
+		$self->search_rate_limit;
+	}
+
+sub seconds_until_search_rate_limit_reset ( $self ) {
+	$self->get_rate_limit->{resources}{search}{reset} - time
+	}
+
+=head2 Authenticating queries
+
+The GitHub API lets you authenticate through Basic (with username and password)
+or token authentication. These methods handle most of those details.
 
 =over 4
 
@@ -436,7 +606,7 @@ later is more clear, though.
 
 =item * has_password
 
-Note that after a switch to token authorization, the password might be
+Note that after a switch to token authentication, the password might be
 deleted from the object.
 
 =item * token
@@ -538,6 +708,8 @@ sub add_token ( $self, $token ) {
 	$self->{token} = $token;
 	$self->remember_token;
 	$self->add_token_auth_to_all_requests;
+	bless $self, $self->authenticated_user_class;
+
 	return $token;
 	}
 
