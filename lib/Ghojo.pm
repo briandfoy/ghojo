@@ -220,25 +220,14 @@ sub new ( $class, $args = {} ) {
 		$self->logger->trace( 'Authorizing with token' );
 		$self->add_token( $args->{token} );
 		}
-	elsif( exists $args->{token_file } ) {
+	elsif( exists $args->{token_file} ) {
 		$self->logger->trace( 'Authorizing with saved token in named file' );
-		open my $fh, '<:utf8', $args->{token_file} or
-			$self->logger->error( "Could not read token file $args->{token_file}" );
-		my $token = <$fh>;
-		chomp $token;
-		$self->logger->debug( "Token from token_file is <$token>" );
-		$self->add_token($token);
+		$self->read_token( $args->{token_file} );
 		}
 	elsif( exists $args->{username} and exists $args->{password} ) {
 		$self->logger->trace( 'Authorizing with username and password' );
-		my @keys = qw(username password);
-		$self->@{@keys} = $args->@{@keys};
-
-		$self->{last_tx} = $self->ua->get( $self->api_base_url );
-
-		$self->create_authorization;
-
-		delete $self->{password};
+		$args->{authorize} //= 1;
+		$self->login( $args );
 		}
 	elsif( -e $self->token_file ) {
 		$self->logger->trace( 'Authorizing with saved token in default file' );
@@ -249,6 +238,59 @@ sub new ( $class, $args = {} ) {
 		}
 
 	return $self;
+	}
+
+=item * login
+
+Validate user credentials. Optionally generate an access token if the
+credentials are valid.
+
+=cut
+
+sub login ( $self, $args={} ) {
+	$self->{$_} = $args->{$_} for ( qw(username password) );
+	$self->{last_tx} = $self->ua->get(
+		$self->query_url( '/user' ) =>
+		{ 'Authorization' => $self->basic_auth_string }
+		);
+
+	unless( $self->last_tx->success ) {
+		my $err = $self->last_tx->error;
+		my $otp_header = $self->last_tx->res->headers->header('x-github-otp') // '';
+		$self->logger->warn( "authentication failed!" );
+		$self->warnif( $err->{code}, "$err->{code} response: $err->{message}" );
+		$self->warnif( my $flag = ($otp_header =~ /required/), "You seem to have 2fa setup for your account. Create an access token for use with Ghojo from https://github.com/settings/tokens" );
+		return $self;
+		}
+
+	if ($args->{authorize}) {
+		$self->{last_tx} = $self->ua->get( $self->api_base_url );
+		$self->create_authorization;
+		delete $self->{password};
+		}
+
+	$self;
+	}
+
+=item * read_token
+
+Read token from a file and save it in memory.
+
+=cut
+
+sub read_token ( $self, $token_file ) {
+	open my $fh, '<:utf8', $token_file or do {
+		$self->logger->error( "Could not read token file $token_file" );
+		return;
+		};
+	chomp( my $token = <$fh> );
+
+	# XXX: There should be something here to check that the string looks like a token
+	$self->logger->debug( "Token from token_file is <$token>" );
+
+	$self->add_token($token);
+
+	$self;
 	}
 
 =item * get_repo_object
