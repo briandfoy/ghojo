@@ -13,6 +13,26 @@ package Ghojo;
 @Ghojo::PublicUser::ISA        = qw(Ghojo);
 @Ghojo::AuthenticatedUser::ISA = qw(Ghojo::PublicUser);
 
+sub AUTOLOAD ( $self ) {
+	our $AUTOLOAD;
+
+	my( $class, $method ) = do {
+		if( $AUTOLOAD =~ m/(?<class>.*)::(?<method>.+)/ ) {
+			@+{ qw(class method) };
+			}
+		else {
+			() # How did we get here?
+			}
+		};
+
+	# What about the case where the method hasn't been loaded?
+
+	if( $self->authenticated_user_class->can( $method ) and not $self->handles_authenticated_api ) {
+		$self->logger->error( "Method [$method] is part of the authenticated user API, but this object only handles the public API" );
+		}
+	}
+
+
 our $VERSION = '1.001001';
 
 use Mojo::Collection;
@@ -484,6 +504,20 @@ logging object through the Ghojo object:
 
 sub logger ( $self ) { $self->{logger} }
 
+=item * enter_sub
+
+Emit a trace message that we entered the subroutine. The message will
+look the same everywhere we do this.
+
+=cut
+
+sub entered_sub ( $self ) {
+	return unless $self->logger->is_trace;
+	my @caller = caller(1);
+
+	$self->logger->trace( "Entered $caller[0]\:\:$caller[3] in $caller[1] line $caller[2]" );
+	}
+
 =item * traceif( FLAG, MESSAGE )
 
 =item * debugif( FLAG, MESSAGE )
@@ -517,12 +551,12 @@ sub fatalif ( $self, $flag, $message ) { $flag ? $self->logger->logdie( $message
 
 sub rate_limit_cache_time { 60 }
 
-{
-my $cache = [];
-sub set_rate_limit_cache ( $self, $data ) { $cache = [ $data, time ]}
-sub get_rate_limit_cache ( $self )        { $cache }
-sub clear_rate_limit_cache ( $self )      { $cache = [] }
-}
+BEGIN {
+	my $cache = [];
+	sub set_rate_limit_cache   ( $self, $data ) { $cache = [ $data, time ] }
+	sub get_rate_limit_cache   ( $self )        { $cache }
+	sub clear_rate_limit_cache ( $self )        { $cache = [] }
+	}
 
 sub get_rate_limit ( $self ) {
 	my $cache = $self->get_rate_limit_cache;
@@ -792,6 +826,10 @@ sub api_base_url ( $self ) { Mojo::URL->new( 'https://api.github.com/' ) }
 
 =item * query_url( PATH, PARAMS_ARRAY_REF, QUERY_HASH )
 
+I don't particularly like this, so I'm working on endpoint_to_url instead.
+I don't like the sprintf-like handling. I want to start with the literal
+endpoint, such as C</users/:username>.
+
 Creates the query URL. Some of the data are in the PATH, so that's a
 sprintf type string that fill in the placeholders with the values in
 C<PARAMS_ARRAY_REF>. The C<QUERY_HASH> forms the query string for the URL.
@@ -801,9 +839,54 @@ C<PARAMS_ARRAY_REF>. The C<QUERY_HASH> forms the query string for the URL.
 =cut
 
 sub query_url ( $self, $path, $params=[], $query={} ) {
+	# If we ever supported Enterprise, we have to consider a different
+	# way to get the base url. There could be several.
 	state $api = $self->api_base_url;
 	my $modified = sprintf $path, $params->@*;
 	my $url = $api->clone->path( $modified )->query( $query );
+	}
+
+=item * endpoint_to_url( END_POINT, REST_PARAMS_HASH, QUERY_PARAMS_HASH )
+
+Translates an endpoint, such as C</users/:username> to the URL to
+access. The REST_PARAMS_HASH has values for the names in the enpoint (such
+as C<:username> in this example). The QUERY_PARAMS_HASH hash translates into
+the GET query string.
+
+	$self->endpoint_to_url(
+		'/users/:username'
+		=> {  # parameters in the path
+			username => 'octocat',
+			}
+		=> { # query_string
+			foo => 'bar'
+			}
+		);
+
+TODO XXX: There are a couple of complicated query setups that require
+extra handling. This just squirts the hash to Mojo::URL's query.
+
+=cut
+
+sub endpoint_to_url ( $self, $endpoint, $rest_params = {}, $query_params = {} ) {
+	state $api = $self->api_base_url;
+
+	my $copy = $endpoint;
+
+	foreach my $key ( keys $rest_params->%* ) {
+		$copy =~ s/:$key/$rest_params->{$key}/;
+		}
+
+	if( my @missing_rest_params = $copy =~ m|/:(.*?)/|g ) {
+		foreach my $param ( @missing_rest_params ) {
+			$self->logger->warn( "Missing parameter [$param] for endpoint [$endpoint]" )
+			}
+		return;
+		}
+
+	my $url = $api->clone->path( $copy )->query( $query );
+
+	return $endpoint;
 	}
 
 sub post_json( $self, $query_url, $headers = {}, $hash = {} ) {
@@ -811,6 +894,127 @@ sub post_json( $self, $query_url, $headers = {}, $hash = {} ) {
 	}
 
 sub last_tx ( $self ) { $self->{last_tx} }
+
+
+# designed for responses that return everything at once (and not
+# paged)
+
+sub default_data_class ( $self ) { 'Ghojo::Data::Unspecified' }
+
+BEGIN {
+	# This stuff will help with rate limiting.
+	my $query_count;
+	sub increment_query_count ( $self ) { $query_count++   }
+	sub get_query_count       ( $self ) { $query_count     }
+	sub clear_query_count     ( $self ) { $query_count = 0 }
+	};
+
+sub single_resource ( $self, $verb, $url, %args = ()  ) {
+	state $allowed_verbs = { # with default expected http statuses
+		get      => 200,
+		post     => 201,
+		put      => 200,
+		patch    => 200,
+		'delete' => 204,
+		};
+
+	# Check that we have an allowed verb. You shouldn't call this
+	# directly in application code, but this check ensures that
+	# $verb is something we can handle.
+	$verb = lc $verb;
+	return unless exists $allowed_verbs->{$verb};
+
+	# turn every value for expected_http_status into an array. There
+	# are some operations that have more than one HTTP status that
+	# signifies normal operation.
+	$args->{expected_http_status} //= $allowed_verbs->{$verb};
+	$args->{expected_http_status} = [ $args->{expected_http_status} ]
+		unless ref $args->{expected_http_status} eq ref [];
+
+	# Before we make the query, check that we have the right scope.
+	# When you create a personal access token, you can specify which
+	# scopes you want. When we stored the token, we asked for the list
+	# of scopes.
+	#
+	# There are also scopes for teams and orgs
+	unless( $self->has_scopes( $args->{required_scopes} ) ) {
+		$self->logger->error( "This operation does not have the required scopes []" );
+		return;
+		}
+
+	# XXX: Check rate status before we try this?
+
+	my $tx = $self->ua->$verb( $url );
+	$self->increment_query_count;
+
+	my $data = $tx->res->json
+
+
+	# check that status is one of the expected statuses
+
+		# if it was the expected status, take the JSON in the
+		# message body and bless it into the right class
+
+
+	# if the status is not the expected status, look at the response
+	# to see why it failed.
+
+		# connection failure
+
+		# bad request
+
+		# rate limit
+	}
+
+sub get_single_resource ( $self, $url, %args = () ) {
+	$self->logger->enter_sub;
+	$self->single_resource( GET => $url => %args );
+	}
+
+sub post_single_resource ( $self, $url, %args = () ) {
+	$self->logger->enter_sub;
+	$self->single_resource( POST => $url => %args );
+	}
+
+sub put_single_resource ( $self, $url, %args = () ) {
+	$self->logger->enter_sub;
+	$self->single_resource( PUT => $url => %args );
+	}
+
+sub patch_single_resource ( $self, $url, %args = () ) {
+	$self->logger->enter_sub;
+	$self->single_resource( PATCH => $url => %args );
+	}
+
+sub delete_single_resource ( $self, $url, %args = () ) {
+	$self->logger->enter_sub;
+	$self->single_resource( DELETE => $url => %args );
+	}
+
+
+# this is blocking, but there's not another way around it
+# you don't know the next one until you see the response
+sub get_paged_resources ( $self, $url, %args = () ) {
+	$self->logger->enter_sub;
+
+	my @results;
+
+	$args->{limit}   //= 1000;
+	$args->{'sleep'} //=    3;
+
+	while( @results < $limit and my $url = shift @next ) {
+		my $tx = $self->ua->get( $url );
+		my $link_header = $self->parse_link_header( $tx );
+		push @next, $link_header->{'next'} if exists $link_header->{'next'};
+
+		my $array = $tx->res->json;
+		push @results, $array->@*;
+
+		sleep $args->{'sleep'} // 3;
+		}
+
+	Mojo::Collection->new( @results );
+	}
 
 sub set_paged_get_sleep_time ( $self, $seconds = 3 ) {
 	$self->{paged_get}{'sleep'} = 0 + $seconds;
@@ -1614,159 +1818,7 @@ sub delete_repo ( $owner, $repo ) {
 
 =head2 Users
 
-=over 4
-
-=item * get_logged_in_user()
-
-Returns a hash reference representing the authenticated user.
-
-=cut
-
-sub get_logged_in_user ( $self ) {
-	$self->logger->trace( 'Getting the authenticated user record' );
-	state $expected_status = 200;
-
-	my $url = $self->query_url( '/user' );
-
-	my $tx = $self->ua->get( $url );
-	my $code = $tx->res->code;
-
-	unless( $code == $expected_status ) {
-		my $body = $tx->res->body;
-		$self->logger->error( "get_logged_in_user() did not return $expected_status" );
-		$self->logger->debug( $tx->res->body );
-		return {};
-		}
-
-	$tx->res->json;
-	}
-
-=item * update_user( QUERY )
-
-
-=cut
-
-sub update_user ( $self, $query = {} ) {
-	state $expected_status = 200;
-
-	}
-
-=item * get_logged_in_user_emails()
-
-Returns a L<Mojo::Collection> object of emails for the logged in user:
-
-	{
-	"email": "octocat@github.com",
-	"verified": true,
-	"primary": true
-	}
-
-
-Implements C<GET /user/emails>
-
-=cut
-
-sub get_logged_in_user_emails ( $self, $callback = sub { $_[0] } ) {
-	state $expected_status = 200;
-
-	my $results = $self->paged_get(
-		"/user/emails", [], $callback, {}
-		);
-	}
-
-=item * add_logged_in_user_emails( LIST_OF_EMAILS )
-
-Implements C<POST /user/emails>
-
-=cut
-
-sub add_logged_in_user_emails ( $self, @emails ) {
-	state $expected_status = 201;
-
-	my $url = $self->query_url( '/user/emails' );
-
-	my $tx = $self->ua->post( $url => json => \@emails );
-	my $code = $tx->res->code;
-
-	unless( $code == $expected_status ) {
-		my $body = $tx->res->body;
-		$self->logger->error( "add_logged_in_user_emails() did not return $expected_status" );
-		$self->logger->debug( $tx->res->body );
-		return Mojo::Collection->new;
-		}
-
-	Mojo::Collection$tx->res->json;
-	}
-
-=item * delete_logged_in_user_emails( LIST_OF_EMAILS )
-
-Implements C<DELETE /user/emails>,
-
-=cut
-
-sub delete_logged_in_user_emails ( $self, @emails ) {
-	state $expected_status = 204;
-
-	my $url = $self->query_url( '/user/emails' );
-
-	my $tx = $self->ua->delete( $url => json => \@emails );
-	my $code = $tx->res->code;
-
-	unless( $code == $expected_status ) {
-		my $body = $tx->res->body;
-		$self->logger->error( "add_logged_in_user_emails() did not return $expected_status" );
-		$self->logger->debug( $tx->res->body );
-		return Mojo::Collection->new;
-		}
-
-	Mojo::Collection$tx->res->json;
-	}
-
-=back
-
-=head3 Other users
-
-=over 4
-
-=item * get_user( USERNAME )
-
-Returns a hash reference representing the requested user.
-
-=cut
-
-sub get_user ( $self, $user ) {
-	state $expected_status = 200;
-
-	my $url = $self->query_url( '/users/%s', [ $user ] );
-
-	my $tx = $self->ua->get( $url );
-	my $code = $tx->res->code;
-
-	unless( $code == $expected_status ) {
-		my $body = $tx->res->body;
-		$self->logger->error( "get_user() did not return $expected_status" );
-		$self->logger->debug( $tx->res->body );
-		return {};
-		}
-
-	$tx->res->json;
-	}
-
-=item * get_all_users( CALLBACK )
-
-This will eventually return millions of rows!
-
-=cut
-
-sub get_all_users ( $self, $callback = sub { $_[0] } ) {
-	state $expected_status = 200;
-
-	my $results = $self->paged_get(
-		"/users", [], $callback, {}
-		);
-	}
-
-=back
+The Users portion of the API is implemented in L<Ghojo::Endpoint::Users>.
 
 =head1 SOURCE AVAILABILITY
 
