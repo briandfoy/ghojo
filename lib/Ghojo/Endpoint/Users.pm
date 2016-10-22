@@ -500,7 +500,7 @@ sub Ghojo::AuthenticatedUser::delete_gpg_keys_by_id ( $self, @ids ) {
 	my @results;
 
 	foreach my $id ( @ids ) {
-		push @results, $self->post_single_resource(
+		push @results, $self->delete_single_resource(
 			$self->endpoint_to_url( '/user/gpg_keys/:id', { id => $id } ),
 			requires_scope       => [ qw(write:gpg_key) ],
 			);
