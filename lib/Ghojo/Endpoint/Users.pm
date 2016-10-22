@@ -117,7 +117,7 @@ sub Ghojo::AuthenticatedUser::update_user ( $self, $args = {} ) {
 		location
 		hireable
 		bio)
-		]
+		];
 
 	return unless ref $args eq ref {};
 
@@ -143,6 +143,8 @@ sub Ghojo::AuthenticatedUser::update_user ( $self, $args = {} ) {
 =back
 
 =head2 Configured email addresses for the authenticated user
+
+=over 4
 
 =item * get_authenticated_user_emails( CALLBACK )
 
@@ -209,9 +211,9 @@ sub Ghojo::AuthenticatedUser::delete_authenticated_user_emails ( $self, @emails 
 
 =item * get_followers_of_user( CALLBACK )
 
-This is an public API endpoint.
+This is a public API endpoint.
 
-L<>
+L<https://developer.github.com/v3/users/followers/#list-followers-of-a-user>
 
 =cut
 
@@ -226,7 +228,7 @@ sub Ghojo::PublicUser::get_followers_of_user ( $self, $user, $callback = sub { $
 
 This is an authenticated API endpoint.
 
-L<>
+L<https://developer.github.com/v3/users/followers/#list-followers-of-a-user>
 
 =cut
 
@@ -239,9 +241,9 @@ sub Ghojo::AuthenticatedUser::get_your_followers ( $self, $callback = sub { $_[0
 
 =item * get_users_followed_by_another( USER, CALLBACK )
 
-This is an public API endpoint.
+This is a public API endpoint.
 
-L<>
+L<https://developer.github.com/v3/users/followers/#list-users-followed-by-another-user>
 
 =cut
 
@@ -256,7 +258,7 @@ sub Ghojo::PublicUser::get_users_followed_by_another ( $self, $user, $callback =
 
 This is an authenticated API endpoint.
 
-L<>
+L<https://developer.github.com/v3/users/followers/#check-if-you-are-following-a-user>
 
 =cut
 
@@ -271,7 +273,7 @@ sub Ghojo::AuthenticatedUser::you_are_following ( $self ) {
 
 This is an authenticated API endpoint. This requires the C<user:follow> scope.
 
-L<>
+L<https://developer.github.com/v3/users/followers/#follow-a-user>
 
 =cut
 
@@ -293,7 +295,7 @@ sub Ghojo::AuthenticatedUser::follow_users ( $self, @users ) {
 
 This is an authenticated API endpoint. This requires the C<user:follow> scope.
 
-L<>
+L<https://developer.github.com/v3/users/followers/#unfollow-a-user>
 
 =cut
 
@@ -318,9 +320,9 @@ sub Ghojo::AuthenticatedUser::unfollow_users ( $self, @users ) {
 
 =item * get_ssh_keys_for_user
 
-This is an public API endpoint.
+This is a public API endpoint.
 
-L<>
+L<https://developer.github.com/v3/users/keys/#list-public-keys-for-a-user>
 
 =cut
 
@@ -335,7 +337,7 @@ sub Ghojo::PublicUser::get_ssh_keys_for_user ( $self, $user ) {
 
 This is an authenticated API endpoint. This requires the C<read:public_key> scope.
 
-L<>
+L<https://developer.github.com/v3/users/keys/#list-your-public-keys>
 
 =cut
 
@@ -351,7 +353,7 @@ sub Ghojo::AuthenticatedUser::get_ssh_keys ( $self ) {
 
 This is an authenticated API endpoint. This requires the C<read:public_key> scope.
 
-L<>
+L<https://developer.github.com/v3/users/keys/#get-a-single-public-key>
 
 =cut
 
@@ -377,17 +379,17 @@ sub Ghojo::AuthenticatedUser::get_ssh_keys_by_id ( $self, @ids ) {
 
 This is an authenticated API endpoint. This requires the C<write:public_key> scope.
 
-L<>
+L<https://developer.github.com/v3/users/keys/#create-a-public-key>
 
 =cut
 
-sub Ghojo::AuthenticatedUser::create_public_key ( $self ) {
+sub Ghojo::AuthenticatedUser::create_public_key ( $self, %args ) {
 	$self->post_single_resource(
 		$self->endpoint_to_url( '/user/keys' ),
 		expected_http_status => 201,
 		requires_scope       => [ qw(write:public_key) ],
 		bless_into           => 'Ghojo::Data::SSHKey',
-		data                 => $data,
+		data                 => \%args,
 		);
 	}
 
@@ -395,7 +397,7 @@ sub Ghojo::AuthenticatedUser::create_public_key ( $self ) {
 
 This is an authenticated API endpoint. This requires the C<admin:public_key> scope.
 
-L<>
+L<https://developer.github.com/v3/users/keys/#delete-a-public-key>
 
 =cut
 
@@ -423,7 +425,7 @@ sub Ghojo::AuthenticatedUser::delete_keys_by_id ( $self, @ids ) {
 
 This is an authenticated API endpoint. This requires the C<read:gpg_key> scope.
 
-L<>
+L<https://developer.github.com/v3/users/gpg_keys/#list-your-gpg-keys>
 
 =cut
 
@@ -439,7 +441,7 @@ sub Ghojo::AuthenticatedUser::get_gpg_keys ( $self ) {
 
 This is an authenticated API endpoint. This requires the C<read:gpg_key> scope.
 
-L<>
+L<https://developer.github.com/v3/users/gpg_keys/#get-a-single-gpg-key>
 
 =cut
 
@@ -461,7 +463,7 @@ sub Ghojo::AuthenticatedUser::get_gpg_key_by_id ( $self, @ids ) {
 
 This is an authenticated API endpoint. This requires the C<write:gpg_key> scope.
 
-L<>
+L<https://developer.github.com/v3/users/gpg_keys/#create-a-gpg-key>
 
 =cut
 
@@ -492,7 +494,7 @@ sub Ghojo::AuthenticatedUser::add_gpg_keys ( $self, @keys ) {
 
 This is an authenticated API endpoint. This requires the C<write:gpg_key> scope.
 
-L<>
+L<https://developer.github.com/v3/users/gpg_keys/#delete-a-gpg-key>
 
 =cut
 
