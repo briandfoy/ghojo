@@ -884,7 +884,7 @@ sub endpoint_to_url ( $self, $endpoint, $rest_params = {}, $query_params = {} ) 
 		return;
 		}
 
-	my $url = $api->clone->path( $copy )->query( $query );
+	my $url = $api->clone->path( $copy )->query( $query_params );
 
 	return $endpoint;
 	}
