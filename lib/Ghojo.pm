@@ -909,7 +909,7 @@ BEGIN {
 	sub clear_query_count     ( $self ) { $query_count = 0 }
 	};
 
-sub single_resource ( $self, $verb, $url, %args = ()  ) {
+sub single_resource ( $self, $verb, $url, %args  ) {
 	state $allowed_verbs = { # with default expected http statuses
 		get      => 200,
 		post     => 201,
@@ -927,9 +927,9 @@ sub single_resource ( $self, $verb, $url, %args = ()  ) {
 	# turn every value for expected_http_status into an array. There
 	# are some operations that have more than one HTTP status that
 	# signifies normal operation.
-	$args->{expected_http_status} //= $allowed_verbs->{$verb};
-	$args->{expected_http_status} = [ $args->{expected_http_status} ]
-		unless ref $args->{expected_http_status} eq ref [];
+	$args{expected_http_status} //= $allowed_verbs->{$verb};
+	$args{expected_http_status} = [ $args{expected_http_status} ]
+		unless ref $args{expected_http_status} eq ref [];
 
 	# Before we make the query, check that we have the right scope.
 	# When you create a personal access token, you can specify which
@@ -937,7 +937,7 @@ sub single_resource ( $self, $verb, $url, %args = ()  ) {
 	# of scopes.
 	#
 	# There are also scopes for teams and orgs
-	unless( $self->has_scopes( $args->{required_scopes} ) ) {
+	unless( $self->has_scopes( $args{required_scopes} ) ) {
 		$self->logger->error( "This operation does not have the required scopes []" );
 		return;
 		}
@@ -966,27 +966,27 @@ sub single_resource ( $self, $verb, $url, %args = ()  ) {
 		# rate limit
 	}
 
-sub get_single_resource ( $self, $url, %args = () ) {
+sub get_single_resource ( $self, $url, %args ) {
 	$self->logger->enter_sub;
 	$self->single_resource( GET => $url => %args );
 	}
 
-sub post_single_resource ( $self, $url, %args = () ) {
+sub post_single_resource ( $self, $url, %args ) {
 	$self->logger->enter_sub;
 	$self->single_resource( POST => $url => %args );
 	}
 
-sub put_single_resource ( $self, $url, %args = () ) {
+sub put_single_resource ( $self, $url, %args ) {
 	$self->logger->enter_sub;
 	$self->single_resource( PUT => $url => %args );
 	}
 
-sub patch_single_resource ( $self, $url, %args = () ) {
+sub patch_single_resource ( $self, $url, %args ) {
 	$self->logger->enter_sub;
 	$self->single_resource( PATCH => $url => %args );
 	}
 
-sub delete_single_resource ( $self, $url, %args = () ) {
+sub delete_single_resource ( $self, $url, %args ) {
 	$self->logger->enter_sub;
 	$self->single_resource( DELETE => $url => %args );
 	}
@@ -994,23 +994,24 @@ sub delete_single_resource ( $self, $url, %args = () ) {
 
 # this is blocking, but there's not another way around it
 # you don't know the next one until you see the response
-sub get_paged_resources ( $self, $url, %args = () ) {
+sub get_paged_resources ( $self, $url, %args ) {
 	$self->logger->enter_sub;
 
 	my @results;
 
-	$args->{limit}   //= 1000;
-	$args->{'sleep'} //=    3;
+	$args{limit}   //= 1000;
+	$args{'sleep'} //=    3;
 
-	while( @results < $limit and my $url = shift @next ) {
+	my @queue;
+	while( @results < $args{limit} and my $url = shift @queue ) {
 		my $tx = $self->ua->get( $url );
 		my $link_header = $self->parse_link_header( $tx );
-		push @next, $link_header->{'next'} if exists $link_header->{'next'};
+		push @queue, $link_header->{'next'} if exists $link_header->{'next'};
 
 		my $array = $tx->res->json;
 		push @results, $array->@*;
 
-		sleep $args->{'sleep'} // 3;
+		sleep $args{'sleep'};
 		}
 
 	Mojo::Collection->new( @results );
