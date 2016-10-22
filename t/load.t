@@ -7,7 +7,7 @@ $ENV{GHOJO_LOG_LEVEL} //= 'OFF';
 my @classes = qw(
 	Ghojo
 	Ghojo::Endpoint::Users
-	Ghojo::Endpoint::Authorization
+	Ghojo::Endpoint::Authorizations
 	);
 
 foreach my $class ( @classes ) {
