@@ -10,15 +10,13 @@ use lib $FindBin::Bin;
 BEGIN { require 'common_things.pl' }
 
 use Ghojo;
+$ENV{GHOJO_LOG_LEVEL} = log_level();
+say "log_level is " . log_level();
 
 my $hash = {
 	username => username(),
 	password => password(),
 	};
-
-say "log_level is " . log_level();
-
-$ENV{GHOJO_LOG_LEVEL} = log_level();
 my $ghojo = Ghojo->new( $hash );
 
 say Dumper( $ghojo->get_logged_in_user );
