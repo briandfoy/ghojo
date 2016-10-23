@@ -35,7 +35,7 @@ L<https://developer.github.com/v3/oauth/#scopes>
 
 =cut
 
-sub valid_scopes ( $self ) {
+sub Ghojo::valid_scopes ( $self ) {
 	state $scopes = [ qw(
 		user
 		user:email
@@ -69,9 +69,19 @@ Returns true if SCOPE is a valid authorization scope.
 
 =cut
 
-sub is_valid_scope ( $self, $scope ) {
+sub Ghojo::is_valid_scope ( $self, $scope ) {
 	state $scopes = { map { lc $_, undef } $self->valid_scopes };
 	exists $scopes->{ lc $scope };
+	}
+
+=item * has_scopes
+
+Always returns true, so far.
+
+=cut
+
+sub Ghojo::has_scopes ( $self, $scopes ) {
+	1;
 	}
 
 =back
