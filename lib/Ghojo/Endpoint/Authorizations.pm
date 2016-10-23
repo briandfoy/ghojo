@@ -20,24 +20,61 @@ Ghojo::Endpoint::Authorizations - The endpoints that deal with authorizations an
 
 =head1 DESCRIPTION
 
-	List your grants
-	Get a single grant
-	Delete a grant
-	List your authorizations
-	Get a single authorization
-	Create a new authorization
-	Get-or-create an authorization for a specific app
-	Get-or-create an authorization for a specific app and fingerprint
-	Update an existing authorization
-	Delete an authorization
-	Check an authorization
-	Reset an authorization
-	Revoke an authorization for an application
-	Revoke a grant for an application
 
 L<https://developer.github.com/v3/oauth_authorizations/>
 
 =head2  General object thingys
+
+=over 4
+
+=item * is_valid_scope( SCOPE )
+
+Returns a list of all valid scopes.
+
+L<https://developer.github.com/v3/oauth/#scopes>
+
+=cut
+
+sub valid_scopes ( $self ) {
+	state $scopes = [ qw(
+		user
+		user:email
+		user:follow
+		public_repo
+		repo
+		repo_deployment
+		repo:status
+		delete_repo
+		notifications
+		gist
+		read:repo_hook
+		write:repo_hook
+		admin:repo_hook
+		admin:org_hook
+		read:org
+		write:org
+		admin:org
+		read:public_key
+		write:public_key
+		admin:public_key
+		read:gpg_key
+		write:gpg_key
+		admin:gpg_key
+		) ];
+	}
+
+=item * is_valid_scope( SCOPE )
+
+Returns true if SCOPE is a valid authorization scope.
+
+=cut
+
+sub is_valid_scope ( $self, $scope ) {
+	state $scopes = { map { lc $_, undef } $self->valid_scopes };
+	exists $scopes->{ lc $scope };
+	}
+
+=back
 
 =head2 Authorizations
 
