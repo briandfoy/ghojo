@@ -1005,12 +1005,17 @@ sub get_paged_resources ( $self, $url, %args ) {
 	$args{'sleep'} //=    3;
 
 	my @queue;
-	while( @results < $args{limit} and my $url = shift @queue ) {
+	LOOP: while( @results < $args{limit} and my $url = shift @queue ) {
 		my $tx = $self->ua->get( $url );
 		my $link_header = $self->parse_link_header( $tx );
 		push @queue, $link_header->{'next'} if exists $link_header->{'next'};
 
 		my $array = $tx->res->json;
+		foreach my $item ( $array->@* ) {
+			my $result = $callback->( $tx, $item );
+			last LOOP unless defined $result;
+			push @results, $result;
+			}
 		push @results, $array->@*;
 
 		sleep $args{'sleep'};

@@ -27,11 +27,14 @@ say Dumper( $ghojo->get_user( 'briandfoy' ) );
 
 say '-' x 50;
 
-$ghojo->set_paged_get_results_limit( 23 );
+my $limit = 23;
 
 my $callback = sub ( $item ) {
+	state $count = 0;
+	return if $count++ > $limit;
+
 	my %hash = $item->%{qw(name login email)};
-	say Dumper( \%hash );
+	say "$count ---------------------------\n", Dumper( \%hash );
 	$hash;
 	};
 
