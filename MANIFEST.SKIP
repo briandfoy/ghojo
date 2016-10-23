@@ -74,3 +74,8 @@ Ghojo-.*
 test.pl
 
 \.github_token
+
+scratch
+t/.+\.log$
+t/log4perl.conf
+

@@ -3,8 +3,15 @@ cpanfile
 examples/common_things.pl
 examples/hacktoberfest.pl
 examples/test_some_things.pl
+examples/user_to_email.pl
 examples/users.pl
 lib/Ghojo.pm
+lib/Ghojo/Endpoint/Authorizations.pm
+lib/Ghojo/Endpoint/Issues.pm
+lib/Ghojo/Endpoint/Labels.pm
+lib/Ghojo/Endpoint/Repositories.pm
+lib/Ghojo/Endpoint/Users.pm
+lib/Ghojo/Endpoints.pm
 lib/Ghojo/NullLogger.pm
 lib/Ghojo/Repo.pm
 LICENSE
