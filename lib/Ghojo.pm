@@ -363,7 +363,7 @@ sub login ( $self, $args={} ) {
 
 	if ($args->{authenticate}) {
 		$self->{last_tx} = $self->ua->get( $self->api_base_url );
-		$self->create_authorization;
+		$self->create_authorization; #needs to call the method in the right class
 		delete $self->{password};
 		}
 
