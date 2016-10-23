@@ -888,7 +888,7 @@ sub endpoint_to_url ( $self, $endpoint, $rest_params = {}, $query_params = {} ) 
 
 	my $url = $api->clone->path( $copy )->query( $query_params );
 
-	return $endpoint;
+	return $url;
 	}
 
 sub post_json( $self, $query_url, $headers = {}, $hash = {} ) {
