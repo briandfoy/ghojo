@@ -8,4 +8,5 @@ use lib $FindBin::Bin;
 use Data::Dumper;
 use Ghojo;
 
-say Ghojo->new->get_user( shift )->{email} || "(No email found, or it is private)";
+say Ghojo->new->get_user( shift )->{email}
+	|| "(No email found, or it is private)";
