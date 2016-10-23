@@ -969,27 +969,27 @@ sub single_resource ( $self, $verb, $url, %args  ) {
 	}
 
 sub get_single_resource ( $self, $url, %args ) {
-	$self->logger->enter_sub;
+	$self->enter_sub;
 	$self->single_resource( GET => $url => %args );
 	}
 
 sub post_single_resource ( $self, $url, %args ) {
-	$self->logger->enter_sub;
+	$self->enter_sub;
 	$self->single_resource( POST => $url => %args );
 	}
 
 sub put_single_resource ( $self, $url, %args ) {
-	$self->logger->enter_sub;
+	$self->enter_sub;
 	$self->single_resource( PUT => $url => %args );
 	}
 
 sub patch_single_resource ( $self, $url, %args ) {
-	$self->logger->enter_sub;
+	$self->enter_sub;
 	$self->single_resource( PATCH => $url => %args );
 	}
 
 sub delete_single_resource ( $self, $url, %args ) {
-	$self->logger->enter_sub;
+	$self->enter_sub;
 	$self->single_resource( DELETE => $url => %args );
 	}
 
@@ -997,7 +997,7 @@ sub delete_single_resource ( $self, $url, %args ) {
 # this is blocking, but there's not another way around it
 # you don't know the next one until you see the response
 sub get_paged_resources ( $self, $url, %args ) {
-	$self->logger->enter_sub;
+	$self->enter_sub;
 
 	my @results;
 
