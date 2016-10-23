@@ -65,6 +65,7 @@ L<https://developer.github.com/v3/users/#get-a-single-user>
 =cut
 
 sub Ghojo::PublicUser::get_user ( $self, $user ) {
+	$self->enter_sub;
 	$self->get_single_resource(
 		$self->endpoint_to_url( '/users/:username', {username => $user} ),
 		bless_into           => 'Ghojo::Data::UserRecord',
