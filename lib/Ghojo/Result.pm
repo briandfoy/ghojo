@@ -2,6 +2,10 @@ use v5.24;
 use feature qw(signatures);
 no warnings qw(experimental::signatures);
 
+package Ghojo::Result;
+
+use Ghojo;
+
 =encoding utf8
 
 =head1 NAME
@@ -12,13 +16,27 @@ Ghojo::Result - Meta-data about the API response
 
 	use Ghojo::Result;
 
-	my $result = Ghojo::Result->new(
-		success      => ..., # true or false
+	my $success_result = Ghojo::Result->success(
 		values       => [ ],
 		description  => ..., # some string
-		error        => ..., # some string
-		error_code   => ..., # a number unique to this error
+		message      => ..., # some string
 		);
+
+	my $error_result = Ghojo::Result->error(
+		values       => [ ],
+		description  => ..., # some string
+		message      => ..., # some string
+		error_code   =>
+		extras       => { },
+		);
+
+	if( $result->is_success ) {
+		...
+		}
+
+	if( $result->is_error ) {
+		...
+		}
 
 =head1 DESCRIPTION
 
@@ -30,6 +48,7 @@ Ghojo::Result - Meta-data about the API response
 =cut
 
 sub _new ( $class, $hash ) {
+	$hash->{success} //= 1;
 	my $self = bless $hash, $class;
 
 	$self->{caller}->@{qw(package filename line sub)}  = (caller(2))[0..3];
@@ -39,7 +58,7 @@ sub _new ( $class, $hash ) {
 
 =over 4
 
-=item * new_error
+=item * error( HASH_REF )
 
 	description  - string
 	message      - string
@@ -48,7 +67,7 @@ sub _new ( $class, $hash ) {
 
 =cut
 
-sub make_error ( $class, $hash = {} ) {
+sub error ( $class, $hash = {} ) {
 	my $return_hash = {};
 
 	$return_hash->{'success'} = 0;
@@ -59,18 +78,18 @@ sub make_error ( $class, $hash = {} ) {
 		defined $hash->{error_code} ? int( $hash->{error_code} ) : 0;
 
 	$return_hash->{'extras'} = do {
-		if( ref $return_hash->{'extras'} eq ref {} ) {
-			 $return_hash->{'extras'};
+		if( ref $hash->{'extras'} eq ref {} ) {
+			 $hash->{'extras'};
 			}
 		else {
-			# XXX error
+			{}
 			}
 		};
 
 	$class->_new( $return_hash );
 	}
 
-=item * new_success
+=item * success
 
 	description
 	values
@@ -78,7 +97,7 @@ sub make_error ( $class, $hash = {} ) {
 
 =cut
 
-sub make_success ( $class, $hash = {} ) {
+sub success ( $class, $hash = {} ) {
 	my $return_hash = {};
 	$return_hash->{'success'} = 1;
 
@@ -90,7 +109,7 @@ sub make_success ( $class, $hash = {} ) {
 			Mojo::Collection->new( $hash->{'values'} )
 			}
 		else {
-			# XXX error
+			Ghojo->logger->debug( "No proper value for success object" );
 			}
 		};
 
@@ -103,7 +122,7 @@ sub make_success ( $class, $hash = {} ) {
 
 =over 4
 
-=item * success
+=item * is_success
 
 Returns true if the result didn't have a problem. If this returns
 true, the result of C<error> should be undef and the C<values> method
@@ -111,21 +130,21 @@ returns a L<Mojo::Collection> object that represents what you normally
 think of as the return values of a method.
 
 If it is false, something bad happened and you should be able to call
-C<error()> to get the message.
+C<message()> to get the message.
 
 =cut
 
-sub success ( $self ) { $self->{success} }
+sub is_success ( $self ) { $self->{success} }
 
-=item * error
+=item * is_error
 
 A string that describes the error. This is undef if the result is
 not an error, and is defined if it is an error (almost a mirror of
-C<success>). The return value of C<success> is undef if C<error> is true.
+C<is_success>). The return value of C<is_success> is undef if C<error> is true.
 
 =cut
 
-sub error ( $self ) { ! $self->success }
+sub is_error ( $self ) { ! $self->is_success }
 
 =item * error_code
 
@@ -137,7 +156,7 @@ This returns undef if the result was a success.
 
 =cut
 
-sub error_code ( $self ) { $self->success ? () : $self->{error_code} }
+sub error_code ( $self ) { $self->is_success ? () : $self->{error_code} }
 
 =item * description
 
@@ -176,7 +195,7 @@ object.
 
 =cut
 
-sub values ( $self ) { $self->success ? $self->{values} : Mojo::Collection->new() }
+sub values ( $self ) { $self->is_success ? $self->{values} : Mojo::Collection->new() }
 
 =item * value_count
 
@@ -187,7 +206,7 @@ This returns undef (or the empty list) is the result was an error.
 
 =cut
 
-sub values ( $self ) { $self->success ? $self->values->size : () }
+sub value_count ( $self ) { $self->is_success ? $self->values->size : () }
 
 =back
 
@@ -223,7 +242,9 @@ These are suggestions for extras:
 
 =cut
 
-sub extras ( $self ) { $self->success ? {} : $self->{extras} }
+sub extras ( $self ) { $self->is_success ? {} : $self->{extras} }
+
+=back
 
 =head3  Caller info
 
@@ -246,15 +267,13 @@ object was created. This might not be useful for finding the point of
 the error since this might be far away from it.
 
 =cut
+
 sub caller     ( $self ) { $self->{caller} }
 
 sub package    ( $self ) { $self->{caller}{'package'}    }
 sub file       ( $self ) { $self->{caller}{'file'}       }
 sub line       ( $self ) { $self->{caller}{'line'}       }
 sub subroutine ( $self ) { $self->{caller}{'subroutine'} }
-
-
-=cut
 
 =back
 
@@ -279,4 +298,5 @@ it under the same terms as Perl itself.
 
 __PACKAGE__
 
+__END__
 https://developer.github.com/v3/#client-errors
