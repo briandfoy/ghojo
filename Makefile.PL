@@ -65,6 +65,7 @@ my %WriteMakefile = (
 		},
 
 	'PREREQ_PM' => {
+		"Hash::AsObject"   => '0',
 		"IO::Socket::SSL"  => '0',
 		"Mojolicious"      => '4.50', # this is the only one with a version
 		"Mojo::Collection" => '0',
