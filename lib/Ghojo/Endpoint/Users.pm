@@ -50,8 +50,6 @@ sub Ghojo::AuthenticatedUser::get_authenticated_user ( $self ) {
 		$self->endpoint_to_url( '/user' ),
 		bless_into           => 'Ghojo::Data::UserRecord',
 		);
-
-	return
 	}
 
 =item * get_user( USERNAME )
@@ -65,7 +63,7 @@ L<https://developer.github.com/v3/users/#get-a-single-user>
 =cut
 
 sub Ghojo::PublicUser::get_user ( $self, $user ) {
-	$self->enter_sub;
+	$self->entered_sub;
 	$self->get_single_resource(
 		$self->endpoint_to_url( '/users/:username', {username => $user} ),
 		bless_into           => 'Ghojo::Data::UserRecord',
@@ -85,11 +83,11 @@ L<https://developer.github.com/v3/users/#get-all-users>
 =cut
 
 sub Ghojo::PublicUser::get_all_users ( $self, $callback = sub { $_[0] } ) {
-	state $expected_status = 200;
-
-	my $collection = $self->get_paged_resources(
+	$self->entered_sub;
+	my $result = $self->get_paged_resources(
 		$self->endpoint_to_url( '/users' ),
 		bless_into           => 'Ghojo::Data::UserRecord',
+		callback             => $callback,
 		);
 	}
 
@@ -120,7 +118,14 @@ sub Ghojo::AuthenticatedUser::update_user ( $self, $args = {} ) {
 		bio)
 		];
 
-	return unless ref $args eq ref {};
+	return Ghojo::Result->error( {
+		description => 'Update the authenticated user',
+		message     => 'Argument should have been a hash reference, but was not',
+		error_code  => 4,
+		extras      => {
+			args => [ @_ ]
+			},
+		} ) unless ref $args eq ref {};
 
 	my %data = map {
 		exists $args->{$_}

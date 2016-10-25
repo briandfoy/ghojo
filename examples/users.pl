@@ -14,28 +14,64 @@ $ENV{GHOJO_LOG_LEVEL} = log_level();
 say "log_level is " . log_level();
 
 my $hash = {
-	username => username(),
-	password => password(),
+	username     => username(),
+	password     => password(),
+	authenticate => 0,
 	};
 my $ghojo = Ghojo->new( $hash );
+say "Class returned is " . ref $ghojo;
 
-say Dumper( $ghojo->get_logged_in_user );
+say "Checking is_error";
+if( $ghojo->is_error ) {
+	say "Error logging in! " . $ghojo->message;
+	my @keys = keys $ghojo->extras->%*;
+	say "Exiting!";
+	exit;
+	}
+
+say "Object is $ghojo";
 
 say '-' x 50;
 
-say Dumper( $ghojo->get_user( 'briandfoy' ) );
+say "Authenticated user is " . $ghojo->username;
 
 say '-' x 50;
 
-my $limit = 23;
+my $result = $ghojo->get_user( 'briandfoy' );
+say "Result class returned is " . ref $result;
 
-my $callback = sub ( $item ) {
-	state $count = 0;
-	return if $count++ > $limit;
+if( $result->is_error ) {
+	say "Error is getting another user!";
+	say $result->message;
+	}
+else {
+	my $value = $result->values->first;
+	say "Value class returned is " . ref $value;
+	say "\tlogin: " . $value->login;
+	say "\tpublic repos: " . $value->public_repos;
+	say "\tpublic gists: " . $value->public_gists;
+	}
+
+say '-' x 50;
+
+my $callback = sub ( $tx, $item ) {
+	state $count =  1;
+	state $limit = 23;
+
+	return if $count > $limit;
 
 	my %hash = $item->%{qw(name login email)};
-	say "$count ---------------------------\n", Dumper( \%hash );
+	say "$count: $hash{login}";
+	$count++;
 	$hash;
 	};
 
-$ghojo->get_all_users( $callback )
+say "Calling get_all_users";
+my $result = $ghojo->get_all_users( $callback );
+if( $result->is_error ) {
+	say "Error is getting all users!";
+	say $result->message;
+	}
+else {
+	say "Size of list is " . $result->value_count;
+	}

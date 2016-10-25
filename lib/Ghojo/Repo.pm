@@ -3,8 +3,6 @@ use feature qw(signatures);
 no warnings qw(experimental::signatures);
 
 package Ghojo::Repo 0.001001 {
-	use Carp qw(carp);
-
 	sub new_from_response ( $class, $ghojo, $response ) {
 		my( $owner, $repo ) = split m{/}, $response->{full_name};
 		bless {
@@ -20,11 +18,13 @@ package Ghojo::Repo 0.001001 {
 	sub repo  ( $self ) { $self->{repo}  }
 	sub data  ( $self ) { $self->{data}  }
 
+	sub logger ( $self ) { $self->ghojo->logger }
+
 	sub AUTOLOAD ( $self, @args ) {
 		our $AUTOLOAD;
 		my $method = $AUTOLOAD =~ s/.*:://r;
 		unless( $self->ghojo->can( $method ) ) {
-			carp "Cannot locate method $method";
+			$self->logger->error( "Cannot locate method $method" );
 			}
 
 		$self->ghojo->logger->trace(

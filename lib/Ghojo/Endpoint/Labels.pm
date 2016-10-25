@@ -72,7 +72,7 @@ sub get_label ( $self, $user, $repo, $name ) {
 	unless( $tx->code eq $expected_status ) {
 		$self->logger->error( sprintf "get_label returned status %s but expected %s", $tx->code, $expected_status );
 		$self->logger->debug( "get_label response for [ $user, $repo, $name ] was\n", $tx->res->body );
-		return;
+		return Ghojo::Result->error;
 		}
 
 	$tx->res->json;

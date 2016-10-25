@@ -55,25 +55,12 @@ is the ultimate source for the network.
 
 =cut
 
-sub get_repo ( $self, $owner, $repo ) {
-	state $expected_status = 200;
-
-	my $url = $self->query_url( '/repos/%s/%s', [ $owner, $repo ] );
-	my $tx  = $self->ua->get( $url );
-
-	unless( $tx->res->code == $expected_status ) {
-		my $json = $tx->res->json;
-		if( $json->{message} eq 'Not Found' ) {
-			$self->logger->error( "get_repo: repo $owner/$repo was not found" );
-			}
-		else {
-			$self->logger->error( "get_repo: unspecified error looking for $owner/$repo. Code " . $tx->res->code );
-			$self->logger->debug( "get_repo: " . $tx->res->body );
-			}
-		return;
-		}
-
-	my $perl = $tx->res->json;
+sub Ghojo::PublicUser::get_repo ( $self, $owner, $repo ) {
+	$self->entered_sub;
+	$self->get_single_resource(
+		$self->endpoint_to_url( '/repos/:owner/:repo', {owner => $owner, repo => $repo} ),
+		bless_into           => 'Ghojo::Data::Repo',
+		);
 	}
 
 =item * repos_by_username( USERNAME )
@@ -86,9 +73,8 @@ direction	string	Can be one of asc or desc. Default: when using full_name: asc, 
 
 =cut
 
-sub repos_by_username( $self, $username ) {
-	$self->paged_get( '', [ $username ] );
-
+sub Ghojo::PublicUser::repos_by_username( $self, $username ) {
+	$self->unimplemented;
 	}
 
 =item * repos_by_organization
@@ -98,9 +84,8 @@ type	string	Can be one of all, public, private, forks, sources, member. Default:
 
 =cut
 
-sub repos_by_organization( $self, $organization ) {
-
-
+sub Ghojo::PublicUser::repos_by_organization( $self, $organization ) {
+	$self->unimplemented;
 	}
 
 =item * all_public_repos( CALLBACK, QUERY_HASH )
@@ -111,7 +96,7 @@ since	string	The integer ID of the last Repository that you've seen.
 
 =cut
 
-sub all_public_repos ( $self, $callback = sub {}, $query = {} ) {
+sub Ghojo::PublicUser::all_public_repos ( $self, $callback = sub {}, $query = {} ) {
 	my $perl = $self->paged_get( '/repositories', [], $callback, $query );
 	}
 
@@ -121,8 +106,8 @@ sub all_public_repos ( $self, $callback = sub {}, $query = {} ) {
 
 =cut
 
-sub edit_repo( $self, $owner, $repo, $hash = {} ) {
-
+sub Ghojo::AuthenticatedUser::edit_repo( $self, $owner, $repo, $hash = {} ) {
+	$self->unimplemented;
 	}
 
 =item * list_repo_contributors( OWNER, REPO )
@@ -133,9 +118,8 @@ anon	string	Set to 1 or true to include anonymous contributors in results.
 
 =cut
 
-sub get_repo_contributors ( $self, $owner, $repo ) {
-
-
+sub Ghojo::PublicUser::get_repo_contributors ( $self, $owner, $repo ) {
+	$self->unimplemented;
 	}
 
 =item * get_repo_languages
@@ -144,9 +128,8 @@ GET /repos/:owner/:repo/languages
 
 =cut
 
-sub get_repo_languages ( $self, $owner, $repo ) {
-
-
+sub Ghojo::PublicUser::get_repo_languages ( $self, $owner, $repo ) {
+	$self->unimplemented;
 	}
 
 =item * get_repo_teams
@@ -155,9 +138,8 @@ GET /repos/:owner/:repo/teams
 
 =cut
 
-sub get_repo_teams ( $self, $owner, $repo ) {
-
-
+sub Ghojo::PublicUser::get_repo_teams ( $self, $owner, $repo ) {
+	$self->unimplemented;
 	}
 
 =item * get_repo_tags
@@ -167,9 +149,8 @@ sub get_repo_teams ( $self, $owner, $repo ) {
 
 =cut
 
-sub get_repo_tags ( $self, $owner, $repo ) {
-
-
+sub Ghojo::PublicUser::get_repo_tags ( $self, $owner, $repo ) {
+	$self->unimplemented;
 	}
 
 =item * delete_repo
@@ -180,8 +161,8 @@ Deleting a repository requires admin access. If OAuth is used, the delete_repo s
 
 =cut
 
-sub delete_repo ( $owner, $repo ) {
-
+sub Ghojo::AuthenticatedUser::delete_repo ( $self, $owner, $repo ) {
+	$self->unimplemented;
 	}
 
 =back

@@ -14,6 +14,8 @@ package Ghojo;
 @Ghojo::AuthenticatedUser::ISA = qw(Ghojo::PublicUser);
 
 use Ghojo::Endpoints;
+use Ghojo::Result;
+use Ghojo::Data;
 
 sub AUTOLOAD ( $self ) {
 	our $AUTOLOAD;
@@ -31,9 +33,31 @@ sub AUTOLOAD ( $self ) {
 
 	if( $self->authenticated_user_class->can( $method ) and not $self->handles_authenticated_api ) {
 		$self->logger->error( "Method [$method] is part of the authenticated user API, but this object only handles the public API" );
+		$self->logger->debug( sub { scalar $self->stacktrace(3) } );
+		return Ghojo::Result->error;
 		}
 	}
 
+# ($package, $filename, $line, $subroutine,
+# $hasargs, $wantarray, $evaltext, $is_require) = caller($i);
+sub stacktrace ( $self, $level = 1 ) {
+	my @callers;
+	while( 1 ) {
+		my @caller = caller( $level++ );
+			# package subroutine filename line
+		push @callers, [ @caller[0,3, 1,2] ];
+		last unless $caller[0] =~ /^Ghojo/;
+		}
+
+	return @callers, if wantarray;
+
+	my $string = "Stacktrace\n";
+	foreach my $i ( 0 .. $#callers ) {
+		$string .= '-->' . ("\t" x $i) .
+			sprintf "$i: %s (%s %s)\n", $callers[$i]->@[-3..-1]
+		}
+	return $string;
+	}
 
 our $VERSION = '1.001001';
 
@@ -250,7 +274,7 @@ sub new ( $class, $args = {} ) {
 
 	$self->setup_logging(
 		$args->{logging_conf} ? $args->{logging_conf} : $class->logging_conf
-	);
+		);
 
 	if( exists $args->{token} ) {
 		$self->logger->trace( 'Authenticating with token' );
@@ -263,9 +287,10 @@ sub new ( $class, $args = {} ) {
 	elsif( exists $args->{username} and exists $args->{password} ) {
 		$self->logger->trace( 'Authenticating with username and password' );
 		$args->{authenticate} //= 1;
-		$self->login( $args );
+		my $result = $self->login( $args );
+		return $result if $result->is_error;
 		}
-	elsif( -e $self->token_file ) {
+	elsif( 0 && -e $self->token_file ) { # still not sure I like this.
 		$self->logger->trace( 'Authenticating with saved token in default file' );
 		$self->logger->trace( 'Reading token from file' );
 		my $token = do { local( @ARGV, $/ ) = $self->token_file; <> };
@@ -297,9 +322,11 @@ particular endpoint though.
 
 =cut
 
-sub handles_public_api ( $self )     { $self->isa( $self->public_user_class ) }
+sub Ghojo::handles_public_api ( $self )                           { 1 }
 
-sub handles_authenticated_api ( $self ) { $self->isa( $self->authenticated_user_class ) }
+sub Ghojo::PublicUser::handles_authenticated_api ( $self )        { 0 }
+
+sub Ghojo::AuthenticatedUser::handles_authenticated_api ( $self ) { 1 }
 
 =item * test_authenticated
 
@@ -343,26 +370,38 @@ do this step for you.
 
 =cut
 
-sub login ( $self, $args={} ) {
+sub login ( $self, $args = {} ) {
 	$self->{$_} = $args->{$_} for ( qw(username password) );
-	$self->{last_tx} = $self->ua->get(
-		$self->query_url( '/user' ) =>
-		{ 'Authorization' => $self->basic_auth_string }
+	my $tx = $self->ua->get(
+		$self->query_url( '/user' )
+			=> { 'Authorization' => $self->basic_auth_string }
 		);
 
-	unless( $self->last_tx->success ) {
-		my $err = $self->last_tx->error;
-		my $otp_header = $self->last_tx->res->headers->header('x-github-otp') // '';
-		$self->logger->warn( "authentication failed!" );
-		$self->warnif( $err->{code}, "$err->{code} response: $err->{message}" );
-		$self->warnif( my $flag = ($otp_header =~ /required/), "You seem to have 2fa setup for your account. Create an access token for use with Ghojo from https://github.com/settings/tokens" );
+	unless( $tx->success ) {
+		$self->logger->debug( $tx->res->to_string );
+		my $err = $tx->error;
 
-		# returns a object that can access the public interface
-		return $self;
+		my @methods = qw( requires_one_time_password requires_authentication is_bad_credentials too_many_login_attempts );
+		foreach my $method ( @methods ) {
+			my $error = $self->$method( $tx );
+			return $error if defined $error;
+			}
+
+		# fallback.
+		return Ghojo::Result->error( {
+			description => 'Login failure',
+			message     => 'Undetermined error with logging in',
+			error_code  => 8,
+			extras      => {
+				tx => $tx
+				},
+			}
+			);
 		}
 
+	# now we should be ready to proceed
 	if ($args->{authenticate}) {
-		$self->{last_tx} = $self->ua->get( $self->api_base_url );
+		$tx = $self->ua->get( $self->api_base_url );
 		$self->create_authorization; #needs to call the method in the right class
 		delete $self->{password};
 		}
@@ -370,6 +409,58 @@ sub login ( $self, $args={} ) {
 	bless $self, $self->authenticated_user_class;
 	}
 
+sub requires_one_time_password ( $self, $tx ) {
+	# XXX What is the HTTP status code here?
+	my $otp_header = $tx->res->headers->header('x-github-otp') // '';
+	return unless $otp_header =~ /required/;
+	return Ghojo::Result->error( {
+		description => 'Login failure',
+		message     => 'This account requires two-factor authentication',
+		error_code  => 5,
+		extras      => {
+			tx => $tx
+			},
+		} );
+	}
+
+sub requires_authentication ( $self, $tx ) {
+	return unless 401 == $tx->res->code;
+	return unless $tx->res->json->{message} eq 'Requires authentication';
+	return Ghojo::Result->error( {
+		description => 'Login failure',
+		message     => "This resource requires authentication",
+		error_code  => 6,
+		extras      => {
+			tx => $tx
+			},
+		} );
+	}
+
+sub is_bad_credentials ( $self, $tx ) {
+	return unless 401 == $tx->res->code;
+	return unless $tx->res->json->{message} eq 'Bad credentials';
+	return Ghojo::Result->error( {
+		description => 'Login failure',
+		message     => "Bad username or password",
+		error_code  => 6,
+		extras      => {
+			tx => $tx
+			},
+		} );
+	}
+
+sub too_many_login_attempts( $self, $tx ) {
+	return unless 403 == $tx->res->code;
+	return unless $tx->res->json->{message} =~ m/\AMaximum number/;
+	return Ghojo::Result->error( {
+		description => 'Login failure',
+		message     => "Too many failed login attempts",
+		error_code  => 7,
+		extras      => {
+			tx => $tx
+			},
+		} );
+	}
 =item * public_user_class
 
 Returns the class name that comprises the parts of the API that
@@ -401,7 +492,14 @@ Read token from a file and save it in memory.
 sub read_token ( $self, $token_file ) {
 	open my $fh, '<:utf8', $token_file or do {
 		$self->logger->error( "Could not read token file $token_file" );
-		return;
+		return Ghojo::Result->error(
+			description  =>  "Reading token from file",
+			message      =>  "Could not read token file $token_file",
+			error_code   =>  2,
+			extras       =>  {
+				args => [@_],
+				}
+			);
 		};
 	chomp( my $token = <$fh> );
 
@@ -423,19 +521,26 @@ a wrapper around L<Ghojo> that fills in some arguments for you.
 
 sub get_repo_object ( $self, $owner, $repo ) {
 	state $rc = require Ghojo::Repo;
-	my $perl = $self->get_repo( $owner, $repo );
-	unless( $perl ) {
+
+	my $result = $self->get_repo( $owner, $repo );
+	say "result is $result";
+
+	if( $result->is_error ) {
 		$self->logger->error( "Could not find the $owner/$repo repo" );
-		return;
+		return Ghojo::Result->error( {
+			description => 'Currying repo object',
+			message     => "Could not find the $owner/$repo repo",
+			error_code  => 3,
+			extras      => {
+				args => [ @_ ]
+				},
+			propogated => [ $result ],
+			} );
 		}
 
-	my $obj = Ghojo::Repo->new_from_response( $self, $perl );
-	unless( $obj ) {
-		$self->logger->error( "Could not make object for $owner/$repo!" );
-		return;
-		}
+	my $response = $result->values->first;
 
-	$obj;
+	my $obj = Ghojo::Repo->new_from_response( $self, $response );
 	}
 
 =back
@@ -506,7 +611,7 @@ logging object through the Ghojo object:
 
 sub logger ( $self ) { $self->{logger} }
 
-=item * enter_sub
+=item * entered_sub
 
 Emit a trace message that we entered the subroutine. The message will
 look the same everywhere we do this.
@@ -517,7 +622,7 @@ sub entered_sub ( $self ) {
 	return unless $self->logger->is_trace;
 	my @caller = caller(1);
 
-	$self->logger->trace( "Entered $caller[0]\:\:$caller[3] in $caller[1] line $caller[2]" );
+	$self->logger->trace( "Entered $caller[3] from $caller[1] line $caller[2]" );
 	}
 
 =item * traceif( FLAG, MESSAGE )
@@ -629,13 +734,13 @@ or token authentication. These methods handle most of those details.
 
 =cut
 
-=item * logged_in_user
+=item * authenticated_user
 
 =item * username
 
 =item * has_username
 
-The C<username> and C<logged_in_user> are the same thing. I think the
+The C<username> and C<authenticated_user> are the same thing. I think the
 later is more clear, though.
 
 =item * password
@@ -654,7 +759,7 @@ log these! The program needs to keep the value around!
 
 =cut
 
-sub logged_in_user ( $self ) { $self->username }
+sub authenticated_user ( $self ) { $self->username }
 sub username ( $self )       { $self->{username} }
 sub has_username ( $self )   { !! defined $self->{username} }
 
@@ -688,16 +793,28 @@ sub has_basic_auth ( $self ) {
 	$self->has_username && $self->has_password
 	}
 
+=item * add_basic_auth_to_all_requests
+
+=cut
+
+sub add_basic_auth_to_all_requests ( $self ) {
+	$self->ua->on( start => sub {
+		my( $ua, $tx ) = @_;
+		$tx->req->headers->authorization( $self->basic_auth_string );
+		} );
+	}
+
 =item * token_auth_string
 
 Returns the value for the C<Authorization> request header, using
 Basic authorization. This requires username and password values.
+If basic authentication is not setup, this return nothing.
 
 =cut
 
 sub basic_auth_string ( $self ) {
 	my $rc = require MIME::Base64;
-	return unless $self->has_basic_auth;
+	return Ghojo::Result->error unless $self->has_basic_auth;
 	'Basic ' . MIME::Base64::encode_base64(
 		join( ':', $self->username, $self->password ),
 		''
@@ -706,14 +823,15 @@ sub basic_auth_string ( $self ) {
 
 =item * token_auth_string
 
-Returns the value for the C<Authorization> request header, using
-token authorization.
+Returns the value for the C<Authorization> request header, using token
+authorization. If token authentication is not setup, this return
+nothing.
 
 =cut
 
 sub token_auth_string ( $self ) {
 	$self->warnif( ! $self->has_token, "Missing token for token authorization!" );
-	return unless $self->has_token;
+	return Ghojo::Result->error unless $self->has_token;
 	'token ' . $self->token;
 	}
 
@@ -730,15 +848,15 @@ sub token_file ( $self ) { $ENV{GITHUB_DEV_TOKEN} // '.github_token' }
 =item * add_token( TOKEN )
 
 Adds the token to the object. After this, the object will try to use
-the token authorization in all queries.
+token authorization in all queries.
 
 =cut
 
 sub add_token ( $self, $token ) {
 	chomp $token;
 	unless( $token ) {
-		$self->logger->error( "There's not token!" );
-		return;
+		$self->logger->error( "There's no token!" );
+		return Ghojo::Result->error;
 		}
 
 	$self->{token} = $token;
@@ -759,7 +877,7 @@ header. You don't need to do this yourself.
 sub add_token_auth_to_all_requests ( $self ) {
 	unless( $self->has_token ) {
 		$self->logger->logdie( "There is no auth token, so I can't add it to every request!" );
-		return 0;
+		return Ghojo::Result->error;
 		}
 
 	$self->ua->on( start => sub {
@@ -778,7 +896,7 @@ this yourself.
 sub remember_token ( $self ) {
 	unless( $self->token ) {
 		$self->logger->warn( "There is no token to remember!" );
-		return;
+		return Ghojo::Result->error;
 		}
 
 	if( open my $fh, '>:utf8', $self->token_file ) {
@@ -883,7 +1001,7 @@ sub endpoint_to_url ( $self, $endpoint, $rest_params = {}, $query_params = {} ) 
 		foreach my $param ( @missing_rest_params ) {
 			$self->logger->warn( "Missing parameter [$param] for endpoint [$endpoint]" )
 			}
-		return;
+		return Ghojo::Result->error;
 		}
 
 	my $url = $api->clone->path( $copy )->query( $query_params );
@@ -924,7 +1042,14 @@ sub single_resource ( $self, $verb, $url, %args  ) {
 	# directly in application code, but this check ensures that
 	# $verb is something we can handle.
 	$verb = lc $verb;
-	return unless exists $allowed_verbs->{$verb};
+	return Ghojo::Result->error( {
+		description => 'Fetching a single resource',
+		message     => "Unknown HTTP verb $verb",
+		error_code  => 4,
+		extras      => {
+			args => [ @_ ],
+			},
+		} ) unless exists $allowed_verbs->{$verb};
 
 	# turn every value for expected_http_status into an array. There
 	# are some operations that have more than one HTTP status that
@@ -941,21 +1066,62 @@ sub single_resource ( $self, $verb, $url, %args  ) {
 	# There are also scopes for teams and orgs
 	unless( $self->has_scopes( $args{required_scopes} ) ) {
 		$self->logger->error( "This operation does not have the required scopes []" );
-		return;
+		return Ghojo::Result->error;
 		}
 
 	# XXX: Check rate status before we try this?
+	my @args = ( $url );
+	my %headers;
 
-	my $tx = $self->ua->$verb( $url );
+	# XXX: has to handle Accepts too
+	$headers{'Authorization'} = $self->auth_string if $self->auth_string;
+
+	# XXX: also look in %args for 'json' and 'form'
+	my $tx = $self->ua->$verb( $url => \%headers );
 	$self->increment_query_count;
 
-	my $data = $tx->res->json
-
-
 	# check that status is one of the expected statuses
+	my $status = $tx->res->code;
+	$self->logger->debug( "HTTP status was [$status]" );
 
-		# if it was the expected status, take the JSON in the
-		# message body and bless it into the right class
+	# if it was the expected status, take the JSON in the
+	# message body and bless it into the right class
+	if( grep { $_ == $status } $args{expected_http_status}->@* ) {
+		my $data = $tx->res->json;
+		if( exists $args{bless_into} ) {
+			$self->logger->debug( sprintf "Response has %s reference", ref $data );
+			$self->logger->debug( "Blessing into $args{bless_into}" );
+			bless $data, $args{bless_into};
+			}
+		return Ghojo::Result->success( {
+			values => [ $data ],
+			} )
+		}
+
+	if( $status == 404 and $verb eq 'get' ) {
+		return Ghojo::Result->error( {
+			description  => 'Fetching a single resource',
+			message      => 'Got a 404 response. Object not found!',
+			error_code   => 9,
+			extras => {
+				url => $url,
+				tx  => $tx,
+				},
+			} )
+		}
+
+	$self->logger->debug( sub {
+		"Got HTTP status $status while expecting one of "
+		. join ', ', $args{expected_http_status}->@*
+		} );
+
+	# XXX: if it's forbidden, what should we do about what we think
+	# we good credentials? Check that the token is still valid?
+	# try to re-login?
+	if( $status == 401 ) {
+		$self->logger->debug( "The request was forbidden!" );
+		return Ghojo::Result->error;
+		}
 
 
 	# if the status is not the expected status, look at the response
@@ -969,27 +1135,27 @@ sub single_resource ( $self, $verb, $url, %args  ) {
 	}
 
 sub get_single_resource ( $self, $url, %args ) {
-	$self->enter_sub;
+	$self->entered_sub;
 	$self->single_resource( GET => $url => %args );
 	}
 
 sub post_single_resource ( $self, $url, %args ) {
-	$self->enter_sub;
+	$self->entered_sub;
 	$self->single_resource( POST => $url => %args );
 	}
 
 sub put_single_resource ( $self, $url, %args ) {
-	$self->enter_sub;
+	$self->entered_sub;
 	$self->single_resource( PUT => $url => %args );
 	}
 
 sub patch_single_resource ( $self, $url, %args ) {
-	$self->enter_sub;
+	$self->entered_sub;
 	$self->single_resource( PATCH => $url => %args );
 	}
 
 sub delete_single_resource ( $self, $url, %args ) {
-	$self->enter_sub;
+	$self->entered_sub;
 	$self->single_resource( DELETE => $url => %args );
 	}
 
@@ -997,14 +1163,20 @@ sub delete_single_resource ( $self, $url, %args ) {
 # this is blocking, but there's not another way around it
 # you don't know the next one until you see the response
 sub get_paged_resources ( $self, $url, %args ) {
-	$self->enter_sub;
+	$self->entered_sub;
 
 	my @results;
+
+	$args{callback} //= sub { 1 };
+	unless( ref $args{callback} eq ref sub {} ) {
+		$self->logger->error( "Callback argument is not a subroutine reference!" );
+		return Ghojo::Result->error;
+		}
 
 	$args{limit}   //= 1000;
 	$args{'sleep'} //=    3;
 
-	my @queue;
+	my @queue = ( $url );
 	LOOP: while( @results < $args{limit} and my $url = shift @queue ) {
 		my $tx = $self->ua->get( $url );
 		my $link_header = $self->parse_link_header( $tx );
@@ -1012,7 +1184,7 @@ sub get_paged_resources ( $self, $url, %args ) {
 
 		my $array = $tx->res->json;
 		foreach my $item ( $array->@* ) {
-			my $result = $callback->( $tx, $item );
+			my $result = $args{callback}->( $tx, $item );
 			last LOOP unless defined $result;
 			push @results, $result;
 			}
@@ -1021,7 +1193,9 @@ sub get_paged_resources ( $self, $url, %args ) {
 		sleep $args{'sleep'};
 		}
 
-	Mojo::Collection->new( @results );
+	Ghojo::Result->success({
+		values => \@results,
+		});
 	}
 
 sub set_paged_get_sleep_time ( $self, $seconds = 3 ) {

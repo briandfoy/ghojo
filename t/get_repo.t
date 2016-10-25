@@ -35,9 +35,10 @@ subtest good_repo => sub {
 subtest bad_repo => sub {
 	my $ghojo = $class->new;
 	isa_ok $ghojo, $class;
-	$ghojo->logger->level( 'OFF' );
-	my $rc = $ghojo->$method( $user, $bad_repo );
-	ok( ! defined $rc, "bad repo returns undef" );
+	my $result = $ghojo->$method( $user, $bad_repo );
+	diag( "Result is " . ref $result );
+	isa_ok( $result, 'Ghojo::Result', "bad repo returns Result object" );
+	ok( $result->is_error, '404 response is an error' );
 	};
 
 done_testing();
