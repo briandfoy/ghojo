@@ -1009,6 +1009,88 @@ sub endpoint_to_url ( $self, $endpoint, $rest_params = {}, $query_params = {} ) 
 	return $url;
 	}
 
+sub validate_profile ( $self, $args, $profile ) {
+	my @caller = caller(1);
+	my $description = "Validating parameters for $caller[3]";
+
+	unless( ref $profile eq ref {} and exists $profile->{params} ) {
+		return Ghojo::Result->error({
+			description  => $description,
+			message      => 'Error specifying profile',
+			error_code   => 11,
+			extras       => {
+				args       => $args,
+				profile    => $profile,
+				stacktrace => $self->stacktrace(1)
+				},
+			});
+		}
+
+	my @extra_keys   = grep { ! exists $profile->{params}{$_} } keys $args->%*;
+
+	$profile->{required} //= [];
+	my @missing_keys = grep { ! exists $args->{$_} } $profile->{required}->@*;
+	my $extra   = scalar @extra_keys   ? ( 'Extra arguments: '   . join( ", ", @extra_keys   ) ) : '';
+	my $missing = scalar @missing_keys ? ( 'Missing arguments: ' . join( ", ", @missing_keys ) ) : '';
+
+	my $message = $extra;
+	$message .= "\n" if $message;
+	$message .= $missing if $missing;
+
+
+	if( $message ) {
+		return Ghojo::Result->error({
+			description  => $description,
+			message      => $message,
+			error_code   => 10,
+			extras       => {
+				args       => $args,
+				profile    => $profile,
+				stacktrace => $self->stacktrace(1)
+				},
+			});
+		}
+
+	my @errors;
+	foreach my $key ( keys $args->%* ) {
+		my $validator = $profile->{params}{$key};
+
+		push @errors, do {
+			if( ref $validator eq ref qr// ) {
+				$args->{$key} =~ $validator ? () : "$key did not match $validator";
+				}
+			elsif( ref $validator eq ref sub {} ) {
+				$validator->( $args->{$key} ) ? () : "$key did not return true value for coderef";
+				}
+			elsif( ref $validator eq ref [] ) {
+				grep { $args->{$key} eq $_ } $validator->@* ? () : "$key was not one of <@$validator>";
+				}
+			elsif( ! ref $validator ) {
+				$args->{$key} eq $validator ? () : "$key was not $validator";
+				}
+			};
+		}
+
+	if( @errors ) {
+		my $message = join "\n", @errors;
+		return Ghojo::Result->error({
+			description  => $description,
+			message      => $message,
+			error_code   => 11,
+			extras       => {
+				args       => $args,
+				profile    => $profile,
+				stacktrace => $self->stacktrace(1)
+				},
+			});
+		}
+
+	return Ghojo::Result->success({
+		description  => $description,
+		message      => 'Parameters validate',
+		});
+	}
+
 sub post_json( $self, $query_url, $headers = {}, $hash = {} ) {
 	$self->{last_tx} = $self->ua->post( $query_url => $headers => json => $hash );
 	}

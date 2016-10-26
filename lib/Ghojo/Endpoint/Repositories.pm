@@ -63,18 +63,35 @@ sub Ghojo::PublicUser::get_repo ( $self, $owner, $repo ) {
 		);
 	}
 
-=item * repos_by_username( USERNAME )
+=item * get_repos_for_username( USERNAME, CALLBACK, HASH_REF )
 
 GET /users/:username/repos
 
-type	string	Can be one of all, owner, member. Default: owner
-sort	string	Can be one of created, updated, pushed, full_name. Default: full_name
-direction	string	Can be one of asc or desc. Default: when using full_name: asc, otherwise desc
+	type		enum{ all, owner*, member }
+	sort		enum{ created, updated, pushed, full_name* }
+	direction	enum{ asc, desc }
 
 =cut
 
-sub Ghojo::PublicUser::repos_by_username( $self, $username ) {
-	$self->unimplemented;
+sub Ghojo::PublicUser::get_repos_for_username( $self, $username, $callback = sub { $_[0] }, $args = {} ) {
+	$self->entered_sub;
+
+	my $profile = {
+		type      => [ qw(all owner member) ],
+		'sort'    => [ qw(created updated pushed full_name) ],
+		direction => [ qw(asc desc) ],
+		};
+
+	my $result = $self->validate( $args, $profile );
+	return $result if $result->is_error;
+
+	my $query = $result->values->first;
+
+	$self->get_paged_resources(
+		$self->endpoint_to_url( '/users/:username/repos', { username => $username }, $query ),
+		bless_into           => 'Ghojo::Data::Repo',
+		callback             => $callback,
+		);
 	}
 
 =item * repos_by_organization
