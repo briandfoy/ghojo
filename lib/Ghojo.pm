@@ -1265,9 +1265,10 @@ sub get_paged_resources ( $self, $url, %args ) {
 		my $link_header = $self->parse_link_header( $tx );
 		push @queue, $link_header->{'next'} if exists $link_header->{'next'};
 
-		my $array = $tx->res->json;
-		foreach my $item ( $array->@* ) {
-			my $result = $args{callback}->( $tx, $item );
+		foreach my $item ( $tx->res->json->@* ) {
+			$self->logger->trace( "get_paged_resources processing item ", @results + 1 );
+			bless $item, $args{bless_into} if $args{bless_into};
+			my $result = $args{callback}->( $item, $tx );
 			last LOOP unless defined $result;
 			push @results, $result;
 			}
