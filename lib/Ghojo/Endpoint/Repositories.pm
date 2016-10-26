@@ -180,6 +180,42 @@ sub Ghojo::PublicUser::all_public_repos ( $self, $callback = sub {}, $query = {}
 	my $perl = $self->paged_get( '/repositories', [], $callback, $query );
 	}
 
+=item * create_repo( )
+
+	name                string	Required. The name of the repository
+	description         string	A short description of the repository
+	homepage            string	A URL with more information about the repository
+	private             boolean	Either true to create a private repository, or false to create a public one. Creating private repositories requires a paid GitHub account. Default: false
+	has_issues          boolean	Either true to enable issues for this repository, false to disable them. Default: true
+	has_wiki            boolean	Either true to enable the wiki for this repository, false to disable it. Default: true
+	has_downloads       boolean	Either true to enable downloads for this repository, false to disable them. Default: true
+	auto_init           boolean	Pass true to create an initial commit with empty README. Default: false
+	gitignore_template  string	Desired language or platform .gitignore template to apply. Use the name of the template without the extension. For example, "Haskell".
+	license_template    string	Desired LICENSE template to apply. Use the name of the template without the extension. For example, "mit" or "mozilla".
+
+	team_id             integer The id of the team that will be granted access to this repository. This is only valid when creating a repository in an organization.
+
+gitignore_templates
+
+
+license_templates
+
+
+public_repo scope or repo scope to create a public repository
+repo scope to create a private repository
+
+=cut
+
+sub Ghojo::AuthenticatedUser::create_repo ( ) {
+	# POST /user/repos
+
+	}
+
+sub sub Ghojo::AuthenticatedUser::create_repo_in_org ( ) {
+	# POST /orgs/:org/repos
+	}
+
+
 =item * edit_repo
 
 UNIMPLEMETED
