@@ -2,8 +2,6 @@
 use v5.24;
 
 use lib qw(lib);
-use FindBin;
-use lib $FindBin::Bin;
 
 use Data::Dumper;
 use Ghojo;
