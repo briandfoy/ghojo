@@ -1272,7 +1272,7 @@ sub get_paged_resources ( $self, $url, %args ) {
 			push @results, $result;
 			}
 
-		sleep $args{'sleep'};
+		sleep $args{'sleep'} unless @queue == 0;
 		}
 
 	Ghojo::Result->success({
