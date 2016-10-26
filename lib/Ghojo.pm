@@ -788,8 +788,6 @@ Checks that we know the username and password.
 =cut
 
 sub has_basic_auth ( $self ) {
-	$self->warnif( ! $self->has_username, "Missing username for basic authorization!" );
-	$self->warnif( ! $self->has_password, "Missing password for basic authorization!" );
 	$self->has_username && $self->has_password
 	}
 
@@ -814,6 +812,9 @@ If basic authentication is not setup, this return nothing.
 
 sub basic_auth_string ( $self ) {
 	my $rc = require MIME::Base64;
+	$self->warnif( ! $self->has_username, "Missing username for basic authorization!" );
+	$self->warnif( ! $self->has_password, "Missing password for basic authorization!" );
+
 	return Ghojo::Result->error unless $self->has_basic_auth;
 	'Basic ' . MIME::Base64::encode_base64(
 		join( ':', $self->username, $self->password ),
