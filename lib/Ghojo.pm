@@ -1270,7 +1270,6 @@ sub get_paged_resources ( $self, $url, %args ) {
 			last LOOP unless defined $result;
 			push @results, $result;
 			}
-		push @results, $array->@*;
 
 		sleep $args{'sleep'};
 		}
