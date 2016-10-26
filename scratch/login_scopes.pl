@@ -4,8 +4,6 @@ use feature qw(signatures);
 no warnings qw(experimental::signatures);
 
 use lib qw(lib);
-use FindBin;
-use lib $FindBin::Bin;
 
 use Data::Dumper;
 use Ghojo;
