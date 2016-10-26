@@ -37,6 +37,9 @@ GET /user/repos
 		Can be one of asc or desc.
 		Default: when using full_name: asc; otherwise desc
 
+This is a public API endpoint.
+
+
 =cut
 
 sub repos ( $self, $callback = sub {}, $query = {} ) {
@@ -47,11 +50,13 @@ sub repos ( $self, $callback = sub {}, $query = {} ) {
 
 =item * get_repo ( OWNER, REPO )
 
-GET /repos/:owner/:repo
-
 The parent and source objects are present when the repository is a
 fork. parent is the repository this repository was forked from, source
 is the ultimate source for the network.
+
+This is a public API endpoint.
+
+L<https://developer.github.com/v3/repos/#list-your-repositories>
 
 =cut
 
@@ -65,24 +70,28 @@ sub Ghojo::PublicUser::get_repo ( $self, $owner, $repo ) {
 
 =item * get_repos_for_username( USERNAME, CALLBACK, HASH_REF )
 
-GET /users/:username/repos
-
 	type		enum{ all, owner*, member }
 	sort		enum{ created, updated, pushed, full_name* }
 	direction	enum{ asc, desc }
 
+This is a public API endpoint.
+
+L<https://developer.github.com/v3/repos/#list-user-repositories>
+
 =cut
 
-sub Ghojo::PublicUser::get_repos_for_username( $self, $username, $callback = sub { $_[0] }, $args = {} ) {
+sub Ghojo::PublicUser::get_repos_for_username ( $self, $username, $callback = sub { $_[0] }, $args = {} ) {
 	$self->entered_sub;
 
 	my $profile = {
-		type      => [ qw(all owner member) ],
-		'sort'    => [ qw(created updated pushed full_name) ],
-		direction => [ qw(asc desc) ],
+		params => {
+			type      => [ qw(all owner member) ],
+			'sort'    => [ qw(created updated pushed full_name) ],
+			direction => [ qw(asc desc) ],
+			},
 		};
 
-	my $result = $self->validate( $args, $profile );
+	my $result = $self->validate_profile( $args, $profile );
 	return $result if $result->is_error;
 
 	my $query = $result->values->first;
@@ -94,10 +103,60 @@ sub Ghojo::PublicUser::get_repos_for_username( $self, $username, $callback = sub
 		);
 	}
 
+=item * get_repos_owned_by( USER, CALLBACK, ARGS )
+
+Like C<get_repos_for_username>, but only returns repos owned by the
+user.
+
+ARGS is a hash ref that may contain any of these parameters. However,
+you can sort on anything you like when you get the L<Mojo::Collection>
+back.
+
+	sort		enum{ created, updated, pushed, full_name* }
+	direction	enum{ asc, desc }
+
+This is a public API endpoint.
+
+L<https://developer.github.com/v3/repos/#list-user-repositories>
+
+=cut
+
+sub Ghojo::PublicUser::get_repos_owned_by ( $self, $username, $callback = sub { $_[0] }, $args = {} ) {
+	$args->{type} = 'owner';
+	$self->get_repos_for_username( $username, $callback, $args );
+	}
+
+=item * get_repos_with_member( USER, CALLBACK, ARGS )
+
+Like C<get_repos_for_username>, but only returns repos where USER is
+a member.
+
+ARGS is a hash ref that may contain any of these parameters. However,
+you can sort on anything you like when you get the L<Mojo::Collection>
+back.
+
+	sort		enum{ created, updated, pushed, full_name* }
+	direction	enum{ asc, desc }
+
+This is a public API endpoint.
+
+L<https://developer.github.com/v3/repos/#list-user-repositories>
+
+=cut
+
+sub Ghojo::PublicUser::get_repos_with_member ( $self, $username, $callback = sub { $_[0] }, $args = {} ) {
+	$args->{type} = 'member';
+	$self->get_repos_for_username( $username, $callback, $args );
+	}
+
 =item * repos_by_organization
+
+UNIMPLEMETED
 
 GET /orgs/:org/repos
 type	string	Can be one of all, public, private, forks, sources, member. Default: all
+
+This is a public API endpoint.
 
 =cut
 
@@ -107,9 +166,13 @@ sub Ghojo::PublicUser::repos_by_organization( $self, $organization ) {
 
 =item * all_public_repos( CALLBACK, QUERY_HASH )
 
+UNIMPLEMETED
+
 GET /repositories
 
-since	string	The integer ID of the last Repository that you've seen.
+	since	string	The integer ID of the last Repository that you've seen.
+
+This is a public API endpoint.
 
 =cut
 
@@ -119,7 +182,11 @@ sub Ghojo::PublicUser::all_public_repos ( $self, $callback = sub {}, $query = {}
 
 =item * edit_repo
 
-	PATCH /repos/:owner/:repo
+UNIMPLEMETED
+
+PATCH /repos/:owner/:repo
+
+This is a public API endpoint.
 
 =cut
 
@@ -129,9 +196,13 @@ sub Ghojo::AuthenticatedUser::edit_repo( $self, $owner, $repo, $hash = {} ) {
 
 =item * list_repo_contributors( OWNER, REPO )
 
+UNIMPLEMETED
+
 GET /repos/:owner/:repo/contributors
 
-anon	string	Set to 1 or true to include anonymous contributors in results.
+	anon	string	Set to 1 or true to include anonymous contributors in results.
+
+This is a public API endpoint.
 
 =cut
 
@@ -141,7 +212,11 @@ sub Ghojo::PublicUser::get_repo_contributors ( $self, $owner, $repo ) {
 
 =item * get_repo_languages
 
+UNIMPLEMETED
+
 GET /repos/:owner/:repo/languages
+
+This is a public API endpoint.
 
 =cut
 
@@ -151,7 +226,11 @@ sub Ghojo::PublicUser::get_repo_languages ( $self, $owner, $repo ) {
 
 =item * get_repo_teams
 
+UNIMPLEMETED
+
 GET /repos/:owner/:repo/teams
+
+This is a public API endpoint.
 
 =cut
 
@@ -161,8 +240,11 @@ sub Ghojo::PublicUser::get_repo_teams ( $self, $owner, $repo ) {
 
 =item * get_repo_tags
 
-	GET /repos/:owner/:repo/tags
+UNIMPLEMETED
 
+GET /repos/:owner/:repo/tags
+
+This is a public API endpoint.
 
 =cut
 
@@ -171,6 +253,8 @@ sub Ghojo::PublicUser::get_repo_tags ( $self, $owner, $repo ) {
 	}
 
 =item * delete_repo
+
+UNIMPLEMETED
 
 DELETE /repos/:owner/:repo
 
