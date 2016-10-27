@@ -10,7 +10,7 @@ use Ghojo::Mixins::SuccessError;
 # until we need to build out these classes
 my @classes = qw(
 	SSHKey GPGKey UserRecord Email Grant Repo
-	Emoji License Gitignore Content RawContent
+	Emojis License Gitignore Content RawContent
 	);
 
 foreach my $class ( @classes ) {
