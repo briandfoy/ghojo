@@ -1245,6 +1245,15 @@ sub get_paged_resources ( $self, $url, %args ) {
 	my @queue = ( $url );
 	LOOP: while( @results < $args{limit} and my $url = shift @queue ) {
 		my $tx = $self->ua->get( $url );
+		unless( $tx->success ) {
+			return Ghojo::Result->error({
+				description => "Fetching $url",
+				message => 'Error fetching paged results',
+				extras  => {
+					tx => $tx,
+					},
+				});
+			}
 		my $link_header = $self->parse_link_header( $tx );
 		push @queue, $link_header->{'next'} if exists $link_header->{'next'};
 
@@ -1265,36 +1274,17 @@ sub get_paged_resources ( $self, $url, %args ) {
 	}
 
 sub set_paged_get_sleep_time ( $self, $seconds = 3 ) {
-	$self->{paged_get}{'sleep'} = 0 + $seconds;
+	$self->logdie( "paged_get is deprecated" );
 	}
-sub paged_get_sleep_time ( $self ) { $self->{paged_get}{'sleep'} }
+sub paged_get_sleep_time ( $self ) { $self->logdie( "paged_get is deprecated" ); }
 
 sub set_paged_get_results_limit ( $self, $count = 10_000 ) {
-	$self->{paged_get}{'results_limit'} = $count;
+	$self->logdie( "paged_get is deprecated" );
 	}
-sub paged_get_results_limit ( $self ) { $self->{paged_get}{'results_limit'} }
+sub paged_get_results_limit ( $self ) { $self->logdie( "paged_get is deprecated" ); }
 
 sub paged_get ( $self, $path, $params = [], $callback=sub{ $_[0] }, $query = {} ) {
-	$self->logger->trace( 'In paged_get' );
-	my @results;
-	my $limit = $self->paged_get_results_limit // 1_000;
-	my @next = $self->query_url( $path, $params, $query);
-		$self->logger->debug( "Queue is:\n\t", join "\n\t", @next );
-
-	while( @results < $limit and my $url = shift @next ) {
-		$self->logger->debug( "query_url is $url" );
-		my $tx = $self->ua->get( $url );
-		my $link_header = $self->parse_link_header( $tx );
-		push @next, $link_header->{'next'} if exists $link_header->{'next'};
-
-		my $array = $tx->res->json;
-		foreach my $item ( $array->@* ) {
-			push @results, $callback->( $item );
-			}
-		sleep $self->paged_get_sleep_time;
-		}
-
-	Mojo::Collection->new( @results );
+	$self->logdie( "paged_get is deprecated" );
 	}
 
 # <https://api.github.com/repositories?since=367>; rel="next", <https://api.github.com/repositories{?since}>; rel="first"';
@@ -1309,6 +1299,46 @@ sub parse_link_header ( $self, $tx ) {
 
 	my %hash = reverse @parts;
 	return \%hash;
+	}
+
+=item * check_repo( OWNER, REPO )
+
+Checks that the OWNER and REPO are avialable. They might exist but
+be hidden to you or the public API.
+
+=cut
+
+sub Ghojo::check_repo ( $self, $owner, $repo ) {
+	state $cache = {};
+	return $cache->{"$owner/$repo"} if exists $cache->{"$owner/$repo"};
+
+	$cache->{"$owner/$repo"} = do {
+		if( ! $self->user_is_available( $owner ) ) {
+			Ghojo::Result->error({
+				description => "Checking user",
+				message     => "User $owner is not available",
+				extras      => {
+					stacktrace => $self->stacktrace(1),
+					},
+				});
+			}
+		elsif( ! $self->repo_is_available( $owner, $repo ) ) {
+			Ghojo::Result->error({
+				description => "Checking repository",
+				message     => "Repo $owner/$repo is not available (but user $owner is)",
+				extras      => {
+					stacktrace => $self->stacktrace(1),
+					},
+				});
+			}
+		else {
+			Ghojo::Result->success({
+				description => "Checking repository",
+				message     => "$owner/$repo is available",
+				});
+			}
+		};
+
 	}
 
 =back
