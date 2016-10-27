@@ -378,23 +378,102 @@ sub Ghojo::PublicUser::get_raw_gitignore_template ( $self, $template ) {
 
 =over 4
 
-=item * get_license_names
+=item * get_licenses
 
-List all licenses	GET	/licenses
+Fetch the list of licenses from GitHub. This returns a C<Ghojo::Result>
+object.
+
 
 This is a public API endpoint.
 
 L<https://developer.github.com/v3/licenses/#list-all-licenses>
 
+Needs to have the MIME type C<application/vnd.github.drax-preview+json>
+in the C<Accepts> header.
+
 =cut
 
+BEGIN {
+my $cache = {};
+
 sub Ghojo::PublicUser::get_license_names ( $self ) {
-	$self->not_implemented
+	$self->entered_sub;
+
+	return Ghojo::Result->success({
+		values => [ $self->license_names_from_cache ],
+		extras => {
+			cache_hit => 1,
+			}
+		}) if keys $cache->%*;
+
+	my $result = $self->get_single_resource(
+		$self->endpoint_to_url( '/licenses' ),
+		bless_into => 'Ghojo::Data::License',
+		accepts    => 'application/vnd.github.drax-preview+json',
+		);
+
+	return $result if $result->is_error;
+
+	my $array = $result->values->first;
+	my %hash = map { $_->{key} => { id => $_, content => undef } } $array->@*;
+
+	$self->set_license_cache( \%hash );
+	$result->add_extras( cache_hit => 0 );
+
+	$result;
 	}
 
-=item * get_license_content
+=item * license_names_from_cache
 
-Get an individual license	GET	/licenses/:license
+Return an array reference of the license names in the cache.
+
+=cut
+
+sub Ghojo::PublicUser::license_names_from_cache ( $self ) {
+	[ keys $self->license_cache->%* ]
+	}
+
+=item * license_cache
+
+Return the license cache. It's a hash with the id of the license
+type as the key and second-level hash as the value. It looks like this:
+
+	{
+	'mit' => {
+		id =>  {
+			"key": "mit",
+			"name": "MIT License",
+			"spdx_id": "MIT",
+			"url": "https://api.github.com/licenses/mit",
+			"featured": true,
+			},
+		content => '...',
+		},
+	}
+
+=cut
+
+sub Ghojo::PublicUser::license_cache ( $self ) {
+	return $cache if keys $cache->%*;
+
+	$self->get_license_names;
+	}
+
+=item * license_exists( LICENSE )
+
+Returns true of the license name exists, and false otherwise. This
+looks in the local license cache, which might contact GitHub to get
+data.
+
+=cut
+
+sub Ghojo::PublicUser::license_exists ( $self, $license ) {
+	exists $self->license_cache->{ $license }
+	}
+
+=item * get_license
+
+Get an individual license
 
 This is a public API endpoint.
 
@@ -403,12 +482,20 @@ L<https://developer.github.com/v3/licenses/#get-an-individual-license>
 =cut
 
 sub Ghojo::PublicUser::get_license_content ( $self, $license ) {
-	$self->not_implemented
+	return Ghojo::Result->error({
+
+		}) unless $self->license_exists( $license );
+
+	my $result = $self->get_single_resource(
+		$self->endpoint_to_url( '/licenses/:license', { license => $license } ),
+		bless_into => 'Ghojo::Data::License',
+		accepts    => 'application/vnd.github.drax-preview+json',
+		);
 	}
 
-=item * get_license_for_repo
+=item * get_license_for_repo( OWNER, REPO )
 
-Get a repository's license	GET	/repos/:owner/:repo
+Get a repository's license
 
 This is a public API endpoint.
 
@@ -417,10 +504,14 @@ L<https://developer.github.com/v3/licenses/#get-a-repositorys-license>
 =cut
 
 sub Ghojo::PublicUser::get_license_name_for_repo ( $self, $owner, $repo ) {
-	$self->not_implemented
+	my $result = $self->get_single_resource(
+		$self->endpoint_to_url( '/repos/:owner/:repo', { owner => $owner, repo => $repo } ),
+		bless_into => 'Ghojo::Data::License',
+		accepts    => 'application/vnd.github.drax-preview+json',
+		);
 	}
 
-=item * get_license_content_for_repo
+=item * get_license_content_for_repo( OWNER, REPO )
 
 Get the contents of a repository's license	GET	/repos/:owner/:repo/license
 
@@ -431,8 +522,14 @@ L<https://developer.github.com/v3/licenses/#get-the-contents-of-a-repositorys-li
 =cut
 
 sub Ghojo::PublicUser::get_license_content_for_repo ( $self, $owner, $repo ) {
-	$self->not_implemented
+	my $result = $self->get_single_resource(
+		$self->endpoint_to_url( '/repos/:owner/:repo/license', { owner => $owner, repo => $repo } ),
+		bless_into => 'Ghojo::Data::License',
+		accepts    => 'application/vnd.github.drax-preview+json',
+		);
 	}
+
+}
 
 =back
 
@@ -446,7 +543,7 @@ Render an arbitrary Markdown document HTML. If you supply the optional
 REPO argument, it knows how to translate some text referring to the
 repo as links (such as C<github/linguist#1> into an issues link).
 
-Render an arbitrary Markdown document	POST	/markdown
+The code GitHub uses to render markdown: L<https://github.com/github/markup>
 
 This is a public API endpoint.
 
@@ -497,6 +594,7 @@ L<https://developer.github.com/v3/markdown/#render-a-markdown-document-in-raw-mo
 
 =cut
 
+# takes text/plain or text/x-markdown
 sub Ghojo::PublicUser::render_raw_markdown ( $self, $markdown ) {
 	$self->post_single_resource(
 		$self->endpoint_to_url( '/markdown/raw' ),
@@ -603,6 +701,7 @@ sub Ghojo::PublicUser::get_rate_limit ( $self ) {
 	$cache->[0];
 	}
 
+# XXX: Should this be somewhere else?
 sub Ghojo::PublicUser::is_public_api_rate_limit ( $self ) { $self->core_rate_limit < 100 }
 
 sub Ghojo::PublicUser::is_authenticated_api_rate_limit ( $self ) { $self->core_rate_limit == 5000 }
@@ -626,9 +725,7 @@ sub Ghojo::PublicUser::core_rate_limit_percent_left ( $self ) {
 
 sub Ghojo::PublicUser::seconds_until_core_rate_limit_reset ( $self ) {
 	$self->get_rate_limit->{resources}{core}{reset} - time
-# takes text/plain or text/x-markdown
 	}
-# takes text/plain or text/x-markdown
 
 sub Ghojo::PublicUser::search_rate_limit ( $self ) {
 	$self->get_rate_limit->{resources}{search}{limit};
