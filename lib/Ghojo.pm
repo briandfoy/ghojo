@@ -1202,7 +1202,7 @@ sub single_resource ( $self, $verb, $url, %args  ) {
 	# we good credentials? Check that the token is still valid?
 	# try to re-login?
 	if( $status == 401 ) {
-		$self->logger->debug( "The request was forbidden!" );
+		$self->logger->debug( "The request requires authentication!" );
 		return Ghojo::Result->error;
 		}
 
