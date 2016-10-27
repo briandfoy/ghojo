@@ -1086,6 +1086,9 @@ sub single_resource ( $self, $verb, $url, %args  ) {
 	# XXX: has to handle Accepts too
 	$headers{'Authorization'} = $self->auth_string if $self->auth_string;
 
+	$headers{'Accept'} = [ 'application/vnd.github.v3+json' ];
+	push @{ $headers{'Accept'} }, $args{accept};
+	$headers{'Accept'} = join ', ', $headers{'Accept'}->@*;
 	# XXX: also look in %args for 'json' and 'form'
 	my $tx = $self->ua->$verb( $url => \%headers );
 	$self->increment_query_count;
