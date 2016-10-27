@@ -1091,9 +1091,24 @@ sub single_resource ( $self, $verb, $url, %args  ) {
 	$headers{'Accept'} = join ', ', $headers{'Accept'}->@*;
 
 	# XXX maybe check that this makes sense
-	# XXX: also look in %args for 'json' and 'form'
 	$headers{'Content-type'}  = $args{content_type} if $args{content_type};
-	my $tx = $self->ua->$verb( $url => \%headers );
+
+	push @args, \%headers;
+
+	if( exists $args{json} ) {
+		push @args, 'json' => $args{json};
+		}
+
+	if( exists $args{form} ) {
+		push @args, 'form' => $args{form};
+		}
+
+	if( exists $args{body} ) {
+		push @args, $args{body}
+		}
+
+	# XXX: also look in %args for 'json' and 'form'
+	my $tx = $self->ua->$verb( @args );
 	$self->increment_query_count;
 
 	# check that status is one of the expected statuses
@@ -1111,6 +1126,9 @@ sub single_resource ( $self, $verb, $url, %args  ) {
 			}
 		return Ghojo::Result->success( {
 			values => [ $data ],
+			extras => {
+				tx => $tx,
+				},
 			} )
 		}
 
@@ -1126,9 +1144,6 @@ sub single_resource ( $self, $verb, $url, %args  ) {
 			} )
 		}
 
-			extras => {
-				tx => $tx,
-				},
 	$self->logger->debug( sub {
 		"Got HTTP status $status while expecting one of "
 		. join ', ', $args{expected_http_status}->@*
