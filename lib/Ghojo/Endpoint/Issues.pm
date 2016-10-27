@@ -54,16 +54,32 @@ The keys of the HASHREF can be:
 
 =cut
 
-sub issues ( $self, $owner, $repo, $callback = sub { } , $query = { 'state' => 'open' } ) {
-	state $expected_status = 200;
+sub Ghojo::PublicUser::issues ( $self, $owner, $repo, $callback = sub { $_[0] } , $args = { 'state' => 'open' } ) {
+	$self->entered_sub;
 
-	my $url = $self->query_url( "/repos/%s/%s/issues", [ $owner, $repo ], $query );
-	$self->logger->trace( "Query URL is $url" );
-	my $results = $self->paged_get(
-		"/repos/%s/%s/issues",
-		[ $owner, $repo ],
-		$callback,
-		$query
+	my $repo_check_result = $self->check_repo( $owner, $repo );
+	return $repo_check_result if $repo_check_result->is_error;
+
+	my $profile = {
+		params => {
+			milestone   => qr/\A (\*|none|\d+) \z/x,
+			'state'     => [ qw(open closed all) ],
+			assignee    => qr/\A (\*|none|\S+) \z/x,
+			creator     => sub { defined $_[0] },
+			mentioned   => sub { defined $_[0] },
+			labels      => sub { 1 },
+			'sort'      => [ qw(created updated comments) ],
+			direction   => [ qw(asc desc) ],
+			since       => sub { Ghojo::Type->is_iso8601( $_[0] ) },
+			},
+		required => [],
+		};
+
+	$self->get_paged_resources(
+		$self->endpoint_to_url( "/repos/:owner/:repo/issues", { owner => $owner, repo => $repo } ),
+		callback => $callback,
+		bless_into => 'Ghojo::Data::Issue',
+		$args->%*
 		);
 	}
 
