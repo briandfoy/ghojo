@@ -384,7 +384,7 @@ List all licenses	GET	/licenses
 
 This is a public API endpoint.
 
-L<>
+L<https://developer.github.com/v3/licenses/#list-all-licenses>
 
 =cut
 
@@ -398,7 +398,7 @@ Get an individual license	GET	/licenses/:license
 
 This is a public API endpoint.
 
-L<>
+L<https://developer.github.com/v3/licenses/#get-an-individual-license>
 
 =cut
 
@@ -412,7 +412,7 @@ Get a repository's license	GET	/repos/:owner/:repo
 
 This is a public API endpoint.
 
-L<>
+L<https://developer.github.com/v3/licenses/#get-a-repositorys-license>
 
 =cut
 
@@ -426,7 +426,7 @@ Get the contents of a repository's license	GET	/repos/:owner/:repo/license
 
 This is a public API endpoint.
 
-L<>
+L<https://developer.github.com/v3/licenses/#get-the-contents-of-a-repositorys-license>
 
 =cut
 
@@ -446,7 +446,7 @@ Render an arbitrary Markdown document	POST	/markdown
 
 This is a public API endpoint.
 
-L<>
+L<https://developer.github.com/v3/markdown/#render-an-arbitrary-markdown-document>
 
 =cut
 
@@ -460,7 +460,7 @@ Render a Markdown document in raw mode	POST	/markdown/raw
 
 This is a public API endpoint.
 
-L<>
+L<https://developer.github.com/v3/markdown/#render-a-markdown-document-in-raw-mode>
 
 =cut
 
@@ -481,7 +481,7 @@ for the services.
 
 This is a public API endpoint.
 
-L<>
+L<https://developer.github.com/v3/meta/>
 
 =cut
 
@@ -504,7 +504,7 @@ Get your current rate limit status	GET	/rate_limit
 
 This is a public API endpoint.
 
-L<https://developer.github.com/v3/meta/>
+L<https://developer.github.com/v3/rate_limit/>
 
 =cut
 
