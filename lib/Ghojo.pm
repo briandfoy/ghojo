@@ -1089,7 +1089,10 @@ sub single_resource ( $self, $verb, $url, %args  ) {
 	$headers{'Accept'} = [ 'application/vnd.github.v3+json' ];
 	push @{ $headers{'Accept'} }, $args{accept};
 	$headers{'Accept'} = join ', ', $headers{'Accept'}->@*;
+
+	# XXX maybe check that this makes sense
 	# XXX: also look in %args for 'json' and 'form'
+	$headers{'Content-type'}  = $args{content_type} if $args{content_type};
 	my $tx = $self->ua->$verb( $url => \%headers );
 	$self->increment_query_count;
 
