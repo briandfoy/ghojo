@@ -67,17 +67,17 @@ sub issues ( $self, $owner, $repo, $callback = sub { } , $query = { 'state' => '
 		);
 	}
 
-sub all_issues ( $self, $user, $repo, $callback = sub { $_[0] }, $query = {} ) {
+sub Ghojo::PublicUser::all_issues ( $self, $user, $repo, $callback = sub { $_[0] }, $query = {} ) {
 	$query->{'state'} = 'all';
 	$self->issues( $user, $repo, $callback, $query );
 	}
 
-sub open_issues ( $self, $user, $repo, $callback = sub { $_[0] }, $query = {} ) {
+sub Ghojo::PublicUser::open_issues ( $self, $user, $repo, $callback = sub { $_[0] }, $query = {} ) {
 	$query->{'state'} = 'open';
 	$self->issues( $user, $repo, $callback, $query );
 	}
 
-sub closed_issues ( $self, $user, $repo, $callback = sub { $_[0] }, $query = {} ) {
+sub Ghojo::PublicUser::closed_issues ( $self, $user, $repo, $callback = sub { $_[0] }, $query = {} ) {
 	$query->{'state'} = 'closed';
 	$self->issues( $user, $repo, $callback, $query );
 	}
@@ -98,7 +98,7 @@ This implements C<GET /repos/:owner/:repo/labels/:name> from L<http://developer.
 
 =cut
 
-sub issue ( $self, $user, $repo, $number ) {
+sub Ghojo::PublicUser::issue ( $self, $user, $repo, $number ) {
 	my $query_url = $self->query_url( "/repos/%s/%s/issues/%d", $user, $repo, $number );
 	$self->logger->trace( "Query URL is $query_url" );
 	my $tx = $self->ua->get( $query_url );
