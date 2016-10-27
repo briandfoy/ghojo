@@ -14,11 +14,20 @@ die "Specify a license name!\n" unless defined $license_name;
 
 my $ghojo = Ghojo->new;
 
-my $result = $ghojo->get_gitignore_template_names;
+my $result = $ghojo->get_license_names;
 if( $result->is_success ) {
-	say "Templates are:\n\t", join "\n\t", $result->values->first->@*;
+	say "Licenses are:\n\t", join "\n\t", map { $_->key } $result->values->first->@*;
+	}
+else {
+	say "Accept header: ", $result->extras->{tx}->res->headers->header( 'Accept' );
 	}
 
+
+
+my $result = $ghojo->get_license_content_for_repo( 'briandfoy', 'ghojo' );
+say dumper( $result->values->first );
+
+__END__
 if( $ghojo->gitignore_template_name_exists( $template_name ) ) {
 	say ">>>There's a template for <$template_name>";
 	my $result = $ghojo->get_gitignore_template( $template_name );

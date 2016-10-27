@@ -2,6 +2,8 @@ use v5.24.0;
 use feature qw(signatures);
 no warnings qw(experimental::signatures);
 
+use Mojo::Util qw(b64_decode);
+
 =encoding utf8
 
 =head1 NAME
@@ -381,15 +383,15 @@ sub Ghojo::PublicUser::get_raw_gitignore_template ( $self, $template ) {
 =item * get_licenses
 
 Fetch the list of licenses from GitHub. This returns a C<Ghojo::Result>
-object.
-
+object. The value is an array reference of C<Ghojo::Data::License>
+objects.
 
 This is a public API endpoint.
 
 L<https://developer.github.com/v3/licenses/#list-all-licenses>
 
 Needs to have the MIME type C<application/vnd.github.drax-preview+json>
-in the C<Accepts> header.
+as the only type in the C<Accept> header.
 
 =cut
 
@@ -408,19 +410,35 @@ sub Ghojo::PublicUser::get_license_names ( $self ) {
 
 	my $result = $self->get_single_resource(
 		$self->endpoint_to_url( '/licenses' ),
-		bless_into => 'Ghojo::Data::License',
 		accepts    => 'application/vnd.github.drax-preview+json',
 		);
 
 	return $result if $result->is_error;
 
+	# this is odd because we have multiple values in the response
+	# but that's mostly a paged response
 	my $array = $result->values->first;
-	my %hash = map { $_->{key} => { id => $_, content => undef } } $array->@*;
+	bless $_, 'Ghojo::Data::License' for $array->@*;
+
+	my %hash = map {
+		$_->{key} => {
+			id => $_,
+			content => undef
+			}
+		} $array->@*;
 
 	$self->set_license_cache( \%hash );
 	$result->add_extras( cache_hit => 0 );
 
 	$result;
+	}
+
+=item * set_license_cache( HASH_REF )
+
+=cut
+
+sub Ghojo::PublicUser::set_license_cache ( $self, $hash ) {
+	$cache = $hash
 	}
 
 =item * license_names_from_cache
@@ -465,8 +483,27 @@ Returns true of the license name exists, and false otherwise. This
 looks in the local license cache, which might contact GitHub to get
 data.
 
+The license list is very short. It's probably:
+
+	apache-2.0
+	mit
+	epl-1.0
+	gpl-2.0
+	lgpl-2.1
+	unlicense
+	mpl-2.0
+	bsd-3-clause
+	bsd-2-clause
+	lgpl-3.0
+	agpl-3.0
+	gpl-3.0
+
+See the blog post "Open source license usage on GitHub.com"
+L<https://github.com/blog/1964-open-source-license-usage-on-github-com>
+
 =cut
 
+# XXX: find some things that are close?
 sub Ghojo::PublicUser::license_exists ( $self, $license ) {
 	exists $self->license_cache->{ $license }
 	}
@@ -483,12 +520,12 @@ L<https://developer.github.com/v3/licenses/#get-an-individual-license>
 
 sub Ghojo::PublicUser::get_license_content ( $self, $license ) {
 	return Ghojo::Result->error({
-
+		message => "License ($license) does not exist",
 		}) unless $self->license_exists( $license );
 
 	my $result = $self->get_single_resource(
 		$self->endpoint_to_url( '/licenses/:license', { license => $license } ),
-		bless_into => 'Ghojo::Data::License',
+		bless_into => 'Ghojo::Data::LicenseContent',
 		accepts    => 'application/vnd.github.drax-preview+json',
 		);
 	}
@@ -524,7 +561,7 @@ L<https://developer.github.com/v3/licenses/#get-the-contents-of-a-repositorys-li
 sub Ghojo::PublicUser::get_license_content_for_repo ( $self, $owner, $repo ) {
 	my $result = $self->get_single_resource(
 		$self->endpoint_to_url( '/repos/:owner/:repo/license', { owner => $owner, repo => $repo } ),
-		bless_into => 'Ghojo::Data::License',
+		bless_into => 'Ghojo::Data::LicenseContent',
 		accepts    => 'application/vnd.github.drax-preview+json',
 		);
 	}

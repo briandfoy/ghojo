@@ -7,15 +7,25 @@ use parent qw( Hash::AsObject ); # as a quick fix. I'd rather lose the dependenc
 
 use Ghojo::Mixins::SuccessError;
 
+
 # until we need to build out these classes
 my @classes = qw(
 	SSHKey GPGKey UserRecord Email Grant Repo
-	Emojis License Gitignore Content RawContent
+	Emojis License Gitignore Content RawContent LicenseContent
 	);
 
 foreach my $class ( @classes ) {
 	no strict 'refs';
 	@{ "Ghojo::Data::$class\::ISA" } = __PACKAGE__;
+	}
+
+package Ghojo::Data::LicenseContent {
+	use Mojo::Util qw(b64_decode);
+
+	sub raw_content ( $self ) {
+		return $self->{raw_content} if exists $self->{raw_content};
+		$self->{raw_content} = b64_decode( $self->{content} )
+		}
 	}
 
 =encoding utf8
