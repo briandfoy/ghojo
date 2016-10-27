@@ -447,7 +447,8 @@ sub Ghojo::PublicUser::render_raw_markdown ( $self, $markdown ) {
 
 =item * get_github_info
 
-Information about GitHub.com	GET	/meta
+Information about GitHub.com, mostly about IP addresses and the SHA
+for the services.
 
 This is a public API endpoint.
 
@@ -456,7 +457,10 @@ L<>
 =cut
 
 sub Ghojo::PublicUser::get_github_info ( $self ) {
-	$self->not_implemented
+	$self->get_single_resource(
+		$self->endpoint_to_url( '/meta' ),
+		bless_into => 'Ghojo::Data::Meta',
+		);
 	}
 
 =back
@@ -471,7 +475,7 @@ Get your current rate limit status	GET	/rate_limit
 
 This is a public API endpoint.
 
-L<>
+L<https://developer.github.com/v3/meta/>
 
 =cut
 
