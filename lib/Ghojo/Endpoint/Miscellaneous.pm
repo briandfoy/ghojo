@@ -176,6 +176,25 @@ sub Ghojo::PublicUser::get_emoji_char_for( $self, $emoji_code ) {
 
 =head2 Gitignore templates
 
+Github has a repository of F<gitignore> templates for several
+languages. One endpoint returns the list of names and another returns
+the content.
+
+You probably only need to ask for the name or the content you want.
+They will call the right things to fetch the list of names or grab
+the content for you. It also caches it so you don't spend your rate
+limit doing this over and over again.
+
+	my $result = $ghojo->get_gitignore_template( 'Perl' );
+	if( $result->is_success ) {
+		say "Is this from the cache? " . $result->extras->cache_hit ? 'Yes' : 'No';
+		say "Template is:\n" . $result->values->first->{source};
+		}
+
+To get the raw template source, you can skip most of this:
+
+	my $source = $ghojo->get_raw_gitignore_template( 'Perl' );
+
 =over 4
 
 =item * get_gitignore_template_names
@@ -318,11 +337,21 @@ sub Ghojo::PublicUser::get_gitignore_template ( $self, $template ) {
 	$result;
 	}
 
-=item * get_gitignore_template( NAME )
+=item * get_raw_gitignore_template( NAME )
 
 Get the raw content for the named template. This is the C<source> value
 you see in C<get_gitignore_template>. This is actually a wrapper around
-C<get_gitignore_template> that translates that result for you.
+C<get_gitignore_template> that translates that result for you. It returns
+a result object if there's a failure, but otherwise returns the raw
+template data:
+
+	my $result = $ghojo->get_raw_gitignore_template( 'Perl' );
+	if( ref $result ) { # an error
+		...;
+		}
+	else { # must be a scalar
+		say "Source is\n$result";
+		}
 
 This is a public API endpoint.
 
