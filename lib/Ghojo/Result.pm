@@ -94,6 +94,7 @@ sub error ( $class, $hash = {} ) {
 	description
 	values
 	message
+	extras
 
 =cut
 
@@ -110,6 +111,15 @@ sub success ( $class, $hash = {} ) {
 			}
 		else {
 			Ghojo->logger->debug( "No proper value for success object" );
+			}
+		};
+
+	$return_hash->{'extras'} = do {
+		if( ref $hash->{'extras'} eq ref {} ) {
+			 $hash->{'extras'};
+			}
+		else {
+			{}
 			}
 		};
 
@@ -242,7 +252,24 @@ These are suggestions for extras:
 
 =cut
 
-sub extras ( $self ) { $self->is_success ? {} : $self->{extras} }
+sub extras ( $self ) {
+	$self->{extras} = {} unless exists $self->{extras};
+	$self->{extras};
+	}
+
+=item * add_extras( KEY => VALUE, KEY => VALUE )
+
+Add the keys and values to the extras entry. Returns the object.
+=cut
+
+sub add_extras ( $self, %args ) {
+	$self->{extras} = {} unless exists $self->{extras};
+	foreach my $key ( keys %args ) {
+		$self->{extras}{$key} = $args{$key};
+		}
+
+	return $self;
+	}
 
 =back
 

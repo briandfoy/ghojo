@@ -17,6 +17,8 @@ Ghojo::Endpoint::Miscellaneous - endpoints with no other place to be
 
 =head2 Emojis
 
+GitHub's emoji docs: L<https://github.com/showcases/emoji>
+
 There's an emoji code cheatsheet: L<http://www.webpagefx.com/tools/emoji-cheat-sheet/>
 
 =over 4
@@ -75,7 +77,7 @@ sub Ghojo::PublicUser::get_emojis ( $self ) {
 
 	my $hash = $result->values->first;
 	$self->set_emoji_cache( $hash );
-	$result->{extras}{cache_hit} = 0;
+	$result->add_extras( cache_hit => 0 );
 
 	$result;
 	}
@@ -178,31 +180,168 @@ sub Ghojo::PublicUser::get_emoji_char_for( $self, $emoji_code ) {
 
 =item * get_gitignore_template_names
 
-Listing available templates	GET	/gitignore/templates
+List the available gitignore templates for various languages stored
+in the github/gitignore repo: L<https://github.com/github/gitignore>.
 
 This is a public API endpoint.
 
-L<>
+L<https://developer.github.com/v3/gitignore/>
 
 =cut
 
+BEGIN {
+my $cache = {};
+
 sub Ghojo::PublicUser::get_gitignore_template_names ( $self ) {
-	$self->not_implemented
+	$self->entered_sub;
+
+	return Ghojo::Result->success({
+		values => [ $self->gitignore_template_cache ],
+		extras => {
+			cache_hit => 1,
+			}
+		}) if keys $cache->%*;
+
+	my $result = $self->get_single_resource(
+		$self->endpoint_to_url( '/gitignore/templates' ),
+		bless_into => 'Ghojo::Data::Gitignore',
+		);
+
+	return $result if $result->is_error;
+
+	my $array = $result->values->first;
+	my %hash = map { $_ => undef } $array->@*;
+
+	$self->set_gitignore_template_cache( \%hash );
+	$result->add_extras( cache_hit => 0 );
+
+	$result;
 	}
 
-=item * get_gitignore_template
+=item * set_gitignore_template_cache( HASHREF )
 
-Get a single template	GET	/gitignore/templates/:template
+Save the hash that maps the gitignore template name to the template content.
+
+=cut
+
+sub Ghojo::PublicUser::set_gitignore_template_cache ( $self, $hash ) {
+	$self->entered_sub;
+	$cache = $hash;
+	}
+
+=item * gitignore_template_cache()
+
+Return the hash reference that is the gitignore template cache. If the cache
+is empty, it fetches the template names.
+
+If there's nothing in the cache, this fetches the list for you. This means
+that you don't have to fetch the list explicitly.
+
+=cut
+
+sub Ghojo::PublicUser::gitignore_template_cache ( $self ) {
+	$self->entered_sub;
+	$self->get_gitignore_template_names unless keys $cache->%*;
+	$cache;
+	}
+
+=item * clear_gitignore_template_cache()
+
+Forget that you ever saw gitignore template name list.
+
+=cut
+
+sub Ghojo::PublicUser::clear_gitignore_template_cache ( $self ) {
+	$self->entered_sub;
+	$cache = {};
+	}
+
+=item * gitignore_template_name_exists( NAME )
+
+Returns true if the NAME is an available template. Returns nothing
+otherwise. This will look in the cache, which will fetch the list of
+names if the cache is empty.
+
+GitHub's documentation about ignoring files: L<https://help.github.com/articles/ignoring-files/>
+
+The repo of gitignore templates: L<https://github.com/github/gitignore>
+
+=cut
+
+sub Ghojo::PublicUser::gitignore_template_name_exists ( $self, $name ) {
+	exists $self->gitignore_template_cache->{$name};
+	}
+
+=item * get_gitignore_template( NAME )
+
+Get the content for the named template. If the named template does
+not exist, returns nothing. For this call,
+
+	my $result = $ghojo->get_gitignore_template( 'Perl' );
+	if( $result->is_success ) {
+		my $name = $result->values->first->{name}; # should be same as arg
+		my $data = $result->values->first->{source};
+		}
 
 This is a public API endpoint.
 
-L<>
+L<https://developer.github.com/v3/gitignore/#get-a-single-template>
 
 =cut
 
 sub Ghojo::PublicUser::get_gitignore_template ( $self, $template ) {
-	$self->not_implemented
+	$self->entered_sub;
+
+	if( defined $self->gitignore_template_cache->{$template} ) {
+		$self->logger->debug( "gitignore template is cached" );
+		return Ghojo::Result->success({
+			values => [ $self->gitignore_template_cache->{$template} ],
+			extras => {
+				cache_hit => 1,
+				}
+			});
+		}
+
+	my $result = $self->get_single_resource(
+		$self->endpoint_to_url( '/gitignore/templates/:template', { template => $template } ),
+		bless_into => 'Ghojo::Data::Gitignore', # XXX This is not sufficient
+		);
+
+	return $result if $result->is_error;
+
+	# store the result as the value in the cache. This is the hash ref
+	# that represents the JSON response. Otherwise, the value should
+	# be undef.
+	$self->gitignore_template_cache->{$template} = $result->values->first;
+	$result->add_extras( cache_hit => 0 );
+
+	$result;
 	}
+
+=item * get_gitignore_template( NAME )
+
+Get the raw content for the named template. This is the C<source> value
+you see in C<get_gitignore_template>. This is actually a wrapper around
+C<get_gitignore_template> that translates that result for you.
+
+This is a public API endpoint.
+
+L<https://developer.github.com/v3/gitignore/#get-a-single-template>
+
+=cut
+
+sub Ghojo::PublicUser::get_raw_gitignore_template ( $self, $template ) {
+	my $result = $self->get_single_resource(
+		$self->endpoint_to_url( '/gitignore/templates/:template', { template => $template } ),
+		bless_into => 'Ghojo::Data::Gitignore', # XXX This is not sufficient
+		);
+
+	return $result if $result->is_error;
+
+	$result->values->first->{source};
+	}
+
+}
 
 =back
 
