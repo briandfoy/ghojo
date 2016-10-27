@@ -1206,7 +1206,12 @@ sub single_resource ( $self, $verb, $url, %args  ) {
 		return Ghojo::Result->error;
 		}
 
-
+	if( $status == 403 ) {
+		$self->logger->debug( "The request was forbidden!" );
+		my $data = $tx->res->json;
+		$self->logger->debug( sub {  $tx->res->json } );
+		return Ghojo::Result->error;
+		}
 	# if the status is not the expected status, look at the response
 	# to see why it failed.
 
