@@ -128,6 +128,8 @@ backup clones at Bitbucket just in case.
 
 =head2 The API
 
+Parts marked with an * are done.
+
 	Activity
 		Events
 		Feeds
@@ -161,13 +163,13 @@ backup clones at Bitbucket just in case.
 		Migrations
 		Source Imports
 
-	Miscellaneous
-		Emojis
-		Gitignore
-		Licenses
-		Markdown
-		Meta
-		Rate Limit
+	* Miscellaneous ( Ghojo/Miscellaneous.pm )
+		* Emojis
+		* Gitignore
+		* Licenses
+		* Markdown
+		* Meta
+		* Rate Limit
 
 	Organizations
 		Members
@@ -210,11 +212,11 @@ backup clones at Bitbucket just in case.
 		Users
 		Legacy Search
 
-	Users
-		Emails
-		Followers
-		Git SSH Keys
-		GPG Keys
+	Users  ( Ghojo/Users.pm )
+		* Emails
+		* Followers
+		* Git SSH Keys
+		* GPG Keys
 		Administration (Enterprise)
 
 	Enterprise
