@@ -440,7 +440,11 @@ sub Ghojo::PublicUser::get_license_content_for_repo ( $self, $owner, $repo ) {
 
 =over 4
 
-=item * render_markdown
+=item * render_markdown( MARKDOWN_SCALAR [, REPO ] )
+
+Render an arbitrary Markdown document HTML. If you supply the optional
+REPO argument, it knows how to translate some text referring to the
+repo as links (such as C<github/linguist#1> into an issues link).
 
 Render an arbitrary Markdown document	POST	/markdown
 
@@ -450,13 +454,42 @@ L<https://developer.github.com/v3/markdown/#render-an-arbitrary-markdown-documen
 
 =cut
 
-sub Ghojo::PublicUser::render_markdown ( $self, $markdown ) {
-	$self->not_implemented
+sub Ghojo::PublicUser::render_markdown ( $self, $markdown, $repo = undef ) {
+	my $profile = {
+		params => {
+			text    => sub { length $_[0] },
+			mode    => [ qw(markdown gfm) ],
+			context => qr|\A \S+ / \S+ \z|x, # a repo context, only matters for gfm
+			},
+		required => [ qw(text) ]
+		};
+
+	my $args = {};
+	$args->{text} = $markdown;
+
+	# XXX: check that repo exists
+	if( defined $repo ) {
+		$args->{mode}    = 'gfm';
+		$args->{context} = $repo;
+		push @{ $profile->{required} }, 'context';
+		}
+	$args->{mode} //= 'markdown';
+
+	my $result = $self->validate_profile( $args, $profile );
+	return $result if $result->is_error;
+
+	my $result = $self->post_single_resource(
+		$self->endpoint_to_url( '/markdown' ),
+		expected_http_status => 200,
+		raw_content          => 1,
+		json                 => $args,
+		);
 	}
 
 =item * render_raw_markdown
 
-Render a Markdown document in raw mode	POST	/markdown/raw
+Render a Markdown document in raw mode. This doesn't include the special
+GitHub links to repos, issues, and the like.
 
 This is a public API endpoint.
 
@@ -465,7 +498,13 @@ L<https://developer.github.com/v3/markdown/#render-a-markdown-document-in-raw-mo
 =cut
 
 sub Ghojo::PublicUser::render_raw_markdown ( $self, $markdown ) {
-	$self->not_implemented
+	$self->post_single_resource(
+		$self->endpoint_to_url( '/markdown/raw' ),
+		expected_http_status => 200,
+		content_type         => 'text/x-markdown',
+		raw_content          => 1,
+		body                 => $markdown,
+		);
 	}
 
 =back
@@ -587,7 +626,9 @@ sub Ghojo::PublicUser::core_rate_limit_percent_left ( $self ) {
 
 sub Ghojo::PublicUser::seconds_until_core_rate_limit_reset ( $self ) {
 	$self->get_rate_limit->{resources}{core}{reset} - time
+# takes text/plain or text/x-markdown
 	}
+# takes text/plain or text/x-markdown
 
 sub Ghojo::PublicUser::search_rate_limit ( $self ) {
 	$self->get_rate_limit->{resources}{search}{limit};
