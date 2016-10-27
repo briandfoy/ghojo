@@ -8,7 +8,11 @@ use parent qw( Hash::AsObject ); # as a quick fix. I'd rather lose the dependenc
 use Ghojo::Mixins::SuccessError;
 
 # until we need to build out these classes
-my @classes = qw( SSHKey GPGKey UserRecord Email Grant Repo );
+my @classes = qw(
+	SSHKey GPGKey UserRecord Email Grant Repo
+	Emoji License Gitignore Content RawContent
+	);
+
 foreach my $class ( @classes ) {
 	no strict 'refs';
 	@{ "Ghojo::Data::$class\::ISA" } = __PACKAGE__;
