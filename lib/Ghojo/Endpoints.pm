@@ -7,6 +7,8 @@ use Ghojo::Endpoint::Labels;
 use Ghojo::Endpoint::Repositories;
 use Ghojo::Endpoint::Miscellaneous;
 
+=encoding utf8
+
 =head1 SOURCE AVAILABILITY
 
 This module is in Github:
