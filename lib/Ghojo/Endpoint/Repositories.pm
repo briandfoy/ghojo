@@ -68,6 +68,23 @@ sub Ghojo::PublicUser::get_repo ( $self, $owner, $repo ) {
 		);
 	}
 
+=item * repo_is_available( OWNER, REPO )
+
+Return true is the repo is available, and false otherwise.
+
+Repositories might be hidden or private, so they might appear to
+not exist. The GitHub API purposedly does not distinguish between
+hidden and non-existent repos.
+
+You might want to use C<repo_check> instead. It will cache the result.
+
+=cut
+
+sub Ghojo::PublicUser::repo_is_available ( $self, $owner, $repo ) {
+	$self->entered_sub;
+	$self->get_repo( $owner, $repo )->is_success;
+	}
+
 =item * get_repos_for_username( USERNAME, CALLBACK, HASH_REF )
 
 	type		enum{ all, owner*, member }

@@ -70,6 +70,17 @@ sub Ghojo::PublicUser::get_user ( $self, $user ) {
 		);
 	}
 
+=item * user_is_available( USER )
+
+You might want to use C<repo_check> instead. It will cache the result.
+
+=cut
+
+sub Ghojo::PublicUser::user_is_available ( $self, $user ) {
+	$self->entered_sub;
+	$self->get_user( $user )->is_success;
+	}
+
 =item * get_all_users( CALLBACK )
 
 This will eventually return millions of rows! The public API can use
