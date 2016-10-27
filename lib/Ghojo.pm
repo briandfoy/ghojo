@@ -1086,9 +1086,9 @@ sub single_resource ( $self, $verb, $url, %args  ) {
 	# XXX: has to handle Accepts too
 	$headers{'Authorization'} = $self->auth_string if $self->auth_string;
 
-	$headers{'Accept'} = [ 'application/vnd.github.v3+json' ];
-	push @{ $headers{'Accept'} }, $args{accept};
-	$headers{'Accept'} = join ', ', $headers{'Accept'}->@*;
+	# this is the base content-type for the API
+	$headers{'Accept'} = $args{accepts} // 'application/vnd.github.v3+json';
+	$self->logger->debug( "Accept header is: $headers{'Accept'}" );
 
 	# XXX maybe check that this makes sense
 	$headers{'Content-type'}  = $args{content_type} if $args{content_type};
