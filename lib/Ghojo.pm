@@ -1126,6 +1126,9 @@ sub single_resource ( $self, $verb, $url, %args  ) {
 			} )
 		}
 
+			extras => {
+				tx => $tx,
+				},
 	$self->logger->debug( sub {
 		"Got HTTP status $status while expecting one of "
 		. join ', ', $args{expected_http_status}->@*
