@@ -48,7 +48,7 @@ sub repos ( $self, $callback = sub {}, $query = {} ) {
 	}
 
 
-=item * get_repo ( OWNER, REPO )
+=item * Ghojo::PublicUser::get_repo ( OWNER, REPO )
 
 The parent and source objects are present when the repository is a
 fork. parent is the repository this repository was forked from, source
@@ -211,7 +211,7 @@ sub Ghojo::AuthenticatedUser::create_repo ( ) {
 
 	}
 
-sub sub Ghojo::AuthenticatedUser::create_repo_in_org ( ) {
+sub Ghojo::AuthenticatedUser::create_repo_in_org ( ) {
 	# POST /orgs/:org/repos
 	}
 
@@ -322,7 +322,5 @@ This program is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
 
 =cut
-
-__PACKAGE__
 
 __PACKAGE__
