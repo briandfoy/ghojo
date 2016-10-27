@@ -1103,7 +1103,7 @@ sub single_resource ( $self, $verb, $url, %args  ) {
 	# if it was the expected status, take the JSON in the
 	# message body and bless it into the right class
 	if( grep { $_ == $status } $args{expected_http_status}->@* ) {
-		my $data = $tx->res->json;
+		my $data = $args{raw_content} ? $tx->res->body : $tx->res->json;
 		if( exists $args{bless_into} ) {
 			$self->logger->debug( sprintf "Response has %s reference", ref $data );
 			$self->logger->debug( "Blessing into $args{bless_into}" );
