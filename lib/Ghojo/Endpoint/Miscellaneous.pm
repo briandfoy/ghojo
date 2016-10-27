@@ -498,9 +498,32 @@ sub Ghojo::PublicUser::get_github_info ( $self ) {
 
 =over 4
 
-=item * rate_limit
+=item * get_rate_limit
 
-Get your current rate limit status	GET	/rate_limit
+Get your current rate limit status. If there's an error, it returns
+a L<Ghojo::Result> object. Otherwise, it returns a C<Ghojo::Data::Rate>
+object. That's a hash that looks something like:
+
+	{
+	  "resources": {
+		"core": {
+		  "limit": 5000,
+		  "remaining": 4999,
+		  "reset": 1372700873
+		},
+		"search": {
+		  "limit": 30,
+		  "remaining": 18,
+		  "reset": 1372697452
+		}
+	  },
+	}
+
+This removes the C<rate> key that is deprecated.
+
+Although this endpoint does not count against your limit, there's a cache
+time of 60 seconds (or whatever C<rate_limit_cache_time> returns). This
+is just to be nice to the network.
 
 This is a public API endpoint.
 
@@ -508,8 +531,83 @@ L<https://developer.github.com/v3/rate_limit/>
 
 =cut
 
-sub Ghojo::PublicUser::rate_limit ( $self ) {
-	$self->not_implemented
+
+BEGIN {
+	my $cache = [];
+	package Ghojo;
+	sub rate_limit_cache_time { 60 }
+	sub set_rate_limit_cache   ( $self, $data ) { $cache = [ $data, time ] }
+	sub get_rate_limit_cache   ( $self )        { $cache }
+	sub clear_rate_limit_cache ( $self )        { $cache = [] }
+	sub rate_limit_cache_is_fresh ( $self )    {
+		defined $cache->[0]
+			and
+		time - $cache->[0] <= $self->rate_limit_cache_time
+		}
+	}
+
+sub Ghojo::PublicUser::get_rate_limit ( $self ) {
+	my $cache = $self->get_rate_limit_cache;
+	return $cache->[0] if $self->rate_limit_cache_is_fresh;
+
+	my $result = $self->get_single_resource(
+		$self->endpoint_to_url( '/rate_limit' ),
+		bless_into => 'Ghojo::Data::Rate',
+		);
+
+	return $result if $result->is_error;
+
+	delete $result->{rate};
+
+	$self->set_rate_limit_cache( $result );
+
+	$cache->[0];
+	}
+
+sub Ghojo::PublicUser::is_public_api_rate_limit ( $self ) { $self->core_rate_limit < 100 }
+
+sub Ghojo::PublicUser::is_authenticated_api_rate_limit ( $self ) { $self->core_rate_limit == 5000 }
+
+sub Ghojo::PublicUser::core_rate_limit ( $self ) {
+	$self->get_rate_limit->{resources}{core}{limit};
+	}
+
+sub Ghojo::PublicUser::core_rate_limit_left ( $self ) {
+	$self->get_rate_limit->{resources}{core}{remaining};
+	}
+
+sub Ghojo::PublicUser::core_rate_limit_percent_left ( $self ) {
+	sprintf "%d",
+		100
+			*
+		( $self->core_rate_limit - $self->core_rate_limit_left )
+			/ #/
+		$self->core_rate_limit;
+	}
+
+sub Ghojo::PublicUser::seconds_until_core_rate_limit_reset ( $self ) {
+	$self->get_rate_limit->{resources}{core}{reset} - time
+	}
+
+sub Ghojo::PublicUser::search_rate_limit ( $self ) {
+	$self->get_rate_limit->{resources}{search}{limit};
+	}
+
+sub Ghojo::PublicUser::search_rate_limit_left ( $self ) {
+	$self->get_rate_limit->{resources}{search}{remaining};
+	}
+
+sub Ghojo::PublicUser::search_rate_limit_percent_left ( $self ) {
+	sprintf "%d",
+		100
+			*
+		( $self->search_rate_limit - $self->search_rate_limit_left )
+			/ #/
+		$self->search_rate_limit;
+	}
+
+sub Ghojo::PublicUser::seconds_until_search_rate_limit_reset ( $self ) {
+	$self->get_rate_limit->{resources}{search}{reset} - time
 	}
 
 =back
