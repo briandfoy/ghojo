@@ -63,6 +63,7 @@ our $VERSION = '1.001001';
 
 use Mojo::Collection;
 use Mojo::URL;
+use Mojo::Util qw(dumper);
 
 =encoding utf8
 
@@ -853,11 +854,6 @@ sub ua ( $self ) {
 	state $rc = require Mojo::UserAgent;
 	state $ua = do {
 		my $ua = Mojo::UserAgent->new;
-		$ua->on( start => sub {
-			my( $ua, $tx ) = @_;
-			# https://developer.github.com/v3/#current-version
-			$tx->req->headers->accept( 'application/vnd.github.v3+json' );
-			});
 		$ua;
 	};
 	$ua->transactor->name( sprintf "Ghojo %s", __PACKAGE__->VERSION );
@@ -1083,7 +1079,6 @@ sub single_resource ( $self, $verb, $url, %args  ) {
 	my @args = ( $url );
 	my %headers;
 
-	# XXX: has to handle Accepts too
 	$headers{'Authorization'} = $self->auth_string if $self->auth_string;
 
 	# this is the base content-type for the API
@@ -1107,8 +1102,11 @@ sub single_resource ( $self, $verb, $url, %args  ) {
 		push @args, $args{body}
 		}
 
+	$self->logger->debug( sub { "Args to ua are:\n" . dumper( \@args ) } );
+
 	# XXX: also look in %args for 'json' and 'form'
 	my $tx = $self->ua->$verb( @args );
+	$self->logger->debug( "Request was:\n" . $tx->req->to_string );
 	$self->increment_query_count;
 
 	# check that status is one of the expected statuses
@@ -1154,23 +1152,50 @@ sub single_resource ( $self, $verb, $url, %args  ) {
 	# try to re-login?
 	if( $status == 401 ) {
 		$self->logger->debug( "The request requires authentication!" );
-		return Ghojo::Result->error;
+		return Ghojo::Result->error({
+			message => "The request requires authentication!",
+			extras => {
+				tx => $tx,
+				},
+			});
 		}
 
 	if( $status == 403 ) {
 		$self->logger->debug( "The request was forbidden!" );
-		my $data = $tx->res->json;
-		$self->logger->debug( sub {  $tx->res->json } );
-		return Ghojo::Result->error;
+		return Ghojo::Result->error({
+			message => "The request was forbidden!",
+			extras => {
+				tx => $tx,
+				},
+			});
 		}
-	# if the status is not the expected status, look at the response
-	# to see why it failed.
 
-		# connection failure
+	if( $status == 415 ) {
+		$self->logger->debug( "The request requires additional media types in Accept" );
+		return Ghojo::Result->error({
+			message => "The request requires additional media types in Accept!",
+			extras => {
+				tx => $tx,
+				},
+			});
+		}
 
-		# bad request
+	if( 400 <= $status and $status <= 499 ) {
+		$self->logger->debug( "Unhandled 4xx request" );
+		return Ghojo::Result->error({
+			message => "Unhandled 4xx request",
+			extras => {
+				tx => $tx,
+				},
+			});
+		}
 
-		# rate limit
+	return Ghojo::Result->error({
+		message => "Unhandled error",
+		extras => {
+			tx => $tx,
+			},
+		});
 	}
 
 sub get_single_resource ( $self, $url, %args ) {
