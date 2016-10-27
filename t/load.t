@@ -1,6 +1,6 @@
 #!perl
 
-use Test::More 0.95;
+use Test::More 1;
 
 $ENV{GHOJO_LOG_LEVEL} //= 'OFF';
 

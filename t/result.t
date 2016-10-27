@@ -1,4 +1,4 @@
-use Test::More;
+use Test::More 1;
 
 my $class = 'Ghojo::Result';
 

@@ -1,7 +1,7 @@
 #!perl
 use v5.24.0;
 
-use Test::More 0.95;
+use Test::More 1;
 use Data::Dumper;
 use File::Spec::Functions;
 use Mojo::Loader qw{data_section};
