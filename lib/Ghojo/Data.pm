@@ -14,7 +14,20 @@ foreach my $class ( @classes ) {
 	@{ "Ghojo::Data::$class\::ISA" } = __PACKAGE__;
 	}
 
-__PACKAGE__
+=encoding utf8
+
+=head1 NAME
+
+Ghojo::Data - Create classes and inheritance for the JSON responses
+
+=head1 SYNOPSIS
+
+	use Ghojo::Data;
+
+=head1 DESCRIPTION
+
+This module is here until we come up with a better way to play with the
+responses from the API. Now it's just all L<Hash::AsObject>.
 
 =head1 SOURCE AVAILABILITY
 
