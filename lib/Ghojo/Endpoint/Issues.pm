@@ -6,15 +6,21 @@ no warnings qw(experimental::signatures);
 
 =head2 Issues
 
+
+application/vnd.github.VERSION.raw+json
+application/vnd.github.VERSION.text+json
+application/vnd.github.VERSION.html+json
+application/vnd.github.VERSION.full+json
+
 =over 4
 
-=item * issues( USER, REPO, CALLBACK, HASHREF )
+=item * issuess_on_repo( USER, REPO, CALLBACK, HASHREF )
 
-=item * all_issues( USER, REPO, CALLBACK, HASHREF )
+=item * all_issuess_on_repo( USER, REPO, CALLBACK, HASHREF )
 
-=item * open_issues( USER, REPO, CALLBACK, HASHREF )
+=item * open_issuess_on_repo( USER, REPO, CALLBACK, HASHREF )
 
-=item * closed_issues( USER, REPO, CALLBACK, HASHREF )
+=item * closed_issuess_on_repo( USER, REPO, CALLBACK, HASHREF )
 
 Get the information for all the labels of a repo.
 
@@ -54,12 +60,7 @@ The keys of the HASHREF can be:
 
 =cut
 
-sub Ghojo::PublicUser::issues ( $self, $owner, $repo, $callback = sub { $_[0] } , $args = { 'state' => 'open' } ) {
-	$self->entered_sub;
-
-	my $repo_check_result = $self->check_repo( $owner, $repo );
-	return $repo_check_result if $repo_check_result->is_error;
-
+sub Ghojo::get_repo_issues_profile ( $self ) {
 	my $profile = {
 		params => {
 			milestone   => qr/\A (\*|none|\d+) \z/x,
@@ -74,31 +75,55 @@ sub Ghojo::PublicUser::issues ( $self, $owner, $repo, $callback = sub { $_[0] } 
 			},
 		required => [],
 		};
+	}
+
+sub Ghojo::get_all_issues_profile ( $self ) {
+	my $profile = {
+		params => {
+			filter      => [ qw(assigned created mentioned subscribed all) ],
+			'state'     => [ qw(open closed all) ],
+			labels      => sub { 1 },
+			'sort'      => [ qw(created updated comments) ],
+			direction   => [ qw(asc desc) ],
+			since       => sub { Ghojo::Type->is_iso8601( $_[0] ) },
+			},
+		required => [],
+		};
+	}
+
+sub Ghojo::PublicUser::issues_on_repo ( $self, $owner, $repo, $callback = sub { $_[0] } , $args = { 'state' => 'open' } ) {
+	$self->entered_sub;
+
+	my $repo_check_result = $self->check_repo( $owner, $repo );
+	return $repo_check_result if $repo_check_result->is_error;
+
+	my $result = $self->validate_profile( $args, $self->get_repo_issues_profile );
+	return $result if $result->is_error;
 
 	$self->get_paged_resources(
 		$self->endpoint_to_url( "/repos/:owner/:repo/issues", { owner => $owner, repo => $repo } ),
-		callback => $callback,
+		callback   => $callback,
 		bless_into => 'Ghojo::Data::Issue',
-		$args->%*
+		form       => $args
 		);
 	}
 
-sub Ghojo::PublicUser::all_issues ( $self, $user, $repo, $callback = sub { $_[0] }, $query = {} ) {
-	$query->{'state'} = 'all';
-	$self->issues( $user, $repo, $callback, $query );
+sub Ghojo::PublicUser::all_issues_on_repo ( $self, $user, $repo, $callback = sub { $_[0] }, $args = {} ) {
+	$args->{'state'} = 'all';
+	$self->issues_on_repo( $user, $repo, $callback, $args );
 	}
 
-sub Ghojo::PublicUser::open_issues ( $self, $user, $repo, $callback = sub { $_[0] }, $query = {} ) {
-	$query->{'state'} = 'open';
-	$self->issues( $user, $repo, $callback, $query );
+sub Ghojo::PublicUser::open_issuess_on_repo ( $self, $user, $repo, $callback = sub { $_[0] }, $args = {} ) {
+	$args->{'state'} = 'open';
+	$self->issues_on_repo( $user, $repo, $callback, $args );
 	}
 
-sub Ghojo::PublicUser::closed_issues ( $self, $user, $repo, $callback = sub { $_[0] }, $query = {} ) {
-	$query->{'state'} = 'closed';
-	$self->issues( $user, $repo, $callback, $query );
+sub Ghojo::PublicUser::closed_issuess_on_repo ( $self, $user, $repo, $callback = sub { $_[0] }, $args = {} ) {
+	$args->{'state'} = 'closed';
+	$self->issues_on_repo( $user, $repo, $callback, $args );
 	}
 
-=item * issue( USER, REPO, NUMBER )
+=item * get_issue_by_number( USER, REPO, NUMBER )
 
 Get the information for a particular label.
 
@@ -110,15 +135,224 @@ It returns a hashref:
 	'name' => 'Win32'
 	}
 
-This implements C<GET /repos/:owner/:repo/labels/:name> from L<http://developer.github.com/v3/issues/labels/>.
+This is a public API endpoint.
+
+L<https://developer.github.com/v3/issues/#get-a-single-issue>
 
 =cut
 
-sub Ghojo::PublicUser::issue ( $self, $user, $repo, $number ) {
-	my $query_url = $self->query_url( "/repos/%s/%s/issues/%d", $user, $repo, $number );
-	$self->logger->trace( "Query URL is $query_url" );
-	my $tx = $self->ua->get( $query_url );
-	$tx->res->json;
+sub Ghojo::PublicUser::get_issue_by_number ( $self, $owner, $repo, $number ) {
+	$self->get_single_resource(
+		$self->endpoint_to_url( '/repos/:owner/:repo/issues/:id' => {
+			owner => $owner,
+			repo  => $repo,
+			id    => $number }),
+		bless_into => 'Ghojo::Data::Issue',
+		accepts    => 'application/vnd.github.squirrel-girl-preview',
+		);
+	}
+
+=item * get_issues_owned_by_you()
+
+List all issues assigned to the authenticated user across all visible
+repositories including owned repositories, member repositories, and
+organization repositories.
+
+This is an authenticated API endpoint.
+
+L<https://developer.github.com/v3/issues/#list-issues>
+
+=cut
+
+sub Ghojo::AuthenticatedUser::get_issues_owned_by_you ( $self, $callback = sub { $_[0] }, $args = {} ) {
+	my $result = $self->validate_profile( $args, $self->get_all_issues_profile );
+	return $result if $result->is_error;
+
+	$self->get_paged_resources(
+		$self->endpoint_to_url( '/issues' ),
+		bless_into => 'Ghojo::Data::Issue',
+		callback   => $callback,
+		accepts    => 'application/vnd.github.squirrel-girl-preview',
+		);
+	}
+
+=item * get_issues_owned_by_you()
+
+List all issues across owned and member repositories assigned to
+the authenticated user:
+
+This is an authenticated API endpoint.
+
+L<https://developer.github.com/v3/issues/#list-issues>
+
+=cut
+
+sub Ghojo::AuthenticatedUser::get_issues_owned_by_you2 ( $self, $callback = sub { $_[0] }, $args = {} ) {
+	my $result = $self->validate_profile( $args, $self->get_all_issues_profile );
+	return $result if $result->is_error;
+
+	$self->get_paged_resources(
+		$self->endpoint_to_url( '/issues' ),
+		bless_into => 'Ghojo::Data::Issue',
+		callback   => $callback,
+		accepts    => 'application/vnd.github.squirrel-girl-preview',
+		);
+	}
+
+=item * get_issues_in_org_owned_by_you( ORGANIZATION, CALLBACK, ARGS )
+
+List all issues for a given organization assigned to the authenticated user:
+
+This is an authenticated API endpoint.
+
+L<https://developer.github.com/v3/issues/#list-issues>
+
+=cut
+
+sub Ghojo::AuthenticatedUser::get_issues_in_org_owned_by_you ( $self, $organization, $callback = sub { $_[0] }, $args = {} ) {
+	my $result = $self->validate_profile( $args, $self->get_all_issues_profile );
+	return $result if $result->is_error;
+
+	$self->get_paged_resources(
+		$self->endpoint_to_url( '/orgs/:org/issues', { org => $organization } ),
+		bless_into => 'Ghojo::Data::Issue',
+		callback   => $callback,
+		accepts    => 'application/vnd.github.squirrel-girl-preview',
+		);
+	}
+
+=item * create_an_issue( OWNER, REPO, ARGS )
+
+POST /repos/:owner/:repo/issues
+
+	title       string Required.   The title of the issue.
+	body        string	           The contents of the issue.
+	# assignee    string	           Login for the user that this issue should be assigned to. NOTE: Only users with push access can set the assignee for new issues. The assignee is silently dropped otherwise. This field is deprecated.
+	milestone   integer	           The number of the milestone to associate this issue with. NOTE: Only users with push access can set the milestone for new issues. The milestone is silently dropped otherwise.
+	labels      array of strings   Labels to associate with this issue. NOTE: Only users with push access can set labels for new issues. Labels are silently dropped otherwise.
+	assignees	array of strings   Logins for Users to assign to this issue. NOTE: Only users with push access can set assignees for new issues. Assignees are silently dropped otherwise.
+
+This is an authenticated API endpoint.
+
+L<https://developer.github.com/v3/issues/#create-an-issue>
+
+=cut
+
+sub Ghojo::AuthenticatedUser::create_an_issue ( $self, $owner, $repo, $args = {} ) {
+	$self->entered_sub;
+
+	my $profile = {
+		params => {
+			title     => qr/\S/,
+			body      => qr/\S/,
+			milestone => sub { $self->has_push_access( $owner, $repo ) and $_[0] =~ m/\A[0-9]+\z/ },
+			labels    => sub { $self->has_push_access( $owner, $repo ) and ref $_[0] eq ref [] },
+			# also check that the users exist?
+			assignees => sub { $self->has_push_access( $owner, $repo ) and ref $_[0] eq ref [] },
+			},
+		required => [ qw(title) ],
+		};
+
+	my $result = $self->validate_profile( $args, $profile );
+	return $result if $result->is_error;
+
+	$self->post_single_resource(
+		$self->endpoint_to_url( '/repos/:owner/:repo/issues' => {
+			owner  => $owner,
+			repo   => $repo,
+			}),
+		json => $args,
+		);
+	}
+
+=item * edit_an_issue
+
+PATCH /repos/:owner/:repo/issues/:number
+
+Issue owners and users with push access can edit an issue.
+
+
+	title       string	           The title of the issue.
+	body        string	           The contents of the issue.
+	assignee	string	           Login for the user that this issue should be assigned to. This field is deprecated.
+	milestone   integer	           The number of the milestone to associate this issue with or null to remove current. NOTE: Only users with push access can set the milestone for issues. The milestone is silently dropped otherwise.
+	labels      array of strings   Labels to associate with this issue. Pass one or more Labels to replace the set of Labels on this Issue. Send an empty array ([]) to clear all Labels from the Issue. NOTE: Only users with push access can set labels for issues. Labels are silently dropped otherwise.
+	assignees   array of strings   Logins for Users to assign to this issue. Pass one or more user logins to replace the set of assignees on this Issue. .Send an empty array ([]) to clear all assignees from the Issue. NOTE: Only users with push access can set assignees for new issues. Assignees are silently dropped otherwise.
+
+This is an authenticated API endpoint.
+
+L<https://developer.github.com/v3/issues/#edit-an-issue>
+
+=cut
+
+sub edit_an_issue ( $self, $owner, $repo, $number, $args = {} ) {
+	$self->entered_sub;
+
+	my $profile = {
+		params => {
+			title     => qr/\S/,
+			body      => qr/\S/,
+			milestone => sub { $self->has_push_access( $owner, $repo ) and $_[0] =~ m/\A[0-9]+\z/ },
+			labels    => sub { $self->has_push_access( $owner, $repo ) and ref $_[0] eq ref [] },
+			# also check that the users exist?
+			assignees => sub { $self->has_push_access( $owner, $repo ) and ref $_[0] eq ref [] },
+			},
+		required => [ qw(title) ],
+		};
+
+	my $result = $self->validate_profile( $args, $profile );
+	return $result if $result->is_error;
+
+	$self->patch_single_resource(
+		$self->endpoint_to_url( '/repos/:owner/:repo/issues/:number' => {
+			owner  => $owner,
+			repo   => $repo,
+			number => $number,
+			}),
+		json => $args,
+		);
+	}
+
+=item * lock_an_issue
+
+Users with push access can lock an issue's conversation.
+
+PUT /repos/:owner/:repo/issues/:number/lock
+
+This is an authenticated API endpoint.
+
+L<https://developer.github.com/v3/issues/#lock-an-issue>
+
+=cut
+
+sub lock_an_issue ( $self, $owner, $repo, $number ) {
+	$self->put_single_resource(
+		$self->endpoint_to_url( '/repos/:owner/:repo/issues/:number/lock' => {
+			owner => $owner,
+			repo  => $repo,
+			number => $number }),
+		);
+	}
+
+=item * unlock_an_issue
+
+Users with push access can unlock an issue's conversation.
+
+DELETE /repos/:owner/:repo/issues/:number/lock
+
+This is an authenticated API endpoint.
+
+L<https://developer.github.com/v3/issues/#unlock-an-issue>
+
+=cut
+
+sub unlock_an_issue ( $self, $owner, $repo, $number ) {
+	$self->delete_single_resource(
+		$self->endpoint_to_url( '/repos/:owner/:repo/issues/:number/lock' => {
+			owner => $owner,
+			repo  => $repo,
+			number => $number }),
+		);
 	}
 
 =back

@@ -23,7 +23,7 @@ my $callback = sub ( $item, $tx ) {
 	};
 
 say "Issues for $pair";
-my $result = $ghojo->issues( $owner, $repo, $callback );
+my $result = $ghojo->issues_on_repo( $owner, $repo, $callback );
 if( $result->is_error ) {
 	say "Error! " . $result->message;
 	exit 1;
