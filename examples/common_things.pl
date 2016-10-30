@@ -1,6 +1,7 @@
 use v5.24;
 
-use Data::Dumper;
+use Ghojo;
+use Mojo::Util qw(dumper);
 
 # BurnItToTheGround is my throw-away account for GitHub API testing
 sub default_username  { 'BurnItToTheGround' }
@@ -19,6 +20,16 @@ sub prompt_for_password {
 	Term::ReadKey::ReadMode('restore');
 	print $1 if $password =~ s/(\s+)\z//;
 	$password;
+	}
+
+sub get_authenticated_user {
+	my $hash = {
+		username => username(),
+		password => password(),
+		};
+	say dumper( $hash );
+
+	my $ghojo = Ghojo->new( $hash );
 	}
 
 1;
