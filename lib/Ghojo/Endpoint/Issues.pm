@@ -144,6 +144,33 @@ sub Ghojo::PublicUser::get_issue_by_number ( $self, $owner, $repo, $number ) {
 		);
 	}
 
+=item * issue_exists( USER, REPO, NUMBER )
+
+=cut
+
+sub Ghojo::PublicUser::issue_exists ( $self, $owner, $repo, $number ) {
+	$self->get_issue_by_number( $owner, $repo, $number )->is_success;
+	}
+
+=item * issue_is_open( USER, REPO, NUMBER )
+
+=cut
+
+sub Ghojo::PublicUser::issue_is_open ( $self, $owner, $repo, $number ) {
+	! $self->issue_is_closed( $owner, $repo, $number );
+	}
+
+=item * issue_is_closed( USER, REPO, NUMBER )
+
+=cut
+
+sub Ghojo::PublicUser::issue_is_closed ( $self, $owner, $repo, $number ) {
+	my $result = $self->get_issue_by_number( $owner, $repo, $number );
+	return $result if $result->is_error;
+
+	defined $result->values->first->{closed_at};
+	}
+
 =item * get_issues_owned_by_you()
 
 List all issues assigned to the authenticated user across all visible
@@ -323,6 +350,7 @@ sub lock_an_issue ( $self, $owner, $repo, $number ) {
 			owner => $owner,
 			repo  => $repo,
 			number => $number }),
+		expected_http_status => 204,
 		);
 	}
 
@@ -369,3 +397,5 @@ it under the same terms as Perl itself.
 =cut
 
 __PACKAGE__
+
+__END__
