@@ -6,6 +6,7 @@ use Mojo::Util qw(dumper);
 # BurnItToTheGround is my throw-away account for GitHub API testing
 sub default_username  { 'BurnItToTheGround' }
 sub username          { $ENV{GHOJO_USERNAME} // default_username() }
+sub default_repo      { 'test_repo' }
 
 
 sub password { $ENV{PASSWORD} // prompt_for_password() }
