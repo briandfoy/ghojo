@@ -7,11 +7,11 @@ use Mojo::Util qw(dumper);
 sub default_username  { 'BurnItToTheGround' }
 sub username          { $ENV{GHOJO_USERNAME} // default_username() }
 
-sub default_log_level { 'OFF' }
-sub log_level { $ENV{GHOJO_LOG_LEVEL} // default_log_level() }
 
 sub password { $ENV{PASSWORD} // prompt_for_password() }
+sub default_log_level { 'OFF' }
 
+sub log_level         { $ENV{GHOJO_LOG_LEVEL} // default_log_level() }
 sub prompt_for_password {
 	state $rc = require Term::ReadKey;
 	Term::ReadKey::ReadMode('noecho');
