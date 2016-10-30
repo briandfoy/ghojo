@@ -13,13 +13,17 @@ package Ghojo;
 @Ghojo::PublicUser::ISA        = qw(Ghojo);
 @Ghojo::AuthenticatedUser::ISA = qw(Ghojo::PublicUser);
 
+use Ghojo::Data;
 use Ghojo::Endpoints;
 use Ghojo::Result;
-use Ghojo::Data;
+use Ghojo::Mixins::SuccessError;
+
+sub DESTROY {}
 
 sub AUTOLOAD ( $self, @ ) {
 	$self->entered_sub;
 	our $AUTOLOAD;
+	$self->logger->trace( "AUTOLOADing $AUTOLOAD" );
 
 	my( $class, $method ) = do {
 		if( $AUTOLOAD =~ m/(?<class>.*)::(?<method>.+)/ ) {
@@ -290,9 +294,11 @@ sub new ( $class, $args = {} ) {
 		}
 	elsif( exists $args->{username} and exists $args->{password} ) {
 		$self->logger->trace( 'Authenticating with username and password' );
-		$args->{authenticate} //= 1;
+		$args->{authenticate} //= 0;
 		my $result = $self->login( $args );
 		return $result if $result->is_error;
+		$self->logger->debug( "Login was a success" );
+		$self->logger->debug( "Class is " . $self->class_name );
 		}
 	elsif( 0 && -e $self->token_file ) { # still not sure I like this.
 		$self->logger->trace( 'Authenticating with saved token in default file' );
@@ -375,6 +381,8 @@ do this step for you.
 =cut
 
 sub login ( $self, $args = {} ) {
+	$self->entered_sub;
+
 	$self->{$_} = $args->{$_} for ( qw(username password) );
 	my $tx = $self->ua->get(
 		$self->query_url( '/user' )
@@ -382,19 +390,23 @@ sub login ( $self, $args = {} ) {
 		);
 
 	unless( $tx->success ) {
+		$self->logger->debug( "Login failed" );
+
 		$self->logger->debug( $tx->res->to_string );
 		my $err = $tx->error;
 
 		my @methods = qw( requires_one_time_password requires_authentication is_bad_credentials too_many_login_attempts );
 		foreach my $method ( @methods ) {
+			$self->logger->debug( "Trying $method" );
 			my $error = $self->$method( $tx );
 			return $error if defined $error;
 			}
 
 		# fallback.
+		$self->logger->debug( "Could not figure out the login error" );
 		return Ghojo::Result->error( {
 			description => 'Login failure',
-			message     => 'Undetermined error with logging in',
+			message     => 'Undetermined error while logging in',
 			error_code  => 8,
 			extras      => {
 				tx => $tx
@@ -402,15 +414,20 @@ sub login ( $self, $args = {} ) {
 			}
 			);
 		}
+	$self->logger->debug( "Login succeeded" );
+
+	bless $self, $self->authenticated_user_class;
 
 	# now we should be ready to proceed
 	if ($args->{authenticate}) {
+		$self->logger->trace( "Trying to get a token" );
 		$tx = $self->ua->get( $self->api_base_url );
-		$self->create_authorization; #needs to call the method in the right class
+		my $result = $self->create_authorization; #needs to call the method in the right class
+		return $result if $result->is_error;
 		delete $self->{password};
 		}
 
-	bless $self, $self->authenticated_user_class;
+	Ghojo::Result->success;
 	}
 
 sub requires_one_time_password ( $self, $tx ) {
