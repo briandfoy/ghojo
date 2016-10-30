@@ -17,7 +17,8 @@ use Ghojo::Endpoints;
 use Ghojo::Result;
 use Ghojo::Data;
 
-sub AUTOLOAD ( $self ) {
+sub AUTOLOAD ( $self, @ ) {
+	$self->entered_sub;
 	our $AUTOLOAD;
 
 	my( $class, $method ) = do {
