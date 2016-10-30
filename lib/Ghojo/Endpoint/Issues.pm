@@ -125,15 +125,7 @@ sub Ghojo::PublicUser::closed_issuess_on_repo ( $self, $owner, $repo, $callback 
 
 =item * get_issue_by_number( USER, REPO, NUMBER )
 
-Get the information for a particular label.
-
-It returns a hashref:
-
-	{
-	'color' => '1d76db',
-	'url' => 'https://api.github.com/repos/briandfoy/test-file/labels/Win32',
-	'name' => 'Win32'
-	}
+Get the information for a particular issue.
 
 This is a public API endpoint.
 
