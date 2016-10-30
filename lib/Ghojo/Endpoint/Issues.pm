@@ -108,19 +108,19 @@ sub Ghojo::PublicUser::issues_on_repo ( $self, $owner, $repo, $callback = sub { 
 		);
 	}
 
-sub Ghojo::PublicUser::all_issues_on_repo ( $self, $user, $repo, $callback = sub { $_[0] }, $args = {} ) {
+sub Ghojo::PublicUser::all_issues_on_repo ( $self, $owner, $repo, $callback = sub { $_[0] }, $args = {} ) {
 	$args->{'state'} = 'all';
-	$self->issues_on_repo( $user, $repo, $callback, $args );
+	$self->issues_on_repo( $owner, $repo, $callback, $args );
 	}
 
-sub Ghojo::PublicUser::open_issuess_on_repo ( $self, $user, $repo, $callback = sub { $_[0] }, $args = {} ) {
+sub Ghojo::PublicUser::open_issuess_on_repo ( $self, $owner, $repo, $callback = sub { $_[0] }, $args = {} ) {
 	$args->{'state'} = 'open';
-	$self->issues_on_repo( $user, $repo, $callback, $args );
+	$self->issues_on_repo( $owner, $repo, $callback, $args );
 	}
 
-sub Ghojo::PublicUser::closed_issuess_on_repo ( $self, $user, $repo, $callback = sub { $_[0] }, $args = {} ) {
+sub Ghojo::PublicUser::closed_issuess_on_repo ( $self, $owner, $repo, $callback = sub { $_[0] }, $args = {} ) {
 	$args->{'state'} = 'closed';
-	$self->issues_on_repo( $user, $repo, $callback, $args );
+	$self->issues_on_repo( $owner, $repo, $callback, $args );
 	}
 
 =item * get_issue_by_number( USER, REPO, NUMBER )
