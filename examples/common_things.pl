@@ -5,7 +5,7 @@ use Mojo::Util qw(dumper);
 
 # BurnItToTheGround is my throw-away account for GitHub API testing
 sub default_username  { 'BurnItToTheGround' }
-sub username { $ARGV[0] // default_username() }
+sub username          { $ENV{GHOJO_USERNAME} // default_username() }
 
 sub default_log_level { 'OFF' }
 sub log_level { $ENV{GHOJO_LOG_LEVEL} // default_log_level() }
