@@ -1,0 +1,12 @@
+application/vnd.github.VERSION.{raw,html,text,full,diff,patch}+json
+
+application/vnd.github.VERSION.raw+json
+application/vnd.github.VERSION.text+json
+application/vnd.github.VERSION.html+json
+application/vnd.github.VERSION.full+json
+application/vnd.github.VERSION.diff
+application/vnd.github.VERSION.patch
+
+
+application/vnd.github.VERSION.raw
+application/vnd.github.VERSION.html
