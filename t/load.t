@@ -8,12 +8,6 @@ my @classes = qw(
 	Ghojo
 	Ghojo::Data
 	Ghojo::Endpoints
-	Ghojo::Endpoint::Authorizations
-	Ghojo::Endpoint::Issues
-	Ghojo::Endpoint::Labels
-	Ghojo::Endpoint::Miscellaneous
-	Ghojo::Endpoint::Repositories
-	Ghojo::Endpoint::Users
 	Ghojo::Mixins::SuccessError
 	Ghojo::Result
 	);
