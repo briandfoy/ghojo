@@ -11,6 +11,14 @@ use Mojo::URL;
 
 =encoding utf8
 
+=head1 NAME
+
+Ghojo::Endpoint::Labels - The endpoints that deal with labels
+
+=head1 SYNOPSIS
+
+=head1 DESCRIPTION
+
 =head2 Labels
 
     # http://developer.github.com/v3/issues/labels/

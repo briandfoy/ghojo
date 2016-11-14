@@ -11,6 +11,23 @@ use Mojo::URL;
 
 =encoding utf8
 
+=head1 NAME
+
+Ghojo::Endpoint::Issues - The endpoints that deal with issues
+
+=head1 SYNOPSIS
+
+
+=head1 DESCRIPTION
+
+	Issues
+		Assignees
+		Comments
+		Events
+		Labels
+		Milestones
+		Timeline
+
 =head2 Issues
 
 

@@ -20,7 +20,46 @@ Ghojo::Endpoint::Search - The endpoints that deal with searches
 
 =head1 DESCRIPTION
 
-=head2  General object thingys
+	Search
+		Repositories
+		Code
+		Issues
+		Users
+		Legacy Search
+
+=head2  Repositories
+
+=over 4
+
+=item *
+
+=back
+
+=head2  Code
+
+=over 4
+
+=item *
+
+=back
+
+=head2  Issues
+
+=over 4
+
+=item *
+
+=back
+
+=head2  Users
+
+=over 4
+
+=item *
+
+=back
+
+=head2  Legacy search
 
 =over 4
 

@@ -17,10 +17,30 @@ Ghojo::Endpoint::PullRequests - The endpoints that deal with organizations
 
 =head1 SYNOPSIS
 
+	Organizations
+		Members
+		Teams
+		Webhooks
 
 =head1 DESCRIPTION
 
-=head2  General object thingys
+=head2  Members
+
+=over 4
+
+=item *
+
+=back
+
+=head2  Teams
+
+=over 4
+
+=item *
+
+=back
+
+=head2  Webhooks
 
 =over 4
 

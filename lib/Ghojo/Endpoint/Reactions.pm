@@ -20,7 +20,37 @@ Ghojo::Endpoint::PullRequests - The endpoints that deal with pull requests
 
 =head1 DESCRIPTION
 
-=head2  General object thingys
+	Reactions
+		Commit Comment
+		Issue
+		Issue Comment
+		Pull Request Review Comment
+
+=head2  Commit comment
+
+=over 4
+
+=item *
+
+=back
+
+=head2  Issue
+
+=over 4
+
+=item *
+
+=back
+
+=head2  Issue comment
+
+=over 4
+
+=item *
+
+=back
+
+=head2  Pull request review comment
 
 =over 4
 

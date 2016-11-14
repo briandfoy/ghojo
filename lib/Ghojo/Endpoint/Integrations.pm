@@ -20,7 +20,19 @@ Ghojo::Endpoint::Integrations - The endpoints that deal with integrations
 
 =head1 DESCRIPTION
 
-=head2  General object thingys
+	Integrations
+		Integrations
+		Installations
+
+=head2  Integrations
+
+=over 4
+
+=item *
+
+=back
+
+=head2  Installations
 
 =over 4
 

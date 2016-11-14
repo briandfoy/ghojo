@@ -20,7 +20,48 @@ Ghojo::Endpoint::Activity - The endpoints that deal with activity
 
 =head1 DESCRIPTION
 
+	Activity
+		Events
+		Feeds
+		Notifications
+		Starring
+		Watching
+
 =head2  General object thingys
+
+=over 4
+
+=item *
+
+=back
+
+=head2 Events
+
+=over 4
+
+=item *
+
+=back
+
+=head2 Feeds
+
+=over 4
+
+=item *
+
+=back
+
+=head2 Notifications
+
+=head2 Starring
+
+=over 4
+
+=item *
+
+=back
+
+=head2 Watching
 
 =over 4
 

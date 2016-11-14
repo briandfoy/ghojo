@@ -20,7 +20,19 @@ Ghojo::Endpoint::Migrations - The endpoints that deal with migrations
 
 =head1 DESCRIPTION
 
-=head2  General object thingys
+	Migration
+		Migrations
+		Source Imports
+
+=head2  Migrations
+
+=over 4
+
+=item *
+
+=back
+
+=head2  Source imports
 
 =over 4
 

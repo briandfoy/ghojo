@@ -23,6 +23,13 @@ Ghojo::Endpoint::Miscellaneous - endpoints with no other place to be
 
 =head1 DESCRIPTION
 
+	* Miscellaneous ( Ghojo/Miscellaneous.pm )
+		* Emojis
+		* Gitignore
+		* Licenses
+		* Markdown
+		* Meta
+		* Rate Limit
 
 =head2 Emojis
 

@@ -11,6 +11,35 @@ use Mojo::URL;
 
 =encoding utf8
 
+=head1 NAME
+
+Ghojo::Endpoint::Repositories - The endpoints that deal with repositories
+
+=head1 SYNOPSIS
+
+
+=head1 DESCRIPTION
+
+	Repositories
+		Branches
+		Collaborators
+		Comments
+		Commits
+		Contents
+		Deploy Keys
+		Deployments
+		Downloads
+		Forks
+		Invitations
+		Merging
+		Pages
+		Projects
+		Releases
+		Statistics
+		Statuses
+		Traffic
+		Webhooks
+
 =head2 Repositories
 
 =over 4

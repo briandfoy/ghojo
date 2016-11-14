@@ -20,7 +20,46 @@ Ghojo::Endpoint::GitData - The endpoints that deal with git data
 
 =head1 DESCRIPTION
 
-=head2  General object thingys
+	Git Data
+		Blobs
+		Commits
+		References
+		Tags
+		Trees
+
+=head2 Blobs
+
+=over 4
+
+=item *
+
+=back
+
+=head2 Commits
+
+=over 4
+
+=item *
+
+=back
+
+=head2 References
+
+=over 4
+
+=item *
+
+=back
+
+=head2 Tags
+
+=over 4
+
+=item *
+
+=back
+
+=head2 Trees
 
 =over 4
 

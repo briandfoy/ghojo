@@ -20,7 +20,18 @@ Ghojo::Endpoint::Gist - The endpoints that deal with gists
 
 =head1 DESCRIPTION
 
+	Gists
+		Comments
+
 =head2  General object thingys
+
+=over 4
+
+=item *
+
+=back
+
+=head2  Comments
 
 =over 4
 
