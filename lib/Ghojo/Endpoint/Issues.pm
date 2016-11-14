@@ -2,6 +2,13 @@ use v5.24.0;
 use feature qw(signatures);
 no warnings qw(experimental::signatures);
 
+package Ghojo::Endpoint::Issues;
+
+our $VERSION = '1.001001';
+
+use Mojo::Collection;
+use Mojo::URL;
+
 =encoding utf8
 
 =head2 Issues
