@@ -1,10 +1,19 @@
 # This module loads all of the endpoint modules.
 
+use Ghojo::Endpoint::Activity;
 use Ghojo::Endpoint::Authorizations;
+use Ghojo::Endpoint::Gist;
+use Ghojo::Endpoint::GitData;
+use Ghojo::Endpoint::Integrations;
 use Ghojo::Endpoint::Issues;
 use Ghojo::Endpoint::Labels;
+use Ghojo::Endpoint::Migrations;
 use Ghojo::Endpoint::Miscellaneous;
+use Ghojo::Endpoint::Organizations;
+use Ghojo::Endpoint::PullRequests;
+use Ghojo::Endpoint::Reactions;
 use Ghojo::Endpoint::Repositories;
+use Ghojo::Endpoint::Search;
 use Ghojo::Endpoint::Users;
 
 =encoding utf8
