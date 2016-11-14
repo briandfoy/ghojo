@@ -530,11 +530,6 @@ sub Ghojo::AuthenticatedUser::delete_gpg_keys_by_id ( $self, @ids ) {
 
 =back
 
-=head2 Administration
-
-The Enterprise portions of the API are awaiting a corporate patron
-to be interested in their development.
-
 =head1 SOURCE AVAILABILITY
 
 This module is in Github:
