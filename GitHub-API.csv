@@ -1,0 +1,322 @@
+,,Deprecated,Preview,Reactions,Raw,Cached,Scopes,SNI,,,,HTTP Code,array of arrays,"array of hashrefs, paged",hash ref,Empty body,Array ref,authenticated user,Location,Sends array,params,
+Activity,Events,,,,,,,,List public events,GET,/events,200,,x,,,,,,,,
+Activity,Events,,,,,,,,List repository events,GET,/repos/:owner/:repo/events,200,,x,,,,,,,,
+Activity,Events,,,,,,,,List issue events for a repository,GET,/repos/:owner/:repo/issues/events,200,,x,,,,,,,,
+Activity,Events,,,,,,,,List public events for a network of repositories,GET,/networks/:owner/:repo/events,200,,x,,,,,,,,
+Activity,Events,,,,,,,,List public events for an organization,GET,/orgs/:org/events,200,,x,,,,,,,,
+Activity,Events,,,,,,,,List events that a user has received,GET,/users/:username/received_events,200,,x,,,,,,,,
+Activity,Events,,,,,,,,List events performed by a user,GET,/users/:username/events,200,,x,,,,,,,,
+Activity,Events,,,,,,,,List public events performed by a user,GET,/users/:username/events/public,200,,x,,,,,,,,
+Activity,Events,,,,,,,,List events for an organization,GET,/users/:username/events/orgs/:org,200,,x,,,,,,,,
+Activity,Feeds,,,,,,,,List Feeds,GET,/feeds,200,,,x,,,x,,,,
+Activity,Notifications,,,,,,notifications or repo,,List your notifications,GET,/notifications,200,,x,,,,x,,,,
+Activity,Notifications,,,,,,notifications or repo,,List your notifications in a repository,GET,/repos/:owner/:repo/notifications,200,,x,,,,x,,,,
+Activity,Notifications,,,,,,notifications or repo,,Mark as read,PUT,/notifications,205,,,,x,,x,,,last_read_at,
+Activity,Notifications,,,,,,notifications or repo,,Mark notifications as read in a repository,PUT,/repos/:owner/:repo/notifications,205,,,,x,,x,,,last_read_at,
+Activity,Notifications,,,,,,notifications or repo,,View a single thread,GET,/notifications/threads/:id,200,,,x,,,,,,,
+Activity,Notifications,,,,,,notifications or repo,,Mark a thread as read,PATCH,/notifications/threads/:id,205,,,,x,,,,,,
+Activity,Notifications,,,,,,notifications or repo,,Get a Thread Subscription,GET,/notifications/threads/:id/subscription,200,,,x,,,,,,,
+Activity,Notifications,,,,,,notifications or repo,,Set a Thread Subscription,PUT,/notifications/threads/:id/subscription,200,,,x,,,,,,"subscribed=B, ignored=B",
+Activity,Notifications,,,,,,notifications or repo,,Delete a Thread Subscription,DELETE,/notifications/threads/:id/subscription,204,,,,x,,,,,,
+Activity,Starring,,,,,,,,List Stargazers,GET,/repos/:owner/:repo/stargazers,200,,x,,,,,,,,application/vnd.github.v3.star+json
+Activity,Starring,,,,,,,,List repositories being starred,GET,/users/:username/starred,200,,x,,,,,,,,application/vnd.github.v3.star+json
+Activity,Starring,,,,,,,,List repositories being starred,GET,/users/starred,200,,x,,,,x,,,,application/vnd.github.v3.star+json
+Activity,Starring,,,,,,,,Check if you are starring a repository,GET,/user/starred/:owner/:repo,"204,404",,,,x,,x,,,,
+Activity,Starring,,,,,,,,Star a repository,PUT,/user/starred/:owner/:repo,204,,,,x,,x,,,,
+Activity,Starring,,,,,,,,Unstar a repository,DELETE,/user/starred/:owner/:repo,204,,,,x,,x,,,,
+Activity,Watching,,,,,,,,List watchers,GET,/repos/:owner/:repo/subscribers,200,,x,,,,,,,,
+Activity,Watching,,,,,,,,List repositories being watched,GET, /users/:username/subscriptions,200,,x,,,,,,,,
+Activity,Watching,,,,,,,,List repositories being watched,GET,/user/subscriptions,200,,x,,,,x,,,,
+Activity,Watching,,,,,,,,Get a Repository Subscription,GET,/repos/:owner/:repo/subscription,"200,404",,,x,,,x,,,,
+Activity,Watching,,,,,,,,Set a Repository Subscription,PUT,/repos/:owner/:repo/subscription,200,,,x,,,x,,,"subscribed=B, ignored=B",
+Activity,Watching,,,,,,,,Delete a Repository Subscription,DELETE,/repos/:owner/:repo/subscription,204,,,,x,,x,,,,
+Gist,,,,,,,,,List a user's gists,GET,/users/:username/gists,200,,x,,,,,,,since=ISO8601,
+Gist,,,,,,,,,List your gists,GET,/gists,200,,x,,,,x,,,since=ISO8601,
+Gist,,,,,,,,,List all public gists,GET,/gists/public,200,,x,,,,,,,since=ISO8601,
+Gist,,,,,,,,,List starred gists,GET,/gists/starred,200,,x,,,,,,,since=ISO8602,
+Gist,,,,,,,,,Get a single gist,GET,/gists/:id,200,,,x,,,,,,,
+Gist,,,,,,,,,Get a specific revision of a gist,GET,/gists/:id/:sha,200,,,x,,,,,,,
+Gist,,,,,,,,,Create a gist,POST,/gists,201,,,x,,,,x,,"public=B, description=S, files=O*",
+Gist,,,,,,,,,Edit a gist,PATCH,/gists/:id,200,,,x,,,,,,lots of stuff,
+Gist,,,,,,,,,List gist commits,GET,/gists/:id/commits,200,,x,,,,,,,,
+Gist,,,,,,,,,Star a gist,PUT,/gists/:id/star,204,,,,x,,,,,,
+Gist,,,,,,,,,Unstar a gist,DELETE,/gists/:id/star,204,,,,x,,,,,,
+Gist,,,,,,,,,Check if a gist is starred,GET,/gists/:id/star,"204, 404",,,,x,,,,,,
+Gist,,,,,,,,,Fork a gist,POST,/gists/:id/forks,201,,,,,,,x,,,
+Gist,,,,,,,,,List gist forks,GET, /gists/:id/forks,200,,x,,,,,,,,
+Gist,,,,,,,,,Delete a gist,DELETE, /gists/:id,204,,,,x,,,,,,
+Gist,Comments,,,,,,,,List comments on a gist,GET,/gists/:gist_id/comments,200,,x,,,,,,,,
+Gist,Comments,,,,,,,,Get a single comment,GET,/gists/:gist_id/comments/:id,200,,,x,,,,,,,
+Gist,Comments,,,,,,,,Create a comment,POST,/gists/:gist_id/comments,201,,,,,,x,x,,body=S,
+Gist,Comments,,,,,,,,Edit a comment,PATCH,/gists/:gist_id/comments/:id,200,,,,,,x,,,body=S,
+Gist,Comments,,,,,,,,Delete a comment,DELETE,/gists/:gist_id/comments/:id,204,,,,x,,x,,,,
+Git Data,Blobs,,,,,,,,Get a Blob,GET,/repos/:owner/:repo/git/blobs/:sha,200,,,x,,,x,,,,"application/json, application/vnd.github.VERSION.raw"
+Git Data,Blobs,,,,,,,,Create a Blob,POST,/repos/:owner/:repo/git/blobs,201,,,x,,,x,x,,"content=S, encoding={utf-8, base64}","application/json, application/vnd.github.VERSION.raw"
+Git Data,Commits,,,,,,,,Get a Commit,GET,/repos/:owner/:repo/git/commits/:sha,200,,,x,,,,,,,
+Git Data,Commits,,,,,,,,Create a Commit,POST,/repos/:owner/:repo/git/commits,201,,,x,,,,x,,lots of stuff,
+Git Data,Commits,,,,,,,,Commit signature verification,GET,/repos/:owner/:repo/git/commits/:sha,200,,,x,,,,,,lots of stuff,application/vnd.github.cryptographer-preview
+Git Data,References,,,,,,,,Get a Reference,GET,/repos/:owner/:repo/git/refs/:ref,200,,,x,,,,,,,
+Git Data,References,,,,,,,,Get a Branch,GET,/repos/:owner/:repo/git/refs/heads/:branch,"200, 404",,,x,,,,,,,
+Git Data,References,,,,,,,,Get a Tag,GET,/repos/:owner/:repo/git/tags/:sha,"200, 404",,,x,,,,,,,
+Git Data,References,,,,,,,,Get all References,GET,/repos/:owner/:repo/git/refs,200,,x,,,,,,,,
+Git Data,References,,,,,,,,Get all Branches,GET,,200,,x,,,,,,,,
+Git Data,References,,,,,,,,Get all Tags,GET,/repos/:owner/:repo/git/refs/tags,200,,x,,,,,,,,
+Git Data,References,,,,,,,,Create a Reference,POST,/repos/:owner/:repo/git/refs,201,,,,,,,x,,,
+Git Data,References,,,,,,,,Update a Reference,PATCH,/repos/:owner/:repo/git/refs/:ref,200,,,x,,,,,,"sha=SHA1, force=B",
+Git Data,References,,,,,,,,Delete a Reference,DELETE,/repos/:owner/:repo/git/refs/:ref,204,,,,,,x,,,,
+Git Data,References,,,,,,,,Delete a branch,DELETE,/repos/:owner/:repo/git/refs/heads/:branch,204,,,,,,x,,,,
+Git Data,References,,,,,,,,Delete a tag,DELETE,/repos/:owner/:repo/git/refs/tags/:tag,204,,,,,,x,,,,
+Git Data,Tags,,,,,,,,Get a Tag,GET,/repos/:owner/:repo/git/tags/:sha,200,,,x,,,,,,lots of stuff,
+Git Data,Tags,,,,,,,,Create a Tag Object,POST,/repos/:owner/:repo/git/tags,201,,,x,,,,x,,lots of stuff,application/vnd.github.cryptographer-preview
+Git Data,Tags,,,,,,,,Tag signature verification,GET,/repos/:owner/:repo/git/tags/:sha,200,,,x,,,,,,lots of stuff,
+Git Data,Trees,,,,,,,,Get a Tree,GET,/repos/:owner/:repo/git/trees/:sha,200,,,x,,,,,,,
+Git Data,Trees,,,,,,,,Get a Tree Recursively,GET,/repos/:owner/:repo/git/trees/:sha?recursive=1,200,,,x,,,,,,,
+Git Data,Trees,,,,,,,,Create a Tree,POST,/repos/:owner/:repo/git/trees,201,,,x,,,,x,,lots of stuff,
+Integrations,Integrations,,x,,,,,,Find installations,GET, /integration/installations,200,,x,,,,,,,,application/vnd.github.machine-man-preview
+Integrations,Integrations,,x,,,,,,Create a new installation token,POST,/installations/:installation_id/access_tokens,201,,,x,,,,,,user_id=I,application/vnd.github.machine-man-preview
+Integrations,Integrations,,x,,,,,,Request identity of user,POST,/integration/identity/user,?,,,x,,,,,,nonce=S,application/vnd.github.machine-man-preview
+Integrations,Installations,,x,,,,,,List repositories,GET,/installation/repositories,200,,x,,,,,,,user_id=I,
+Issues,,,,,,,,,"List issues (owned, member, orgs)",GET,/issues,200,,x,,,,x,,,"filter={assigned*, created, mentioned, subscribed, all}, state={open*, closed, all}, labels=CSV, sort={created*, updated, comments}, direction={asc,desc*},since=ISO8601","application/vnd.github.VERSION.{raw,text,html,full}+json,  application/vnd.github.squirrel-girl-preview"
+Issues,,,,,,,,,List issues (owned repos and member),GET,/user/issues,200,,x,,,,x,,,,
+Issues,,,,,,,,,List issues (orgs),GET,/orgs/:org/issues,200,,x,,,,,,,,
+Issues,,,,,,,,,List issues for a repository,GET,/repos/:owner/:repo/issues,200,,x,,,,,,,lots of stuff,
+Issues,,,,,,,,,Get a single issue,GET,/repos/:owner/:repo/issues/:number,200,,,x,,,,,,,
+Issues,,,,,,,,,Create an issue,POST,/repos/:owner/:repo/issues,201,,,x,,,,,,,
+Issues,,,,,,,,,Edit an issue,PATCH,/repos/:owner/:repo/issues/:number,200,,,,,,,,,lots of stuff,
+Issues,,,,,,,,,Lock an issue,PUT,/repos/:owner/:repo/issues/:number/lock,204,,,,x,,,,,,set Content-length to 0
+Issues,,,,,,,,,Unlock an issue,DELETE,/repos/:owner/:repo/issues/:number/lock,204,,,,x,,,,,,
+Issues,Assignees,,,,,,,,List assignees,GET,/repos/:owner/:repo/assignees,200,,x,,,,,,,,
+Issues,Assignees,,,,,,,,Check assignee,GET,/repos/:owner/:repo/assignees/:assignee,"204,404",,,,,,,,,,
+Issues,Assignees,,,,,,,,Add assignees to an Issue,POST,/repos/:owner/:repo/issues/:number/assignees,201,,,x,,,x,,,assignees=Array of names,
+Issues,Assignees,,,,,,,,Remove assignees from an Issue,DELETE,/repos/:owner/:repo/issues/:number/assignees,200,,,x,,,,,,assignees=Array of names,
+Issues,Comments,,,x,,,,,List comments on an issue,GET,/repos/:owner/:repo/issues/:number/comments,200,,x,,,,,,,,
+Issues,Comments,,,x,,,,,List comments in a repository,GET,/repos/:owner/:repo/issues/comments,200,,x,,,,,,,,
+Issues,Comments,,,x,,,,,Get a single comment,GET,/repos/:owner/:repo/issues/comments/:id,200,,,x,,,,,,,"application/vnd.github.VERSION.{raw,text,html,full}+json,  application/vnd.github.squirrel-girl-preview"
+Issues,Comments,,,,,,,,Create a comment,POST ,/repos/:owner/:repo/issues/:number/comments,201,,,,,,x,x,,,application/vnd.github.squirrel-girl-preview
+Issues,Comments,,,,,,,,Edit a comment,PATCH,/repos/:owner/:repo/issues/comments/:id,200,,,x,,,x,,,body=S,
+Issues,Comments,,,,,,,,Delete a comment,DELETE,/repos/:owner/:repo/issues/comments/:id,204,,,,x,,x,,,,
+Issues,Events,,,,,,,,List events for an issue,GET,/repos/:owner/:repo/issues/:issue_number/events,200,,x,,,,,,,lots of stuff,
+Issues,Events,,,,,,,,List events for a repository,GET,/repos/:owner/:repo/issues/events,200,,x,,,,,,,lots of stuff,
+Issues,Events,,,,,,,,Get a single event,GET,/repos/:owner/:repo/issues/events/:id,200,,,x,,,,,,lots of stuff,
+Issues,Labels,,,,,,,,List all labels for this repository,GET,/repos/:owner/:repo/labels,200,,x,,,,,,,,
+Issues,Labels,,,,,,,,Get a single label,GET,/repos/:owner/:repo/labels/:name,200,,,x,,,,,,,
+Issues,Labels,,,,,,,,Create a label,POST,/repos/:owner/:repo/labels,201,,,x,,,,,,"name=S, color=RGB6",
+Issues,Labels,,,,,,,,Update a label,PATCH,/repos/:owner/:repo/labels/:name,200,,,x,,,,,,,
+Issues,Labels,,,,,,,,Delete a label,DELETE,/repos/:owner/:repo/labels/:name,204,,,,x,,,,,,
+Issues,Labels,,,,,,,,List labels on an issue,GET,/repos/:owner/:repo/issues/:number/labels,200,,x,,,,,,,,
+Issues,Labels,,,,,,,,Add labels to an issue,POST,/repos/:owner/:repo/issues/:number/labels,200,,x,,,,,,x,,
+Issues,Labels,,,,,,,,Remove a label from an issue,DELETE,/repos/:owner/:repo/issues/:number/labels/:name,204,,,,x,,,,x,,
+Issues,Labels,,,,,,,,Replace all labels for an issue,PUT,/repos/:owner/:repo/issues/:number/labels,200,,x,,,,,,,,
+Issues,Labels,,,,,,,,Remove all labels from an issue,DELETE,/repos/:owner/:repo/issues/:number/labels,204,,,,x,,,,,,
+Issues,Labels,,,,,,,,Get labels for every issue in a milestone,GET,/repos/:owner/:repo/milestones/:number/labels,200,,x,,,,,,,,
+Issues,Milestones,,,,,,,,List milestones for a repository,GET,/repos/:owner/:repo/milestones,200,,x,,,,,,,,"state={open*,closed,all}, sort={due_on*, completeness}, direction={asc*,desc}"
+Issues,Milestones,,,,,,,,Get a single milestone,GET,/repos/:owner/:repo/milestones/:number,200,,,x,,,,,,,
+Issues,Milestones,,,,,,,,Create a milestone,POST,/repos/:owner/:repo/milestones,201,,,x,,,,,,,"title=S*, state={open*,closed}, description=S, due_on=ISO8601"
+Issues,Milestones,,,,,,,,Update a milestone,PATCH,/repos/:owner/:repo/milestones/:number,200,,,x,,,,,,,"title=S, state={open*,closed}, description=S, due_on=ISO8601"
+Issues,Milestones,,,,,,,,Delete a milestone,DELETE,/repos/:owner/:repo/milestones/:number,204,,,,x,,,,,,
+Issues,Timeline,,x,,,,,,List events for an issue,GET,/repos/:owner/:repo/issues/:issue_number/timeline,200,,x,,,,,,,lots of stuff, application/vnd.github.mockingbird-preview
+Migration,Migrations,,x,,,,,,,,,,,,,,,,,,,
+,Source Imports,,x,,,,,,,,,,,,,,,,,,,
+Miscellaneous,Emojis,,,,,,,,List emojis,GET,/emojis,200,,,x,,,,,,,
+Miscellaneous,Gitignore,,,,,,,,Listing available templates,GET,/gitignore/templates,200,,,,,x,,,,,
+Miscellaneous,Gitignore,,,,x,,,,Get a single template,GET,/gitignore/templates/:template,200,,,x,,,,,,,
+Miscellaneous,Licenses,,x,,,,,,List all licenses,GET,/licenses,200,,x,,,,,,,, application/vnd.github.drax-preview+json
+Miscellaneous,Licenses,,x,,,,,,Get an individual license,GET,/licenses/:license,200,,,x,,,,,,, application/vnd.github.drax-preview+json
+Miscellaneous,Licenses,,x,,,,,,Get a repository's license,GET,/repos/:owner/:repo,200,,,,,,,,,, application/vnd.github.drax-preview+json
+Miscellaneous,Licenses,,x,,x,,,,Get the contents of a repository's license,GET,/repos/:owner/:repo/license,200,,,,,,,,,, application/vnd.github.drax-preview+json
+Miscellaneous,Markdown,,,,,,,,Render an arbitrary Markdown document,POST,/markdown,200,,,,,,,,,"text=S*,mode={markdown*,gfm},context=S(repo name)",
+Miscellaneous,Markdown,,,,,,,,Render a Markdown document in raw mode,POST,/markdown/raw,200,,,,,,,,,,
+Miscellaneous,Meta,,,,,,,, Information about GitHub.com,GET,/meta,200,,,x,,,,,,,
+Miscellaneous,Rate Limit,,,,,,,,Get your current rate limit status,GET,/rate_limit,200,,,x,,,,,,,
+Organizations,Members,,,,,,,,,,,,,,,,,,,,,
+,Teams,,,,,,,,,,,,,,,,,,,,,
+,Webhooks,,,,,,,,,,,,,,,,,,,,,
+Pull Requests,,,,,,,,,List pull requests,GET,/repos/:owner/:repo/pulls,200,,x,,,,,,,,"application/vnd.github.VERSION.{raw,html,text,full,diff,patch}+json"
+Pull Requests,,,,,,,,,Get a single pull request,GET,/repos/:owner/:repo/pulls/:number,200,,,x,,,,,,,"application/vnd.github.VERSION.{raw,html,text,full,diff,patch}+json"
+Pull Requests,,,,,,,,,Create a pull request,POST,/repos/:owner/:repo/pulls,201,,,x,,,,x,,,"application/vnd.github.VERSION.{raw,html,text,full,diff,patch}+json"
+Pull Requests,,,,,,,,,Update a pull request,PATCH,/repos/:owner/:repo/pulls/:number,200,,,x,,,,,,,"application/vnd.github.VERSION.{raw,html,text,full,diff,patch}+json"
+Pull Requests,,,,,,,,,List commits on a pull request,GET,/repos/:owner/:repo/pulls/:number/commits,200,,x,,,,,,,,"application/vnd.github.VERSION.{raw,html,text,full,diff,patch}+json"
+Pull Requests,,,,,,,,,List pull requests files,GET,/repos/:owner/:repo/pulls/:number/files,200,,x,,,,,,,,"application/vnd.github.VERSION.{raw,html,text,full,diff,patch}+json"
+Pull Requests,,,,,,,,,Get if a pull request has been merged,GET,/repos/:owner/:repo/pulls/:number/merge,"204,404",,,,x,,,,,,"application/vnd.github.VERSION.{raw,html,text,full,diff,patch}+json"
+Pull Requests,,,,,,,,,Merge a pull request (Merge Button),PUT,/repos/:owner/:repo/pulls/:number/merge,"200,405,409",,,x,,,,,,,"application/vnd.github.VERSION.{raw,html,text,full,diff,patch}+json,application/vnd.github.polaris-preview+json"
+Pull Requests,Review Comments,,,x,,,,,List comments on a pull request,GET,/repos/:owner/:repo/pulls/:number/comments,200,,x,,,,,,,,"application/vnd.github.VERSION.{raw,text,html,full,diff,patch}+json"
+Pull Requests,Review Comments,,,x,,,,,List comments in a repository,GET,/repos/:owner/:repo/pulls/comments,200,,x,,,,,,,"sort={created*,updated},direction={asc,desc},since=ISO8601",
+Pull Requests,Review Comments,,,x,,,,,Get a single comment,GET,/repos/:owner/:repo/pulls/comments/:id,200,,,x,,,,,,,
+Pull Requests,Review Comments,,,,,,,,Create a comment,POST,/repos/:owner/:repo/pulls/:number/comments,201,,,x,,,,x,,lots of stuff,
+Pull Requests,Review Comments,,,,,,,,Edit a comment,PATCH,/repos/:owner/:repo/pulls/comments/:id,200,,,x,,,,,,body=S,
+Pull Requests,Review Comments,,,,,,,,Delete a comment,DELETE,/repos/:owner/:repo/pulls/comments/:id,204,,,,x,,,,,,
+Reactions,Commit Comment,,x,,,,,,List reactions for a commit comment,GET,/repos/:owner/:repo/comments/:id/reactions,200,,x,,,,,,,"content={+1,-1,laugh,confused,heart,hooray}",
+Reactions,Commit Comment,,x,,,,,,Create reaction for a commit comment,POST,/repos/:owner/:repo/comments/:id/reactions,201,,,x,,,,,,"content={+1,-1,laugh,confused,heart,hooray}",
+Reactions,Issue,,x,,,,,,List reactions for an issue,GET,/repos/:owner/:repo/issues/:number/reactions,200,,x,,,,,,,"content={+1,-1,laugh,confused,heart,hooray}",
+Reactions,Issue,,x,,,,,,Create reaction for an issue,POST,/repos/:owner/:repo/issues/:number/reactions,201,,,x,,,,,,"content={+1,-1,laugh,confused,heart,hooray}",
+Reactions,Issue Comment,,x,,,,,,List reactions for an issue comment,GET,/repos/:owner/:repo/issues/comments/:id/reactions,200,,x,,,,,,,"content={+1,-1,laugh,confused,heart,hooray}",
+Reactions,Issue Comment,,x,,,,,,Create reaction for an issue comment,POST,/repos/:owner/:repo/issues/comments/:id/reactions,201,,,x,,,,,,"content={+1,-1,laugh,confused,heart,hooray}",
+Reactions,Pull Request Review Comment,,x,,,,,,List reactions for a pull request review comment,GET,/repos/:owner/:repo/pulls/comments/:id/reactions,200,,x,,,,,,,"content={+1,-1,laugh,confused,heart,hooray}",
+Reactions,Pull Request Review Comment,,x,,,,,,Create reaction for a pull request review comment,POST,/repos/:owner/:repo/pulls/comments/:id/reactions,201,,,x,,,,,,"content*={+1,-1,laugh,confused,heart,hooray}",
+Reactions,Pull Request Review Comment,,x,,,,,,Delete a reaction,DELETE,/reactions/:id,204,,,x,,,,,,,
+Repositories,,,,,,,,,List your repositories,GET,/user/repos,200,,x,,,,x,,,losts,
+Repositories,,,,,,,,,List user repositories,GET,/users/:username/repos,201,,x,,,,,,,,
+Repositories,,,,,,,,,List organization repositories,GET,/orgs/:org/repos,202,,x,,,,,,,"type={all*, public, private, forks, sources, member}",
+Repositories,,,,,,,,,List all public repositories,GET,/repositories,203,,x,,,,,,,since=ID,
+Repositories,,,,,,,,,Create new repo for authenticated user,POST,/user/repos,201,,,x,,,,,,lots of stuff,
+Repositories,,,,,,,,,Create new repo for org,POST,/orgs/:org/repos,201,,,x,,,,,,lots of stuff,
+Repositories,,,x,,,,,,Get,GET,/repos/:owner/:repo,200,,,x,,,,,,, application/vnd.github.polaris-preview
+Repositories,,,x,,,,,,Edit,PATCH,/repos/:owner/:repo,200,,,x,,,,,,lots of stuff, application/vnd.github.polaris-preview
+Repositories,,,,,,x,,,List contributors,GET,/repos/:owner/:repo/contributors,200,,x,,,,,,,anon=true,
+Repositories,,,,,,,,,List languages,GET,/repos/:owner/:repo/languages,200,,,x,,,,,,,
+Repositories,,,,,,,,,List Teams,GET,/repos/:owner/:repo/teams,200,,x,,,,,,,,
+Repositories,,,,,,,,,List Tags,GET,/repos/:owner/:repo/tags,200,,x,,,,,,,,
+Repositories,,,,,,,,,Delete a Repository,DELETE,/repos/:owner/:repo,204,,,,x,,,,,,application/vnd.github.loki-preview+json
+Repositories,Branches,,x,,,,,,List Branches,GET,/repos/:owner/:repo/branches,200,,x,,,,,,,protected=B,application/vnd.github.loki-preview+json
+Repositories,Branches,,x,,,,,,Get Branch,GET,/repos/:owner/:repo/branches/:branch,200,,,x,,,,,,,application/vnd.github.loki-preview+json
+Repositories,Protected Branches,,x,,,,,,Get branch protection,GET,/repos/:owner/:repo/branches/:branch/protection,,,,x,,,,,,,application/vnd.github.loki-preview+json
+Repositories,Protected Branches,,,,,,,,Update branch protection,PUT,/repos/:owner/:repo/branches/:branch/protection,200,,,,,,,,,lots of stuff,application/vnd.github.loki-preview+json
+Repositories,Protected Branches,,,,,,,,Remove branch protection,,,,,,,,,,,,,application/vnd.github.loki-preview+json
+Repositories,Protected Branches,,,,,,,,Get required status checks of protected branch,,,,,,,,,,,,,application/vnd.github.loki-preview+json
+Repositories,Protected Branches,,,,,,,,Update required status checks of protected branch,PATCH,/repos/:owner/:repo/branches/:branch/protection/required_status_checks,200,,,x,,,,,,,application/vnd.github.loki-preview+json
+Repositories,Protected Branches,,,,,,,,Remove required status checks of protected branch,DELETE,/repos/:owner/:repo/branches/:branch/protection/required_status_checks,204,,,,x,,,,,,application/vnd.github.loki-preview+json
+Repositories,Protected Branches,,,,,,,,List required status checks contexts of protected branch,GET,/repos/:owner/:repo/branches/:branch/protection/required_status_checks/contexts,200,,,,,x,,,,,application/vnd.github.loki-preview+json
+Repositories,Protected Branches,,,,,,,,Replace required status checks contexts of protected branch,PUT,/repos/:owner/:repo/branches/:branch/protection/required_status_checks/contexts,200,,,,,x,,,x,,application/vnd.github.loki-preview+json
+Repositories,Protected Branches,,,,,,,,Add required status checks contexts of protected branch,POST,/repos/:owner/:repo/branches/:branch/protection/required_status_checks/contexts,200,,,,,x,,,x,,application/vnd.github.loki-preview+json
+Repositories,Protected Branches,,,,,,,,Remove required status checks contexts of protected branch,DELETE,/repos/:owner/:repo/branches/:branch/protection/required_status_checks/contexts,200,,,,,x,,,x,,application/vnd.github.loki-preview+json
+Repositories,Protected Branches,,,,,,,,Get restrictions of protected branch,GET,/repos/:owner/:repo/branches/:branch/protection/restrictions,200,,,x,,,,,,,application/vnd.github.loki-preview+json
+Repositories,Protected Branches,,,,,,,,Remove restrictions of protected branch,DELETE,/repos/:owner/:repo/branches/:branch/protection/restrictions,204,,,,x,,,,x,,application/vnd.github.loki-preview+json
+Repositories,Protected Branches,,,,,,,,List team restrictions of protected branch,GET,/repos/:owner/:repo/branches/:branch/protection/restrictions/teams,200,,x,,,,,,,,application/vnd.github.loki-preview+json
+Repositories,Protected Branches,,,,,,,,Replace team restrictions of protected branch,PUT,/repos/:owner/:repo/branches/:branch/protection/restrictions/teams,200,,x,,,,,,x,,application/vnd.github.loki-preview+json
+Repositories,Protected Branches,,,,,,,,Add team restrictions of protected branch,POST,/repos/:owner/:repo/branches/:branch/protection/restrictions/teams,200,,x,,,,,,x,,application/vnd.github.loki-preview+json
+Repositories,Protected Branches,,,,,,,,Remove team restrictions of protected branch,DELETE,/repos/:owner/:repo/branches/:branch/protection/restrictions/teams,200,,x,,,,,,x,,application/vnd.github.loki-preview+json
+Repositories,Protected Branches,,,,,,,,List user restrictions of protected branch,GET,/repos/:owner/:repo/branches/:branch/protection/restrictions/users,200,,x,,,,,,,,application/vnd.github.loki-preview+json
+Repositories,Protected Branches,,,,,,,,Replace user restrictions of protected branch,PUT,/repos/:owner/:repo/branches/:branch/protection/restrictions/users,200,,x,,,,,,x,,application/vnd.github.loki-preview+json
+Repositories,Protected Branches,,,,,,,,Add user restrictions of protected branch,POST,/repos/:owner/:repo/branches/:branch/protection/restrictions/users,200,,x,,,,,,x,,application/vnd.github.loki-preview+json
+Repositories,Protected Branches,,,,,,,,Remove user restrictions of protected branch,DELETE, /repos/:owner/:repo/branches/:branch/protection/restrictions/users,200,,x,,,,,,x,,application/vnd.github.loki-preview+json
+Repositories,Collaborators,,,,,,,,List collaborators,GET,/repos/:owner/:repo/collaborators,200,,x,,,,,,,,
+Repositories,Collaborators,,,,,,,,Check if a user is a collaborator,GET,/repos/:owner/:repo/collaborators/:username,"204, 404",,,,x,,,,,,
+Repositories,Collaborators,,,,,,,,Add user as a collaborator,PUT,/repos/:owner/:repo/collaborators/:username,"201,204",,,x,,,,,,"permission={pull, push*,admin} for orgs only",application/vnd.github.swamp-thing-preview+json
+Repositories,Collaborators,,,,,,,,Remove user as a collaborator,DELETE,/repos/:owner/:repo/collaborators/:username,204,,,,x,,,,,,
+Repositories,Comments,,,,,,,,List commit comments for a repository,GET,/repos/:owner/:repo/comments,200,,x,,,,,,,,"application/vnd.github.VERSION.{raw,text,html,full}+json,  application/vnd.github.squirrel-girl-preview"
+Repositories,Comments,,,,,,,,List comments for a single commit,GET,/repos/:owner/:repo/commits/:ref/comments,200,,x,,,,,,,,"application/vnd.github.VERSION.{raw,text,html,full}+json,  application/vnd.github.squirrel-girl-preview"
+Repositories,Comments,,,,,,,,Create a commit comment,POST,/repos/:owner/:repo/commits/:sha/comments,201,,,x,,,,x,,,"application/vnd.github.VERSION.{raw,text,html,full}+json"
+Repositories,Comments,,,,,,,,Get a single commit comment,GET,/repos/:owner/:repo/comments/:id,200,,,x,,,,,,,"application/vnd.github.VERSION.{raw,text,html,full}+json,  application/vnd.github.squirrel-girl-preview"
+Repositories,Comments,,,,,,,,Update a commit comment,PATCH,/repos/:owner/:repo/comments/:id,200,,,x,,,,,,body=S,"application/vnd.github.VERSION.{raw,text,html,full}+json"
+Repositories,Comments,,,,,,,,Delete a commit comment,DELETE,/repos/:owner/:repo/comments/:id,204,,,,x,,,,,,"application/vnd.github.VERSION.{raw,text,html,full}+json"
+Repositories,Commits,,,,,,,,List commits on a repository,GET,/repos/:owner/:repo/commits,200,,x,,,,,,,"sha=SHA1,path=S,author=S,since=ISO8601,until=ISO8601",
+Repositories,Commits,,,,,,,,Get a single commit,GET,/repos/:owner/:repo/commits/:sha,200,,x,,,,,,,,
+Repositories,Commits,,,,,,,,Get the SHA-1 of a commit reference,GET,/repos/:owner/:repo/commits/:ref,200,,,,,,,,,,application/vnd.github.VERSION.sha
+Repositories,Commits,,,,,,,,Compare two commits,GET,/repos/:owner/:repo/compare/:base...:head,200,,,x,,,,,,,"diff, patch types,"
+Repositories,Commits,,,,,,,,Commit signature verification,GET,/repos/:owner/:repo/commits/:sha,200,,,x,,,,,,,application/vnd.github.cryptographer-preview
+Repositories,Contents,,,,,,,,Get the README,GET,/repos/:owner/:repo/readme,200,,,x,,,,,,ref=S,"application/vnd.github.VERSION.{raw,html,object}+json"
+Repositories,Contents,,,,,,,,Get contents,GET,/repos/:owner/:repo/contents/:path,200,,x (dir),x,,,,,,"path=S,ref=S","application/vnd.github.VERSION.{raw,html,object}+json"
+Repositories,Contents,,,,,,,,Create a file,PUT,/repos/:owner/:repo/contents/:path,201,,,x,,,,,,"path*=S,message*=S,content*=S,branch*=S (master*),committer:name,email, author=name,email","application/vnd.github.VERSION.{raw,html,object}+json"
+Repositories,Contents,,,,,,,,Update a file,PUT,/repos/:owner/:repo/contents/:path,200,,,x,,,,,,,"application/vnd.github.VERSION.{raw,html,object}+json"
+Repositories,Contents,,,,,,,,Delete a file,DELETE,/repos/:owner/:repo/contents/:path,200,,,x,,,,,,,"application/vnd.github.VERSION.{raw,html,object}+json"
+Repositories,Contents,,,,,,,,Get archive link,GET,/repos/:owner/:repo/:archive_format/:ref,302,,,,,,,x,,,"application/vnd.github.VERSION.{raw,html,object}+json"
+Repositories,Deploy Keys,,,,,,,,List deploy keys,GET,/repos/:owner/:repo/keys,200,,x,,,,,,,,
+Repositories,Deploy Keys,,,,,,,,Get a deploy key,GET,/repos/:owner/:repo/keys/:id,200,,,x,,,,,,,
+Repositories,Deploy Keys,,,,,,,,Add a new deploy key,POST,/repos/:owner/:repo/keys,201,,,,,,,x,,"title=S, key=S, read_only=B",
+Repositories,Deploy Keys,,,,,,,,Remove a deploy key,DELETE,/repos/:owner/:repo/keys/:id,204,,,,x,,,,,,
+Repositories,Deployments,,,,,,,,List Deployments,GET,/repos/:owner/:repo/deployments,200,,x,,,,,,,,
+Repositories,Deployments,,,,,,,,Create a Deployment,POST,/repos/:owner/:repo/deployments,"201, 409",,,x,,,,,,lots of stuff,application/vnd.github.ant-man-preview+json
+Repositories,Deployments,,,,,,,,List Deployment Statuses,GET,/repos/:owner/:repo/deployments/:id/statuses,200,,x,,,,,,,id*=I,
+Repositories,Deployments,,,,,,,,Create a Deployment Status,POST,/repos/:owner/:repo/deployments/:id/statuses,201,,,x,,,,,,,application/vnd.github.ant-man-preview+json
+Repositories,Downloads,x,,,,,,,List downloads for a repository,GET,/repos/:owner/:repo/downloads,200,,x,,,,,,,,
+Repositories,Downloads,x,,,,,,,Get a single download,GET,/repos/:owner/:repo/downloads/:id,200,,,x,,,,,,,
+Repositories,Downloads,x,,,,,,,Delete a download,DELETE,/repos/:owner/:repo/downloads/:id,204,,,,x,,,,,,
+Repositories,Forks,,,,,,,,List forks,GET,/repos/:owner/:repo/forks,200,,x,,,,,,,"sort={newest*,oldest, stargazers}",
+Repositories,Forks,,,,,,,,Create a fork,POST,/repos/:owner/:repo/forks,202,,,x,,,,,,organization=S,
+Repositories,Invitations,,x,,,,,,List invitations for a repository,GET,/repositories/:repo_id/invitations,200,,x,,,,,,,,application/vnd.github.swamp-thing-preview+json
+Repositories,Invitations,,x,,,,,,Delete a repository invitation,DELETE,/repositories/:repo_id/invitations/:invitation_id,204,,,,x,,,,,,application/vnd.github.swamp-thing-preview+json
+Repositories,Invitations,,x,,,,,,Update a repository invitation,PATCH,/repositories/:repo_id/invitations/:invitation_id,200,,,x,,,,,,"permissions={read,write,admin}",application/vnd.github.swamp-thing-preview+json
+Repositories,Invitations,,x,,,,,,List a user's repository invitations,GET,/user/repository_invitations,200,,x,,,,,,,,application/vnd.github.swamp-thing-preview+json
+Repositories,Invitations,,x,,,,,,Accept a repository invitation,PATCH,/user/repository_invitations/:invitation_id,204,,,,x,,,,,,application/vnd.github.swamp-thing-preview+json
+Repositories,Invitations,,x,,,,,,Decline a repository invitation,DELETE,/user/repository_invitations/:invitation_id,204,,,,x,,,,,,application/vnd.github.swamp-thing-preview+json
+Repositories,Merging,,,,,,,,Perform a merge,POST,/repos/:owner/:repo/merges,"201,204,409,404",,,x,,,,,,,
+Repositories,Pages,,,,,,,,Get information about a Pages site,GET,/repos/:owner/:repo/pages,200,,,x,,,,,,,application/vnd.github.mister-fantastic-preview+json
+Repositories,Pages,,,,,,,,Request a page build,POST,/repos/:owner/:repo/pages/builds,200,,,x,,,,,,,application/vnd.github.mister-fantastic-preview+json
+Repositories,Pages,,,,,,,,List Pages builds,GET,/repos/:owner/:repo/pages/builds,200,,x,,,,,,,,application/vnd.github.mister-fantastic-preview+json
+Repositories,Pages,,,,,,,,List latest Pages build,GET,/repos/:owner/:repo/pages/builds/latest,200,,,x,,,,,,,application/vnd.github.mister-fantastic-preview+json
+Repositories,Pages,,,,,,,,List a specific Pages build,GET,/repos/:owner/:repo/pages/builds/:id,200,,x,,,,,,,,application/vnd.github.mister-fantastic-preview+json
+Repositories,Projects,,x,,,,,,List projects,GET,/repos/:owner/:repo/projects,200,,x,,,,,,,,application/vnd.github.inertia-preview+json
+Repositories,Projects,,x,,,,,,Get a project,GET,/repos/:owner/:repo/projects/:number,200,,x,,,,,,,,application/vnd.github.inertia-preview+json
+Repositories,Projects,,x,,,,,,Create a project,POST,/repos/:owner/:repo/projects,201,,,x,,,,,,"name*=S, body=S",application/vnd.github.inertia-preview+json
+Repositories,Projects,,x,,,,,,Update a project,PATCH,/repos/:owner/:repo/projects/:number,200,,,x,,,,,,"name=S, body=S",application/vnd.github.inertia-preview+json
+Repositories,Projects,,x,,,,,,Delete a project,DELETE,/repos/:owner/:repo/projects/:number,204,,,,x,,,,,,application/vnd.github.inertia-preview+json
+Repositories,Projects,,x,,,,,,List columns,GET,/repos/:owner/:repo/projects/:project_number/columns,200,,x,,,,,,,,application/vnd.github.inertia-preview+json
+Repositories,Projects,,x,,,,,,Get a column,GET,/repos/:owner/:repo/projects/columns/:id,200,,,x,,,,,,,application/vnd.github.inertia-preview+json
+Repositories,Projects,,x,,,,,,Create a column,POST,/repos/:owner/:repo/projects/:project_number/columns,200,,,x,,,,,,name*=S,application/vnd.github.inertia-preview+json
+Repositories,Projects,,x,,,,,,Update a column,PATCH,/repos/:owner/:repo/projects/columns/:id,200,,,x,,,,,,name*=S,application/vnd.github.inertia-preview+json
+Repositories,Projects,,x,,,,,,Delete a column,DELETE,/repos/:owner/:repo/projects/columns/:id,204,,,x,,,,,,,application/vnd.github.inertia-preview+json
+Repositories,Projects,,x,,,,,,Move a column,POST,/repos/:owner/:repo/projects/columns/:id/moves,201,,,,x,,,,,"position={first,last,after:id}",application/vnd.github.inertia-preview+json
+Repositories,Projects,,x,,,,,,List projects cards,GET,/repos/:owner/:repo/projects/columns/:column_id/cards,200,,x,,,,,,,,application/vnd.github.inertia-preview+json
+Repositories,Projects,,x,,,,,,Get a project card,GET,/repos/:owner/:repo/projects/columns/cards/:id,200,,,x,,,,,,,application/vnd.github.inertia-preview+json
+Repositories,Projects,,x,,,,,,Create a project card,POST,/repos/:owner/:repo/projects/columns/:column_id/cards,200,,,x,,,,,,"name=S,content_id=I,content_type={Issue,PullRequest}",application/vnd.github.inertia-preview+json
+Repositories,Projects,,x,,,,,,Update a project card,PATCH,/repos/:owner/:repo/projects/columns/cards/:id,200,,,x,,,,,,note=S,application/vnd.github.inertia-preview+json
+Repositories,Projects,,x,,,,,,Delete a project card,DELETE,/repos/:owner/:repo/projects/columns/cards/:id,204,,,,x,,,,,,application/vnd.github.inertia-preview+json
+Repositories,Projects,,x,,,,,,Move a project card,POST,/repos/:owner/:repo/projects/columns/cards/:id/moves,201,,,,x,,,,,"position={top,bottom,after:id},column_id",application/vnd.github.inertia-preview+json
+Repositories,Releases,,,,,,,,List releases for a repository,GET,/repos/:owner/:repo/releases,200,,x,,,,,,,,
+Repositories,Releases,,,,,,,,Get a single release,GET,/repos/:owner/:repo/releases/:id,200,,,x,,,,,,,
+Repositories,Releases,,,,,,,,Get the latest release,GET,/repos/:owner/:repo/releases/latest,200,,,x,,,,,,,
+Repositories,Releases,,,,,,,,Get a release by tag name,GET,/repos/:owner/:repo/releases/tags/:tag,200,,,x,,,,,,,
+Repositories,Releases,,,,,,push access,,Create a release,POST,POST /repos/:owner/:repo/releases,201,,,x,,,,x,,,
+Repositories,Releases,,,,,,push access,,Edit a release,PATCH,/repos/:owner/:repo/releases/:id,200,,,x,,,,,,,
+Repositories,Releases,,,,,,push access,,Delete a release,DELETE,/repos/:owner/:repo/releases/:id,204,,,,x,,,,,,
+Repositories,Releases,,,,,,,,List assets for a release,GET,/repos/:owner/:repo/releases/:id/assets,200,,x,,,,,,,,
+Repositories,Releases,,,,,,,x,Upload a release asset,POST,/repos/:owner/:repo/releases/:id/assets?name=foo.zip,201,,,x,,,,,,,
+Repositories,Releases,,,,,,,,Get a single release asset,GET,/repos/:owner/:repo/releases/assets/:id,200,,,x,,,,,,,application/octet-stream for binary
+Repositories,Releases,,,,,,,,Edit a release asset,PATCH,/repos/:owner/:repo/releases/assets/:id,200,,,x,,,,,,"name=S,label=S",
+Repositories,Releases,,,,,,,,Delete a release asset,DELETE,/repos/:owner/:repo/releases/assets/:id,204,,,x,,,,,,,
+Repositories,Statistics,,,,,,,,"Get contributors list with additions, deletions, and commit counts",GET,/repos/:owner/:repo/stats/contributors,200,,,x,,,,,,,
+Repositories,Statistics,,,,,,,,Get the last year of commit activity data,GET,/repos/:owner/:repo/stats/commit_activity,200,,,x,,,,,,,
+Repositories,Statistics,,,,,,,,Get the number of additions and deletions per week,GET,/repos/:owner/:repo/stats/code_frequency,200,,x,,,,,,,,
+Repositories,Statistics,,,,,,,,Get the weekly commit count for the repository owner and everyone else,GET,/repos/:owner/:repo/stats/participation,200,,,x,,,,,,,
+Repositories,Statistics,,,,,,,,Get the number of commits per hour in each day,GET,/repos/:owner/:repo/stats/punch_card,200,,x,,,,,,,,
+Repositories,Statuses,,,,,,,,Create a Status,POST,/repos/:owner/:repo/statuses/:sha,201,,,,,,,x,,,
+Repositories,Statuses,,,,,,,,List Statuses for a specific Ref,GET,/repos/:owner/:repo/commits/:ref/statuses,200,,x,,,,,,,,ref=S
+Repositories,Statuses,,,,,,,,Get the combined Status for a specific Ref,GET,/repos/:owner/:repo/commits/:ref/status,200,,,x,,,,,,ref=string,
+Repositories,Traffic,,x,,,,,,List referrers,GET,/repos/:owner/:repo/traffic/popular/referrers,200,,x,,,,,,,,application/vnd.github.spiderman-preview
+Repositories,Traffic,,x,,,,,,List paths,GET,/repos/:owner/:repo/traffic/popular/paths,200,,x,,,,,,,,
+Repositories,Traffic,,x,,,,,,Views,GET,/repos/:owner/:repo/traffic/views,200,,,x,,,,,,"per={day*,week}",
+Repositories,Traffic,,x,,,,,,Clones,GET,/repos/:owner/:repo/traffic/clones,200,,,x,,,,,,"per={day*,week}",
+Repositories,Webhooks,,,,,,,,List hooks,GET,/repos/:owner/:repo/hooks,200,,x,,,,,,,,
+Repositories,Webhooks,,,,,,,,Get single hook,GET,/repos/:owner/:repo/hooks/:id,200,,,x,,,,,,,
+Repositories,Webhooks,,,,,,,,Create a hook,POST,/repos/:owner/:repo/hooks,200,,,,,,,,,,
+Repositories,Webhooks,,,,,,,,Edit a hook,PATCH,/repos/:owner/:repo/hooks/:id,200,,,x,,,,,,lots of stuff,
+Repositories,Webhooks,,,,,,,,Test a push hook,POST,/repos/:owner/:repo/hooks/:id/tests,204,,,,x,,,,,,
+Repositories,Webhooks,,,,,,,,Ping a hook,POST,/repos/:owner/:repo/hooks/:id/pings,204,,,,x,,,,,,
+Repositories,Webhooks,,,,,,,,Delete a hook,DELETE,/repos/:owner/:repo/hooks/:id,204,,,,x,,,,,,
+Search,Repositories,,,,,,,,Search repositories,GET,/search/repositories,,,,,,,,,,"q=, sort={stars,forks, updated},order={desc*,asc}",application/vnd.github.v3.text-match+json
+Search,Code,,,,,,,,Search code,GET,/search/code,,,,,,,,,,"q=, sort=indexed, order={asc,desc*}",application/vnd.github.v3.text-match+json
+Search,Issues,,,,,,,,Search issues,GET,/search/issues,,,,,,,,,,"q=, sort={comments, created, updated}, order={asc,desc*}",application/vnd.github.v3.text-match+json
+Search,Users,,,,,,,,Search users,GET,/search/users,,,,,,,,,,"q=, sort={followers, repositories, joined}, sort={asc, desc*}",application/vnd.github.v3.text-match+json
+Users,,,,,,,,,Get a single user,GET,/users/:username,200,,,x,,,,,,,
+Users,,,,,,,,,Get the authenticated user,GET,/user,200,,,x,,,x,,,,
+Users,,,,,,,,,Update the authenticated user,PATCH,/user,200,,,x,,,,,,"name=S,email=S,blog=S,company=S,location=S,hireable=B,bio=S",
+Users,,,,,,,,,Get all users,GET,/users,200,,x,,,,,,,,
+Users,Emails,,,,,,,,List email addresses for a user,GET,/user/emails,200,,x,,,,x,,,,
+Users,Emails,,,,,,,,Add email address(es),POST,/user/emails,201,,x,,,,x,,,array of strings,
+Users,Emails,,,,,,,,Delete email address(es),DELETE,/user/emails,204,,,,x,,x,,,array of strings,
+Users,Followers,,,,,,,,List followers of a user,GET,/users/:username/followers,200,,x,,,,,,,,
+Users,Followers,,,,,,,,List the authenticated user's followers,GET,/user/followers,200,,x,,,,x,,,,
+Users,Followers,,,,,,,,List users followed by another user,GET,/users/:username/following,200,,,,,,,,,,
+Users,Followers,,,,,,,,List who the authenticated user is following,GET,/user/following,200,,,,,,x,,,,
+Users,Followers,,,,,,,,Check if you are following a user,GET,/user/following/:username,"204, 404",,,,x,,,,,,
+Users,Followers,,,,,,,,Check if one user follows another,GET,/users/:username/following/:target_user,"204, 404",,,,x,,,,,,
+Users,Followers,,,,,,user:follow,,Follow a user,PUT,/user/following/:username,204,,,,x,,,,,,
+Users,Followers,,,,,,user:follow,,Unfollow a user,DELETE,/user/following/:username,204,,,,x,,,,,,
+Users,Git SSH Keys,,,,,,,,List public keys for a user,GET,/users/:username/keys,200,,x,,,,,,,,
+Users,Git SSH Keys,,,,,,read:public_key,,List your public keys,GET,/user/keys,200,,x,,,,x,,,,
+Users,Git SSH Keys,,,,,,read:public_key,,Get a single public key,GET,/user/keys/:id,200,,,x,,,x,,,,
+Users,Git SSH Keys,,,,,,write:public_key,,Create a public key,POST,/user/keys,201,,,x,,,x,x,,"title=S, key=S",
+Users,Git SSH Keys,,,,,,admin:public_key,,Delete a public key,DELETE,/user/keys/:id,204,,,,x,,x,,,,
+Users,GPG Keys,,x,,,,read:gpg_key ,,List your GPG keys,GET,/user/gpg_keys,200,,x,,,,x,,,,
+Users,GPG Keys,,,,,,read:gpg_key ,,Get a single GPG key,GET,/user/gpg_keys/:id,200,,,x,,,x,,,,
+Users,GPG Keys,,,,,,write:gpg_key,,Create a GPG key,POST,/user/gpg_keys,201,,,,,,x,x,,armored_public_key,
+Users,GPG Keys,,,,,,write:gpg_key,,Delete a GPG key,DELETE,/user/gpg_keys/:id,204,,,,x,,x,,,,
+Users,Administration (Enterprise),,,,,,,,,,,,,,,,,,,,,
+Enterprise,Admin Stats,,,,,,,,,,,,,,,,,,,,,
+,LDAP,,,,,,,,,,,,,,,,,,,,,
+,License,,,,,,,,,,,,,,,,,,,,,
+,Management Console,,,,,,,,,,,,,,,,,,,,,
+,Pre-receive Environments,,,,,,,,,,,,,,,,,,,,,
+,Pre-receive Hooks,,,,,,,,,,,,,,,,,,,,,
+,Search Indexing,,,,,,,,,,,,,,,,,,,,,
+,Organization Administration,,,,,,,,,,,,,,,,,,,,,
