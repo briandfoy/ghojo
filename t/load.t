@@ -9,6 +9,7 @@ my @classes = qw(
 	Ghojo::Data
 	Ghojo::Endpoints
 	Ghojo::Mixins::SuccessError
+	Ghojo::NullLogger
 	Ghojo::Result
 	);
 
