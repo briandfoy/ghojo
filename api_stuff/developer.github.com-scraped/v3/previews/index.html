@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta http-equiv="Content-Language" content="en-us" />
+  <meta http-equiv="imagetoolbar" content="false" />
+  <meta name="MSSmartTagsPreventParsing" content="true" />
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>API previews | GitHub Developer Guide</title>
+  
+  <link rel="alternate" type="application/atom+xml" title="API Changes" href="https://developer.github.com/changes.atom" />
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:400,300,400italic,500">
+  <link href="https://developer.github.com/assets/stylesheets/application.css" rel="stylesheet" type="text/css" />
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+  <script src="https://developer.github.com/assets/javascripts/application.js" type="text/javascript"></script>
+  
+</head>
+
+
+<body class="api ">
+  
+
+<header class="site-header">
+  <div id="header" class="container">
+    <a class="site-header-logo mt-1" href="https://developer.github.com/"><img src="https://developer.github.com/assets/images/github-developer-logo.svg" alt="GitHub Developer"></a>
+    <nav class="site-header-nav">
+      
+      <a class="site-header-nav-item" href="../index.html">API</a>
+      <a class="site-header-nav-item" href="https://developer.github.com/changes/">Blog</a>
+      
+      <a class="site-header-nav-item" href="https://developer.github.com/early-access/">Early Access</a>
+      
+      <a class="site-header-nav-item" href="https://github.com/contact">Support</a>
+      <form accept-charset="UTF-8" action="index.html#" class="site-header-nav-item site-header-search">
+        <label id="search-container" class="mb-0">
+          <input type="text" id="searchfield" class="form-control" placeholder="Search…"
+            autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+          <div class="cancel-search"></div>
+          <ul id="search-results"></ul>
+        </label>
+      </form>
+    </nav>
+  </div>
+</header>
+
+
+  <div class="container">
+    <div class="sub-nav mt-5 mb-3">
+      <h2><a href="../index.html">API</a></h2>
+      <ul>
+  <li><a href="../index.html" class="active">Reference</a></li>
+  <li><a href="https://developer.github.com/webhooks/">Webhooks</a></li>
+  <li><a href="https://developer.github.com/guides/">Guides</a></li>
+  <li><a href="https://developer.github.com/libraries/">Libraries</a></li>
+</ul>
+
+    </div>
+
+    <div class="nav-select nav-select-top hide-lg hide-xl">
+      <select class="form-select mt-4" onchange="if (this.value) window.location.href=this.value">
+  <option value="">Navigate the docs…</option>
+
+  <optgroup label="Overview">
+    <option value="/v3/">API Overview</a></h3>
+    <option value="/v3/media/">Media Types</option>
+    <option value="/v3/oauth/">OAuth</option>
+    <option value="/v3/oauth_authorizations/">OAuth Authorizations API</option>
+    <option value="/v3/auth/">Other Authentication Methods</option>
+    <option value="/v3/troubleshooting/">Troubleshooting</option>
+    <option value="/v3/pre-release/">Pre-release Program</option>
+    <option value="/v3/previews/">API Previews</option>
+    <option value="/v3/versions/">Versions</option>
+  </optgroup>
+
+  <optgroup label="Activity">
+    <option value="/v3/activity/">Activity overview</a></h3>
+    <option value="/v3/activity/events/">Events</option>
+    <option value="/v3/activity/events/types/">Event Types &amp; Payloads</option>
+    <option value="/v3/activity/feeds/">Feeds</option>
+    <option value="/v3/activity/notifications/">Notifications</option>
+    <option value="/v3/activity/starring/">Starring</option>
+    <option value="/v3/activity/watching/">Watching</option>
+  </optgroup>
+
+  <optgroup label="Gists">
+    <option value="/v3/gists/">Gists overview</a></h3>
+    <option value="/v3/gists/comments/">Comments</option>
+  </optgroup>
+
+  <optgroup label="Git Data">
+    <option value="/v3/git/">Git Data overview</a></h3>
+    <option value="/v3/git/blobs/">Blobs</option>
+    <option value="/v3/git/commits/">Commits</option>
+    <option value="/v3/git/refs/">References</option>
+    <option value="/v3/git/tags/">Tags</option>
+    <option value="/v3/git/trees/">Trees</option>
+  </optgroup>
+
+  <optgroup label="Integrations">
+    <option value="/v3/integrations/">Integrations</a></h3>
+    <option value="/v3/integrations/installations/">Installations</a></h3>
+  </optgroup>
+
+  <optgroup label="Issues">
+    <option value="/v3/issues/">Issues overview</a></h3>
+    <option value="/v3/issues/assignees/">Assignees</option>
+    <option value="/v3/issues/comments/">Comments</option>
+    <option value="/v3/issues/events/">Events</option>
+    <option value="/v3/issues/labels/">Labels</option>
+    <option value="/v3/issues/milestones/">Milestones</option>
+    
+    <option value="/v3/issues/timeline/">Timeline</option>
+    
+  </optgroup>
+
+  
+  <optgroup label="Migration">
+    <option value="/v3/migration/">Migration overview</a></h3>
+    <option value="/v3/migration/migrations/">Migrations</option>
+    <option value="/v3/migration/source_imports/">Source Imports</option>
+  </optgroup>
+  
+
+  <optgroup label="Miscellaneous">
+    <option value="/v3/misc/">Miscellaneous overview</a></h3>
+    <option value="/v3/emojis/">Emojis</option>
+    <option value="/v3/gitignore/">Gitignore</option>
+    <option value="/v3/licenses/">Licenses</option>
+    <option value="/v3/markdown/">Markdown</option>
+    <option value="/v3/meta/">Meta</option>
+    
+    <option value="/v3/rate_limit/">Rate Limit</option>
+    
+  </optgroup>
+
+  <optgroup label="Organizations">
+    <option value="/v3/orgs/">Organizations overview</a></h3>
+    <option value="/v3/orgs/members/">Members</option>
+    <option value="/v3/orgs/teams/">Teams</option>
+    <option value="/v3/orgs/hooks/">Webhooks</option>
+    
+  </optgroup>
+
+  
+  <optgroup label="Projects">
+    <option value="/v3/projects/">Projects overview</a></h3>
+    <option value="/v3/projects/cards/">Cards</option>
+    <option value="/v3/projects/columns/">Columns</option>
+  </optgroup>
+  
+
+  <optgroup label="Pull Requests">
+    <option value="/v3/pulls/">Pull Requests overview</a></h3>
+    <option value="/v3/pulls/comments/">Review Comments</option>
+  </optgroup>
+
+  <optgroup label="Reactions">
+    <option value="/v3/reactions/">Reactions overview</a></h3>
+    <option value="/v3/reactions/#list-reactions-for-a-commit-comment">Commit Comment</option>
+    <option value="/v3/reactions/#list-reactions-for-an-issue">Issue</option>
+    <option value="/v3/reactions/#list-reactions-for-an-issue-comment">Issue Comment</option>
+    <option value="/v3/reactions/#list-reactions-for-a-pull-request-review-comment">Pull Request Review Comment</option>
+  </optgroup>
+
+  <optgroup label="Repositories">
+    <option value="/v3/repos/">Repositories overview</a></h3>
+    <option value="/v3/repos/branches/">Branches</option>
+    <option value="/v3/repos/collaborators/">Collaborators</option>
+    <option value="/v3/repos/comments/">Comments</option>
+    <option value="/v3/repos/commits/">Commits</option>
+    <option value="/v3/repos/contents/">Contents</option>
+    <option value="/v3/repos/keys/">Deploy Keys</option>
+    <option value="/v3/repos/deployments/">Deployments</option>
+    <option value="/v3/repos/downloads/">Downloads</option>
+    <option value="/v3/repos/forks/">Forks</option>
+    <option value="/v3/repos/invitations/">Invitations</option>
+    <option value="/v3/repos/merging/">Merging</option>
+    <option value="/v3/repos/pages/">Pages</option>
+    
+    <option value="/v3/repos/releases/">Releases</option>
+    <option value="/v3/repos/statistics/">Statistics</option>
+    <option value="/v3/repos/statuses/">Statuses</option>
+    
+    <option value="/v3/repos/traffic/">Traffic</option>
+    
+    <option value="/v3/repos/hooks/">Webhooks</option>
+    
+  </optgroup>
+
+  <optgroup label="Search">
+    <option value="/v3/search/">Search overview</a></h3>
+    <option value="/v3/search/#search-repositories">Repositories</option>
+    <option value="/v3/search/#search-code">Code</option>
+    <option value="/v3/search/#search-issues">Issues</option>
+    <option value="/v3/search/#search-users">Users</option>
+    <option value="/v3/search/legacy/">Legacy Search</option>
+  </optgroup>
+
+  <optgroup label="Users">
+    <option value="/v3/users/">Users overview</a></h3>
+    <option value="/v3/users/emails/">Emails</option>
+    <option value="/v3/users/followers/">Followers</option>
+    <option value="/v3/users/keys/">Git SSH Keys</option>
+    
+    <option value="/v3/users/gpg_keys/">GPG Keys</option>
+    
+    <option value="/v3/users/administration/">Administration (Enterprise)</option>
+  </optgroup>
+
+  <optgroup label="Enterprise">
+    <option value="/v3/enterprise/">Enterprise overview</a></h3>
+    <option value="/v3/enterprise/admin_stats/">Admin Stats</option>
+    <option value="/v3/enterprise/ldap/">LDAP</option>
+    <option value="/v3/enterprise/license/">License</option>
+    <option value="/v3/enterprise/management_console/">Management Console</option>
+    
+    <option value="/v3/enterprise/pre_receive_environments/">Pre-receive Environments</option>
+    <option value="/v3/enterprise/pre_receive_hooks/">Pre-receive Hooks</option>
+    
+    <option value="/v3/enterprise/search_indexing/">Search Indexing</option>
+    
+    <option value="/v3/enterprise/orgs/">Organization Administration</option>
+    
+  </optgroup>
+</select>
+
+    </div>
+
+    <section class="main pt-5 clearfix gut-3" role="main">
+      <div class="content col-md-8">
+        <h1>
+<a id="api-previews" class="anchor" href="index.html#api-previews" aria-hidden="true"><span class="octicon octicon-link"></span></a>API Previews</h1>
+
+<ul id="markdown-toc">
+<li><a href="index.html#open-source-license-use" id="markdown-toc-open-source-license-use">Open Source License Use</a></li>
+<li><a href="index.html#migrations" id="markdown-toc-migrations">Migrations</a></li>
+<li><a href="index.html#protected-branches" id="markdown-toc-protected-branches">Protected branches</a></li>
+<li><a href="index.html#source-import" id="markdown-toc-source-import">Source import</a></li>
+<li><a href="index.html#squash-or-rebase-pull-requests" id="markdown-toc-squash-or-rebase-pull-requests">Squash or rebase pull requests</a></li>
+<li><a href="index.html#git-signing" id="markdown-toc-git-signing">Git signing</a></li>
+<li><a href="index.html#enhanced-deployments" id="markdown-toc-enhanced-deployments">Enhanced deployments</a></li>
+<li><a href="index.html#reactions" id="markdown-toc-reactions">Reactions</a></li>
+<li><a href="index.html#timeline" id="markdown-toc-timeline">Timeline</a></li>
+<li><a href="index.html#repository-invitations" id="markdown-toc-repository-invitations">Repository invitations</a></li>
+<li><a href="index.html#pages" id="markdown-toc-pages">Pages</a></li>
+<li><a href="index.html#traffic" id="markdown-toc-traffic">Traffic</a></li>
+<li><a href="index.html#integrations" id="markdown-toc-integrations">Integrations</a></li>
+<li><a href="index.html#projects" id="markdown-toc-projects">Projects</a></li>
+</ul>
+
+<p>API previews let you try out new APIs and changes to existing API methods before they become part of the official GitHub API.</p>
+
+<p>During the preview period, we may change some features based on developer feedback. If we do make changes, we'll announce them on the <a href="https://developer.github.com/changes/">developer blog</a> without advance notice.</p>
+
+<p>To access an API preview, you'll need to provide a custom <a href="../media/index.html">media type</a> in the <code>Accept</code> header for your requests. Feature documentation for each preview specifies which custom media type to provide.</p>
+
+<h2>
+<a id="open-source-license-use" class="anchor" href="index.html#open-source-license-use" aria-hidden="true"><span class="octicon octicon-link"></span></a>Open Source License Use</h2>
+
+<p>Support for retrieving information about <a href="../licenses/index.html">open source license usage</a> on GitHub.com.</p>
+
+<p><strong>Custom media type:</strong> <code>drax-preview</code>
+<strong>Announced:</strong> <a href="https://developer.github.com/changes/2015-03-09-licenses-api/">2015-03-09</a>
+<strong>Update 1:</strong> <a href="https://developer.github.com/changes/2015-06-24-licenses-api-update/">2015-06-24</a>
+<strong>Update 2:</strong> <a href="https://developer.github.com/changes/2015-08-04-get-license-contents/">2015-08-04</a></p>
+
+<h2>
+<a id="migrations" class="anchor" href="index.html#migrations" aria-hidden="true"><span class="octicon octicon-link"></span></a>Migrations</h2>
+
+<p>Prepare a GitHub repository for <a href="../migration/migrations/index.html">migration</a> to GitHub Enterprise.</p>
+
+<p><strong>Custom media type:</strong> <code>wyandotte-preview</code></p>
+
+<h2>
+<a id="protected-branches" class="anchor" href="index.html#protected-branches" aria-hidden="true"><span class="octicon octicon-link"></span></a>Protected branches</h2>
+
+<p>Protect <a href="../repos/branches/index.html">branches</a> by preventing force-pushes and branch deletions, requiring status checks, and setting push permissions for users in an organization.</p>
+
+<p><strong>Custom media type:</strong> <code>loki-preview</code>
+<strong>Announced:</strong> <a href="https://developer.github.com/changes/2015-11-11-protected-branches-api/">2015-11-11</a>
+<strong>Update:</strong> <a href="https://developer.github.com/changes/2016-06-27-protected-branches-api-update/">2016-06-27</a></p>
+
+<h2>
+<a id="source-import" class="anchor" href="index.html#source-import" aria-hidden="true"><span class="octicon octicon-link"></span></a>Source import</h2>
+
+<p>Import <a href="../migration/source_imports/index.html">source repositories</a> to GitHub with the API version of the <a href="https://help.github.com/articles/importing-a-repository-with-github-importer/">GitHub Importer</a>.</p>
+
+<p><strong>Custom media type:</strong> <code>barred-rock-preview</code>
+<strong>Announced:</strong> <a href="https://developer.github.com/changes/2016-02-19-source-import-preview-api/">2016-02-19</a>
+<strong>Update:</strong> <a href="https://developer.github.com/changes/2016-05-03-source-import-api-enhancements-for-working-with-git-lfs/">2016-05-03</a></p>
+
+<h2>
+<a id="squash-or-rebase-pull-requests" class="anchor" href="index.html#squash-or-rebase-pull-requests" aria-hidden="true"><span class="octicon octicon-link"></span></a>Squash or rebase pull requests</h2>
+
+<p>Squash or rebase <a href="https://help.github.com/articles/about-pull-request-merges/">commits</a> when <a href="../pulls/index.html#merge-a-pull-request-merge-button">merging pull requests</a> through the API.</p>
+
+<p><strong>Custom media type:</strong> <code>polaris-preview</code>
+<strong>Announced:</strong> <a href="https://developer.github.com/changes/2016-04-01-squash-api-preview/">2016-04-01</a>
+<strong>Update:</strong> <a href="https://developer.github.com/changes/2016-09-26-pull-request-merge-api-update/">2016-09-26</a></p>
+
+<h2>
+<a id="git-signing" class="anchor" href="index.html#git-signing" aria-hidden="true"><span class="octicon octicon-link"></span></a>Git signing</h2>
+
+<p>Verify GNU Privacy Guard (GPG) <a href="../users/gpg_keys/index.html">signed commits</a> and tags.</p>
+
+<p><strong>Custom media type:</strong> <code>cryptographer-preview</code>
+<strong>Announced:</strong> <a href="https://developer.github.com/changes/2016-04-04-git-signing-api-preview/">2016-04-04</a></p>
+
+<h2>
+<a id="enhanced-deployments" class="anchor" href="index.html#enhanced-deployments" aria-hidden="true"><span class="octicon octicon-link"></span></a>Enhanced deployments</h2>
+
+<p>Exercise greater control over <a href="../repos/deployments/index.html">deployments</a> with more information and finer granularity.</p>
+
+<p><strong>Custom media type:</strong> <code>ant-man-preview</code>
+<strong>Announced:</strong> <a href="https://developer.github.com/changes/2016-04-06-deployment-and-deployment-status-enhancements/">2016-04-06</a></p>
+
+<h2>
+<a id="reactions" class="anchor" href="index.html#reactions" aria-hidden="true"><span class="octicon octicon-link"></span></a>Reactions</h2>
+
+<p>Manage <a href="../reactions/index.html">reactions</a> for commits, issues, and comments.</p>
+
+<p><strong>Custom media type:</strong> <code>squirrel-girl-preview</code>
+<strong>Announced:</strong> <a href="https://developer.github.com/changes/2016-05-12-reactions-api-preview/">2016-05-12</a>
+<strong>Update:</strong> <a href="https://developer.github.com/changes/2016-06-07-reactions-api-update/">2016-06-07</a></p>
+
+<h2>
+<a id="timeline" class="anchor" href="index.html#timeline" aria-hidden="true"><span class="octicon octicon-link"></span></a>Timeline</h2>
+
+<p>Get a <a href="../issues/timeline/index.html">list of events</a> for an issue or pull request.</p>
+
+<p><strong>Custom media type:</strong> <code>mockingbird-preview</code>
+<strong>Announced:</strong> <a href="https://developer.github.com/changes/2016-05-23-timeline-preview-api/">2016-05-23</a></p>
+
+<h2>
+<a id="repository-invitations" class="anchor" href="index.html#repository-invitations" aria-hidden="true"><span class="octicon octicon-link"></span></a>Repository invitations</h2>
+
+<p>Invite collaborators to <a href="../repos/invitations/index.html">work on your repository</a>.</p>
+
+<p><strong>Custom media type:</strong> <code>swamp-thing-preview</code>
+<strong>Announced:</strong> <a href="https://developer.github.com/changes/2016-06-14-repository-invitations/">2016-06-14</a></p>
+
+<h2>
+<a id="pages" class="anchor" href="index.html#pages" aria-hidden="true"><span class="octicon octicon-link"></span></a>Pages</h2>
+
+<p>Get more information about your <a href="../repos/pages/index.html">GitHub Pages</a> site.</p>
+
+<p><strong>Custom media type:</strong> <code>mister-fantastic-preview</code>
+<strong>Announced:</strong> <a href="https://developer.github.com/changes/2016-07-06-github-pages-preview-api/">2016-07-06</a></p>
+
+<h2>
+<a id="traffic" class="anchor" href="index.html#traffic" aria-hidden="true"><span class="octicon octicon-link"></span></a>Traffic</h2>
+
+<p>Get <a href="../repos/traffic/index.html">traffic information</a> for a repository you have push access to.</p>
+
+<p><strong>Custom media type:</strong> <code>spiderman-preview</code>
+<strong>Announced:</strong> <a href="https://developer.github.com/changes/2016-08-15-traffic-api-preview/">2016-08-15</a>
+<strong>Update:</strong> <a href="https://developer.github.com/changes/2016-10-26-traffic-api-update/">2016-10-26</a></p>
+
+<h2>
+<a id="integrations" class="anchor" href="index.html#integrations" aria-hidden="true"><span class="octicon octicon-link"></span></a>Integrations</h2>
+
+<p>Manage <a href="https://developer.github.com/early-access/integrations/">integrations</a> through the API.</p>
+
+<p><strong>Custom media type:</strong> <code>machine-man-preview</code>
+<strong>Announced:</strong> <a href="https://developer.github.com/changes/2016-09-14-Integrations-Early-Access/">2016-09-14</a></p>
+
+<h2>
+<a id="projects" class="anchor" href="index.html#projects" aria-hidden="true"><span class="octicon octicon-link"></span></a>Projects</h2>
+
+<p>Manage <a href="../projects/index.html">projects</a>.</p>
+
+<p><strong>Custom media type:</strong> <code>inertia-preview</code>
+<strong>Announced:</strong> <a href="https://developer.github.com/changes/2016-09-14-projects-api/">2016-09-14</a>
+<strong>Update:</strong> <a href="https://developer.github.com/changes/2016-10-27-changes-to-projects-api/">2016-10-27</a></p>
+      </div>
+
+      <div class="nav-select nav-select-bottom hide-lg hide-xl">
+        <select class="form-select mt-4" onchange="if (this.value) window.location.href=this.value">
+  <option value="">Navigate the docs…</option>
+
+  <optgroup label="Overview">
+    <option value="/v3/">API Overview</a></h3>
+    <option value="/v3/media/">Media Types</option>
+    <option value="/v3/oauth/">OAuth</option>
+    <option value="/v3/oauth_authorizations/">OAuth Authorizations API</option>
+    <option value="/v3/auth/">Other Authentication Methods</option>
+    <option value="/v3/troubleshooting/">Troubleshooting</option>
+    <option value="/v3/pre-release/">Pre-release Program</option>
+    <option value="/v3/previews/">API Previews</option>
+    <option value="/v3/versions/">Versions</option>
+  </optgroup>
+
+  <optgroup label="Activity">
+    <option value="/v3/activity/">Activity overview</a></h3>
+    <option value="/v3/activity/events/">Events</option>
+    <option value="/v3/activity/events/types/">Event Types &amp; Payloads</option>
+    <option value="/v3/activity/feeds/">Feeds</option>
+    <option value="/v3/activity/notifications/">Notifications</option>
+    <option value="/v3/activity/starring/">Starring</option>
+    <option value="/v3/activity/watching/">Watching</option>
+  </optgroup>
+
+  <optgroup label="Gists">
+    <option value="/v3/gists/">Gists overview</a></h3>
+    <option value="/v3/gists/comments/">Comments</option>
+  </optgroup>
+
+  <optgroup label="Git Data">
+    <option value="/v3/git/">Git Data overview</a></h3>
+    <option value="/v3/git/blobs/">Blobs</option>
+    <option value="/v3/git/commits/">Commits</option>
+    <option value="/v3/git/refs/">References</option>
+    <option value="/v3/git/tags/">Tags</option>
+    <option value="/v3/git/trees/">Trees</option>
+  </optgroup>
+
+  <optgroup label="Integrations">
+    <option value="/v3/integrations/">Integrations</a></h3>
+    <option value="/v3/integrations/installations/">Installations</a></h3>
+  </optgroup>
+
+  <optgroup label="Issues">
+    <option value="/v3/issues/">Issues overview</a></h3>
+    <option value="/v3/issues/assignees/">Assignees</option>
+    <option value="/v3/issues/comments/">Comments</option>
+    <option value="/v3/issues/events/">Events</option>
+    <option value="/v3/issues/labels/">Labels</option>
+    <option value="/v3/issues/milestones/">Milestones</option>
+    
+    <option value="/v3/issues/timeline/">Timeline</option>
+    
+  </optgroup>
+
+  
+  <optgroup label="Migration">
+    <option value="/v3/migration/">Migration overview</a></h3>
+    <option value="/v3/migration/migrations/">Migrations</option>
+    <option value="/v3/migration/source_imports/">Source Imports</option>
+  </optgroup>
+  
+
+  <optgroup label="Miscellaneous">
+    <option value="/v3/misc/">Miscellaneous overview</a></h3>
+    <option value="/v3/emojis/">Emojis</option>
+    <option value="/v3/gitignore/">Gitignore</option>
+    <option value="/v3/licenses/">Licenses</option>
+    <option value="/v3/markdown/">Markdown</option>
+    <option value="/v3/meta/">Meta</option>
+    
+    <option value="/v3/rate_limit/">Rate Limit</option>
+    
+  </optgroup>
+
+  <optgroup label="Organizations">
+    <option value="/v3/orgs/">Organizations overview</a></h3>
+    <option value="/v3/orgs/members/">Members</option>
+    <option value="/v3/orgs/teams/">Teams</option>
+    <option value="/v3/orgs/hooks/">Webhooks</option>
+    
+  </optgroup>
+
+  
+  <optgroup label="Projects">
+    <option value="/v3/projects/">Projects overview</a></h3>
+    <option value="/v3/projects/cards/">Cards</option>
+    <option value="/v3/projects/columns/">Columns</option>
+  </optgroup>
+  
+
+  <optgroup label="Pull Requests">
+    <option value="/v3/pulls/">Pull Requests overview</a></h3>
+    <option value="/v3/pulls/comments/">Review Comments</option>
+  </optgroup>
+
+  <optgroup label="Reactions">
+    <option value="/v3/reactions/">Reactions overview</a></h3>
+    <option value="/v3/reactions/#list-reactions-for-a-commit-comment">Commit Comment</option>
+    <option value="/v3/reactions/#list-reactions-for-an-issue">Issue</option>
+    <option value="/v3/reactions/#list-reactions-for-an-issue-comment">Issue Comment</option>
+    <option value="/v3/reactions/#list-reactions-for-a-pull-request-review-comment">Pull Request Review Comment</option>
+  </optgroup>
+
+  <optgroup label="Repositories">
+    <option value="/v3/repos/">Repositories overview</a></h3>
+    <option value="/v3/repos/branches/">Branches</option>
+    <option value="/v3/repos/collaborators/">Collaborators</option>
+    <option value="/v3/repos/comments/">Comments</option>
+    <option value="/v3/repos/commits/">Commits</option>
+    <option value="/v3/repos/contents/">Contents</option>
+    <option value="/v3/repos/keys/">Deploy Keys</option>
+    <option value="/v3/repos/deployments/">Deployments</option>
+    <option value="/v3/repos/downloads/">Downloads</option>
+    <option value="/v3/repos/forks/">Forks</option>
+    <option value="/v3/repos/invitations/">Invitations</option>
+    <option value="/v3/repos/merging/">Merging</option>
+    <option value="/v3/repos/pages/">Pages</option>
+    
+    <option value="/v3/repos/releases/">Releases</option>
+    <option value="/v3/repos/statistics/">Statistics</option>
+    <option value="/v3/repos/statuses/">Statuses</option>
+    
+    <option value="/v3/repos/traffic/">Traffic</option>
+    
+    <option value="/v3/repos/hooks/">Webhooks</option>
+    
+  </optgroup>
+
+  <optgroup label="Search">
+    <option value="/v3/search/">Search overview</a></h3>
+    <option value="/v3/search/#search-repositories">Repositories</option>
+    <option value="/v3/search/#search-code">Code</option>
+    <option value="/v3/search/#search-issues">Issues</option>
+    <option value="/v3/search/#search-users">Users</option>
+    <option value="/v3/search/legacy/">Legacy Search</option>
+  </optgroup>
+
+  <optgroup label="Users">
+    <option value="/v3/users/">Users overview</a></h3>
+    <option value="/v3/users/emails/">Emails</option>
+    <option value="/v3/users/followers/">Followers</option>
+    <option value="/v3/users/keys/">Git SSH Keys</option>
+    
+    <option value="/v3/users/gpg_keys/">GPG Keys</option>
+    
+    <option value="/v3/users/administration/">Administration (Enterprise)</option>
+  </optgroup>
+
+  <optgroup label="Enterprise">
+    <option value="/v3/enterprise/">Enterprise overview</a></h3>
+    <option value="/v3/enterprise/admin_stats/">Admin Stats</option>
+    <option value="/v3/enterprise/ldap/">LDAP</option>
+    <option value="/v3/enterprise/license/">License</option>
+    <option value="/v3/enterprise/management_console/">Management Console</option>
+    
+    <option value="/v3/enterprise/pre_receive_environments/">Pre-receive Environments</option>
+    <option value="/v3/enterprise/pre_receive_hooks/">Pre-receive Hooks</option>
+    
+    <option value="/v3/enterprise/search_indexing/">Search Indexing</option>
+    
+    <option value="/v3/enterprise/orgs/">Organization Administration</option>
+    
+  </optgroup>
+</select>
+
+      </div>
+
+      <div id="js-sidebar" class="sidebar-shell col-md-4 hide-sm hide-md d-md-block d-lg-block d-xl-block">
+  <div class="js-toggle-list sidebar-module sidebar-menu expandable">
+    <ul>
+      <li class="js-topic">
+        <h3><a href="index.html#" class="js-expand-btn collapsed arrow-btn" data-proofer-ignore></a><a href="../index.html">Overview</a></h3>
+        <ul class="js-guides">
+          <li><a href="../media/index.html">Media Types</a></li>
+          <li><a href="../oauth/index.html">OAuth</a></li>
+          <li><a href="../oauth_authorizations/index.html">OAuth Authorizations API</a></li>
+          <li><a href="../auth/index.html">Other Authentication Methods</a></li>
+          <li><a href="../troubleshooting/index.html">Troubleshooting</a></li>
+          <li><a href="../pre-release/index.html">Pre-release Program</a></li>
+          <li><a href="index.html">API Previews</a></li>
+          <li><a href="../versions/index.html">Versions</a></li>
+        </ul>
+      </li>
+      <li class="js-topic">
+        <h3><a href="index.html#" class="js-expand-btn collapsed arrow-btn" data-proofer-ignore></a><a href="../activity/index.html">Activity</a></h3>
+        <ul class="js-guides">
+          <li><a href="../activity/events/index.html">Events</a></li>
+          <li><a href="../activity/events/types/index.html">Event Types &amp; Payloads</a></li>
+          <li><a href="../activity/feeds/index.html">Feeds</a></li>
+          <li><a href="../activity/notifications/index.html">Notifications</a></li>
+          <li><a href="../activity/starring/index.html">Starring</a></li>
+          <li><a href="../activity/watching/index.html">Watching</a></li>
+        </ul>
+      </li>
+      <li class="js-topic">
+        <h3><a href="index.html#" class="js-expand-btn collapsed arrow-btn" data-proofer-ignore></a><a href="../gists/index.html">Gists</a></h3>
+        <ul class="js-guides">
+          <li><a href="../gists/comments/index.html">Comments</a></li>
+        </ul>
+      </li>
+      <li class="js-topic">
+        <h3><a href="index.html#" class="js-expand-btn collapsed arrow-btn" data-proofer-ignore></a><a href="../git/index.html">Git Data</a></h3>
+        <ul class="js-guides">
+          <li><a href="../git/blobs/index.html">Blobs</a></li>
+          <li><a href="../git/commits/index.html">Commits</a></li>
+          <li><a href="../git/refs/index.html">References</a></li>
+          <li><a href="../git/tags/index.html">Tags</a></li>
+          <li><a href="../git/trees/index.html">Trees</a></li>
+        </ul>
+      </li>
+      <li class="js-topic">
+        <h3><a href="index.html#" class="js-expand-btn collapsed arrow-btn" data-proofer-ignore></a><a href="../integrations/index.html">Integrations</a></h3>
+        <ul class="js-guides">
+          <li><a href="../integrations/index.html">Integrations</a></li>
+          <li><a href="../integrations/installations/index.html">Installations</a></li>
+        </ul>
+      </li>
+      <li class="js-topic">
+        <h3><a href="index.html#" class="js-expand-btn collapsed arrow-btn" data-proofer-ignore></a><a href="../issues/index.html">Issues</a></h3>
+        <ul class="js-guides">
+          <li><a href="../issues/assignees/index.html">Assignees</a></li>
+          <li><a href="../issues/comments/index.html">Comments</a></li>
+          <li><a href="../issues/events/index.html">Events</a></li>
+          <li><a href="../issues/labels/index.html">Labels</a></li>
+          <li><a href="../issues/milestones/index.html">Milestones</a></li>
+          
+          <li><a href="../issues/timeline/index.html">Timeline</a></li>
+          
+        </ul>
+      </li>
+      
+      <li class="js-topic">
+        <h3><a href="index.html#" class="js-expand-btn collapsed arrow-btn" data-proofer-ignore></a><a href="../migration/index.html">Migration</a></h3>
+        <ul class="js-guides">
+          <li><a href="../migration/migrations/index.html">Migrations</a></li>
+          <li><a href="../migration/source_imports/index.html">Source Imports</a></li>
+        </ul>
+      </li>
+      
+      <li class="js-topic">
+        <h3><a href="index.html#" class="js-expand-btn collapsed arrow-btn" data-proofer-ignore></a><a href="../misc/index.html">Miscellaneous</a></h3>
+        <ul class="js-guides">
+          <li><a href="../emojis/index.html">Emojis</a></li>
+          <li><a href="../gitignore/index.html">Gitignore</a></li>
+          <li><a href="../licenses/index.html">Licenses</a></li>
+          <li><a href="../markdown/index.html">Markdown</a></li>
+          <li><a href="../meta/index.html">Meta</a></li>
+          
+          <li><a href="../rate_limit/index.html">Rate Limit</a></li>
+          
+        </ul>
+      </li>
+      <li class="js-topic">
+        <h3><a href="index.html#" class="js-expand-btn collapsed arrow-btn" data-proofer-ignore></a><a href="../orgs/index.html">Organizations</a></h3>
+        <ul class="js-guides">
+          <li><a href="../orgs/members/index.html">Members</a></li>
+          <li><a href="../orgs/teams/index.html">Teams</a></li>
+          <li><a href="../orgs/hooks/index.html">Webhooks</a></li>
+          
+        </ul>
+      </li>
+      
+      <li class="js-topic">
+        <h3><a href="index.html#" class="js-expand-btn collapsed arrow-btn" data-proofer-ignore></a><a href="../projects/index.html">Projects</a></h3>
+        <ul class="js-guides">
+          <li><a href="../projects/cards/index.html">Cards</a></li>
+          <li><a href="../projects/columns/index.html">Columns</a></li>
+        </ul>
+      </li>
+      
+      <li class="js-topic">
+        <h3><a href="index.html#" class="js-expand-btn collapsed arrow-btn" data-proofer-ignore></a><a href="../pulls/index.html">Pull Requests</a></h3>
+        <ul class="js-guides">
+          <li><a href="../pulls/comments/index.html">Review Comments</a></li>
+        </ul>
+      </li>
+      <li class="js-topic">
+        <h3><a href="index.html#" class="js-expand-btn collapsed arrow-btn" data-proofer-ignore></a><a href="../reactions/index.html">Reactions</a></h3>
+        <ul class="js-guides">
+          <li><a href="../reactions/index.html#list-reactions-for-a-commit-comment">Commit Comment</a></li>
+          <li><a href="../reactions/index.html#list-reactions-for-an-issue">Issue</a></li>
+          <li><a href="../reactions/index.html#list-reactions-for-an-issue-comment">Issue Comment</a></li>
+          <li><a href="../reactions/index.html#list-reactions-for-a-pull-request-review-comment">Pull Request Review Comment</a></li>
+        </ul>
+      </li>
+      <li class="js-topic">
+        <h3><a href="index.html#" class="js-expand-btn collapsed arrow-btn" data-proofer-ignore></a><a href="../repos/index.html">Repositories</a></h3>
+        <ul class="js-guides">
+          <li><a href="../repos/branches/index.html">Branches</a></li>
+          <li><a href="../repos/collaborators/index.html">Collaborators</a></li>
+          <li><a href="../repos/comments/index.html">Comments</a></li>
+          <li><a href="../repos/commits/index.html">Commits</a></li>
+          <li><a href="../repos/contents/index.html">Contents</a></li>
+          <li><a href="../repos/keys/index.html">Deploy Keys</a></li>
+          <li><a href="../repos/deployments/index.html">Deployments</a></li>
+          <li><a href="../repos/downloads/index.html">Downloads</a></li>
+          <li><a href="../repos/forks/index.html">Forks</a></li>
+          <li><a href="../repos/invitations/index.html">Invitations</a></li>
+          <li><a href="../repos/merging/index.html">Merging</a></li>
+          <li><a href="../repos/pages/index.html">Pages</a></li>
+          
+          <li><a href="../repos/releases/index.html">Releases</a></li>
+          <li><a href="../repos/statistics/index.html">Statistics</a></li>
+          <li><a href="../repos/statuses/index.html">Statuses</a></li>
+          
+          <li><a href="../repos/traffic/index.html">Traffic</a></li>
+          
+          <li><a href="../repos/hooks/index.html">Webhooks</a></li>
+          
+        </ul>
+      </li>
+      <li class="js-topic">
+        <h3><a href="index.html#" class="js-expand-btn collapsed arrow-btn" data-proofer-ignore></a><a href="../search/index.html">Search</a></h3>
+        <ul class="js-guides">
+          <li><a href="../search/index.html#search-repositories">Repositories</a></li>
+          <li><a href="../search/index.html#search-code">Code</a></li>
+          <li><a href="../search/index.html#search-issues">Issues</a></li>
+          <li><a href="../search/index.html#search-users">Users</a></li>
+          <li><a href="../search/legacy/index.html">Legacy Search</a></li>
+        </ul>
+      </li>
+      <li class="js-topic">
+        <h3><a href="index.html#" class="js-expand-btn collapsed arrow-btn" data-proofer-ignore></a><a href="../users/index.html">Users</a></h3>
+        <ul class="js-guides">
+          <li><a href="../users/emails/index.html">Emails</a></li>
+          <li><a href="../users/followers/index.html">Followers</a></li>
+          <li><a href="../users/keys/index.html">Git SSH Keys</a></li>
+          
+          <li><a href="../users/gpg_keys/index.html">GPG Keys</a></li>
+          
+          <li><a href="../users/administration/index.html">Administration (Enterprise)</a></li>
+        </ul>
+      </li>
+      <li class="js-topic">
+        <h3><a href="index.html#" class="js-expand-btn collapsed arrow-btn" data-proofer-ignore></a><a href="../enterprise/index.html">Enterprise</a></h3>
+        <ul class="js-guides">
+          <li><a href="../enterprise/admin_stats/index.html">Admin Stats</a></li>
+          <li><a href="../enterprise/ldap/index.html">LDAP</a></li>
+          <li><a href="../enterprise/license/index.html">License</a></li>
+          <li><a href="../enterprise/management_console/index.html">Management Console</a></li>
+          
+          <li><a href="../enterprise/pre_receive_environments/index.html">Pre-receive Environments</a></li>
+          <li><a href="../enterprise/pre_receive_hooks/index.html">Pre-receive Hooks</a></li>
+          
+          <li><a href="../enterprise/search_indexing/index.html">Search Indexing</a></li>
+          
+          <li><a href="../enterprise/orgs/index.html">Organization Administration</a></li>
+          
+        </ul>
+      </li>
+    </ul>
+  </div> <!-- /sidebar-module -->
+  <div class="sidebar-module api-status py-4 text-center"><a href="https://status.github.com" class="unknown">API Status</a></div>
+
+</div><!-- /sidebar-shell -->
+
+    </section>
+  </div>
+
+  <footer class="footer text-muted">
+  <div class="container">
+    <span class="footer-legal">&copy; 2016 GitHub Inc. All rights reserved.</span>
+    <span class="mega-octicon octicon-mark-github footer-mark"></span>
+    <nav class="footer-nav">
+      <a class="footer-nav-item" href="https://help.github.com/articles/github-terms-of-service">Terms of service</a>
+      <a class="footer-nav-item" href="https://github.com/site/privacy">Privacy</a>
+      <a class="footer-nav-item" href="https://github.com/security">Security</a>
+      <a class="footer-nav-item" href="https://github.com/support">Support</a>
+    </nav>
+  </div>
+</footer>
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-3769691-37', 'github.com');
+  ga('send', 'pageview');
+</script>
+
+</body>
+</html>
