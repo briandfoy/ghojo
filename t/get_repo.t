@@ -25,10 +25,13 @@ subtest good_repo => sub {
 	diag( "Repo name is " . $repo->data->{full_name} );
 
 	subtest labels => sub {
-		$ghojo->logger->level( 'OFF' );
-		my $response = eval { $repo->labels };
-		ok( ref $response );
-		isa_ok( $response, ref [] );
+		my $result = eval { $repo->labels };
+		isa_ok( $result, 'Ghojo::Result' );
+
+		my $array = $result->values;
+		ok( ref $array, 'Values for label list is a reference' );
+		isa_ok( $array, ref [] );
+		diag( "Labels is [@$array]" );
 		};
 	};
 
