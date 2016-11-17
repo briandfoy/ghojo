@@ -85,7 +85,7 @@ sub Ghojo::PublicUser::get_emojis ( $self ) {
 		}) if keys $cache->%*;
 
 	my $result = $self->get_single_resource(
-		$self->endpoint_to_url( '/emojis' ),
+		endpoint => '/emojis',
 		bless_into => 'Ghojo::Data::Emojis',
 		);
 
@@ -238,7 +238,7 @@ sub Ghojo::PublicUser::get_gitignore_template_names ( $self ) {
 		}) if keys $cache->%*;
 
 	my $result = $self->get_single_resource(
-		$self->endpoint_to_url( '/gitignore/templates' ),
+		endpoint   => '/gitignore/templates',
 		bless_into => 'Ghojo::Data::Gitignore',
 		);
 
@@ -338,8 +338,9 @@ sub Ghojo::PublicUser::get_gitignore_template ( $self, $template ) {
 		}
 
 	my $result = $self->get_single_resource(
-		$self->endpoint_to_url( '/gitignore/templates/:template', { template => $template } ),
-		bless_into => 'Ghojo::Data::Gitignore', # XXX This is not sufficient
+		endpoint        => '/gitignore/templates/:template',
+		endpoint_params => { template => $template },
+		bless_into      => 'Ghojo::Data::Gitignore', # XXX This is not sufficient
 		);
 
 	return $result if $result->is_error;
@@ -377,8 +378,9 @@ L<https://developer.github.com/v3/gitignore/#get-a-single-template>
 
 sub Ghojo::PublicUser::get_raw_gitignore_template ( $self, $template ) {
 	my $result = $self->get_single_resource(
-		$self->endpoint_to_url( '/gitignore/templates/:template', { template => $template } ),
-		bless_into => 'Ghojo::Data::Gitignore', # XXX This is not sufficient
+		endpoint        => '/gitignore/templates/:template',
+		endpoint_params => { template => $template },
+		bless_into      => 'Ghojo::Data::Gitignore', # XXX This is not sufficient (why not?)
 		);
 
 	return $result if $result->is_error;
@@ -423,8 +425,8 @@ sub Ghojo::PublicUser::get_license_names ( $self ) {
 		}) if keys $cache->%*;
 
 	my $result = $self->get_single_resource(
-		$self->endpoint_to_url( '/licenses' ),
-		accepts    => 'application/vnd.github.drax-preview+json',
+		endpoint => '/licenses',
+		accepts  => 'application/vnd.github.drax-preview+json',
 		);
 
 	return $result if $result->is_error;
@@ -538,9 +540,10 @@ sub Ghojo::PublicUser::get_license_content ( $self, $license ) {
 		}) unless $self->license_exists( $license );
 
 	my $result = $self->get_single_resource(
-		$self->endpoint_to_url( '/licenses/:license', { license => $license } ),
-		bless_into => 'Ghojo::Data::LicenseContent',
-		accepts    => 'application/vnd.github.drax-preview+json',
+		endpoint        => '/licenses/:license',
+		endpoint_params => { license => $license },
+		bless_into      => 'Ghojo::Data::LicenseContent',
+		accepts         => 'application/vnd.github.drax-preview+json',
 		);
 	}
 
@@ -556,9 +559,10 @@ L<https://developer.github.com/v3/licenses/#get-a-repositorys-license>
 
 sub Ghojo::PublicUser::get_license_name_for_repo ( $self, $owner, $repo ) {
 	my $result = $self->get_single_resource(
-		$self->endpoint_to_url( '/repos/:owner/:repo', { owner => $owner, repo => $repo } ),
-		bless_into => 'Ghojo::Data::License',
-		accepts    => 'application/vnd.github.drax-preview+json',
+		endpoint        => '/repos/:owner/:repo',
+		endpoint_params => { owner => $owner, repo => $repo },
+		bless_into      => 'Ghojo::Data::License',
+		accepts         => 'application/vnd.github.drax-preview+json',
 		);
 	}
 
@@ -574,9 +578,10 @@ L<https://developer.github.com/v3/licenses/#get-the-contents-of-a-repositorys-li
 
 sub Ghojo::PublicUser::get_license_content_for_repo ( $self, $owner, $repo ) {
 	my $result = $self->get_single_resource(
-		$self->endpoint_to_url( '/repos/:owner/:repo/license', { owner => $owner, repo => $repo } ),
-		bless_into => 'Ghojo::Data::LicenseContent',
-		accepts    => 'application/vnd.github.drax-preview+json',
+		endpoint        => '/repos/:owner/:repo/license',
+		endpoint_params => { owner => $owner, repo => $repo },
+		bless_into      => 'Ghojo::Data::LicenseContent',
+		accepts         => 'application/vnd.github.drax-preview+json',
 		);
 	}
 
@@ -603,7 +608,7 @@ L<https://developer.github.com/v3/markdown/#render-an-arbitrary-markdown-documen
 =cut
 
 sub Ghojo::PublicUser::render_markdown ( $self, $markdown, $repo = undef ) {
-	my $profile = {
+	state $profile = {
 		params => {
 			text    => sub { length $_[0] },
 			mode    => [ qw(markdown gfm) ],
@@ -627,7 +632,7 @@ sub Ghojo::PublicUser::render_markdown ( $self, $markdown, $repo = undef ) {
 	return $result if $result->is_error;
 
 	my $result = $self->post_single_resource(
-		$self->endpoint_to_url( '/markdown' ),
+		endpoint             => '/markdown',
 		expected_http_status => 200,
 		raw_content          => 1,
 		json                 => $args,
@@ -648,7 +653,7 @@ L<https://developer.github.com/v3/markdown/#render-a-markdown-document-in-raw-mo
 # takes text/plain or text/x-markdown
 sub Ghojo::PublicUser::render_raw_markdown ( $self, $markdown ) {
 	$self->post_single_resource(
-		$self->endpoint_to_url( '/markdown/raw' ),
+		endpoint             => '/markdown/raw',
 		expected_http_status => 200,
 		content_type         => 'text/x-markdown',
 		raw_content          => 1,
@@ -675,7 +680,7 @@ L<https://developer.github.com/v3/meta/>
 
 sub Ghojo::PublicUser::get_github_info ( $self ) {
 	$self->get_single_resource(
-		$self->endpoint_to_url( '/meta' ),
+		endpoint   => '/meta',
 		bless_into => 'Ghojo::Data::Meta',
 		);
 	}
@@ -739,7 +744,7 @@ sub Ghojo::PublicUser::get_rate_limit ( $self ) {
 	return $cache->[0] if $self->rate_limit_cache_is_fresh;
 
 	my $result = $self->get_single_resource(
-		$self->endpoint_to_url( '/rate_limit' ),
+		endpoint => '/rate_limit',
 		bless_into => 'Ghojo::Data::Rate',
 		);
 

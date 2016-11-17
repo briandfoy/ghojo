@@ -55,12 +55,11 @@ Implements C</repos/:owner/:repo/labels>.
 
 =cut
 
-sub labels ( $self, $owner, $repo ) {
-	my $params = [ $owner, $repo ];
-	my $url = $self->query_url( "/repos/%s/%s/labels", $params );
-	$self->logger->trace( "Query URL is $url" );
-	my $tx = $self->ua->get( $url );
-	Mojo::Collection->new( $tx->res->json->@* );
+sub Ghojo::PublicUser::labels ( $self, $owner, $repo ) {
+	$self->get_single_resource(
+		endpoint        => '/repos/%s/%s/labels',
+		endpoint_params => { owner => $owner, repo => $repo },
+		);
 	}
 
 =item * get_label( USER, REPO, LABEL )
@@ -77,7 +76,7 @@ Implements C</repos/:owner/:repo/labels/:name>.
 
 =cut
 
-sub get_label ( $self, $user, $repo, $name ) {
+sub Ghojo::PublicUser::get_label ( $self, $user, $repo, $name ) {
 	state $expected_status = 200;
 	my $params = [ $user, $repo, $name ];
 	my $url = $self->query_url( "/repos/%s/%s/labels/%s", $params );
@@ -107,7 +106,7 @@ Implements C<POST /repos/:owner/:repo/labels>.
 
 =cut
 
-sub create_label ( $self, $owner, $repo, $name, $color = 'FF0000' ) {
+sub Ghojo::AuthenticatedUser::create_label ( $self, $owner, $repo, $name, $color = 'FF0000' ) {
 	state $expected_status = 201;
 	my $params             = [ $owner, $repo ];
 
@@ -145,7 +144,7 @@ Response Status: 200 OK
 
 =cut
 
-sub update_label ( $self, $owner, $repo, $name, $new_name, $color ) {
+sub Ghojo::AuthenticatedUser::update_label ( $self, $owner, $repo, $name, $new_name, $color ) {
 	state $expected_status = 200;
 	my $params             = [ $owner, $repo, $name ];
 
@@ -171,31 +170,30 @@ sub update_label ( $self, $owner, $repo, $name, $new_name, $color ) {
 	return 1;
 	}
 
-=item * delete_label( OWNER, REPO, $NAME )
+=item * delete_label( OWNER, REPO, LABEL_NAME )
 
-DELETE /repos/:owner/:repo/labels/:name
+Remove the named label from the repository. This should also remove
+that label from every issue.
 
-Status: 204 No Content
+	$ghojo->delete_label( 'octollama', 'woolkit', 'Hacktoberfest' );
+
+This is part of the authenticated user interface.
+
+L<https://developer.github.com/v3/issues/labels/#delete-a-label>
 
 =cut
 
-sub delete_label ( $self, $owner, $repo, $name ) {
-	state $expected_status = 204;
-	my $params             = [ $owner, $repo, $name ];
+sub Ghojo::AuthenticatedUser::delete_label ( $self, $owner, $repo, $name ) {
+	$self->entered_sub;
 
-	my $url = $self->query_url( "/repos/%s/%s/labels/%s", $params );
-
-	$self->logger->trace( "delete_label: URL is $url" );
-	my $tx = $self->ua->delete( $url );
-	my $code = $tx->res->code;
-
-	unless( $code == $expected_status ) {
-		my $body = $tx->res->body;
-		$self->logger->error( "create_label did not return a $expected_status: $body" );
-		return 0;
-		}
-
-	return 1;
+	$self->delete_single_resource(
+		endpoint        => '/repos/:owner/:repo/labels/:name',
+		endpoint_params => {
+			owner => $owner,
+			repo  => $repo,
+			name  => $name,
+			},
+		);
 	}
 
 
@@ -218,15 +216,11 @@ Link: <https://api.github.com/resource?page=2>; rel="next",
 
 =cut
 
-sub get_labels_for_issue ( $self, $owner, $repo, $number, $callback = sub { $_[0] } ) {
-	state $expected_status = 200;
-	my $params             = [ $owner, $repo, $number ];
-
-	my $results = $self->paged_get(
-		"/repos/%s/%s/issues/%d/labels",
-		[ $owner, $repo, $number ],
-		$callback,
-		{}
+sub Ghojo::PublicUser::get_labels_for_issue ( $self, $owner, $repo, $number, $callback = sub { $_[0] } ) {
+	$self->get_paged_resources(
+		endpoint        => '/repos/:owner/:repo/issues/%d/labels',
+		endpoint_params => { owner => $owner, repo => $repo, number => $number },
+		callback        => $callback,
 		);
 	}
 
@@ -248,7 +242,9 @@ Link: <https://api.github.com/resource?page=2>; rel="next",
 
 =cut
 
-sub get_labels_for_all_issus_in_milestone ( $self, $owner, $repo, $name ) {
+sub Ghojo::PublicUser::get_labels_for_all_issus_in_milestone ( $self, $owner, $repo, $name ) {
+	$self->not_implemented;
+
 	state $expected_status = 200;
 	my $params             = [ $owner, $repo, $name ];
 
@@ -284,7 +280,7 @@ Status: 200 OK
 
 =cut
 
-sub add_labels_to_issue ( $self, $owner, $repo, $number, @names ) {
+sub Ghojo::AuthenticatedUser::add_labels_to_issue ( $self, $owner, $repo, $number, @names ) {
 	state $expected_status = 200;
 	my $params             = [ $owner, $repo, $number ];
 
@@ -312,7 +308,8 @@ Status: 204 No Content
 
 =cut
 
-sub remove_label_from_issue ( $self, $owner, $repo, $name ) {
+sub Ghojo::AuthenticatedUser::remove_label_from_issue ( $self, $owner, $repo, $name ) {
+	$self->not_implemented;
 	state $expected_status = 204;
 	my $params             = [ $owner, $repo, $name ];
 
@@ -328,7 +325,8 @@ Status: 204 No Content
 
 =cut
 
-sub remove_all_labels_from_issue ( $self, $owner, $repo, $name ) {
+sub Ghojo::AuthenticatedUser::remove_all_labels_from_issue ( $self, $owner, $repo, $name ) {
+	$self->not_implemented;
 	state $expected_status = 204;
 	my $params             = [ $owner, $repo, $name ];
 
@@ -358,12 +356,14 @@ Status: 200 OK
 
 =cut
 
-sub replace_all_labels_for_issue ( $self, $owner, $repo, $name ) {
+sub Ghojo::AuthenticatedUser::replace_all_labels_for_issue ( $self, $owner, $repo, $name ) {
+	$self->not_implemented;
 	state $expected_status = 200;
 	my $params             = [ $owner, $repo, $name ];
 
 
 	}
+
 =back
 
 =head1 SOURCE AVAILABILITY

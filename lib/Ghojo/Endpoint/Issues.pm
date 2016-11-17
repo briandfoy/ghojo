@@ -85,7 +85,7 @@ The keys of the HASHREF can be:
 =cut
 
 sub Ghojo::get_repo_issues_profile ( $self ) {
-	my $profile = {
+	state $profile = {
 		params => {
 			milestone   => qr/\A (\*|none|\d+) \z/x,
 			'state'     => [ qw(open closed all) ],
@@ -102,7 +102,7 @@ sub Ghojo::get_repo_issues_profile ( $self ) {
 	}
 
 sub Ghojo::get_all_issues_profile ( $self ) {
-	my $profile = {
+	state $profile = {
 		params => {
 			filter      => [ qw(assigned created mentioned subscribed all) ],
 			'state'     => [ qw(open closed all) ],
@@ -125,10 +125,11 @@ sub Ghojo::PublicUser::issues_on_repo ( $self, $owner, $repo, $callback = sub { 
 	return $result if $result->is_error;
 
 	$self->get_paged_resources(
-		$self->endpoint_to_url( "/repos/:owner/:repo/issues", { owner => $owner, repo => $repo } ),
-		callback   => $callback,
-		bless_into => 'Ghojo::Data::Issue',
-		form       => $args
+		endpoint        => "/repos/:owner/:repo/issues",
+		endpoint_params => { owner => $owner, repo => $repo },
+		callback        => $callback,
+		bless_into      => 'Ghojo::Data::Issue',
+		form            => $args
 		);
 	}
 
@@ -159,10 +160,11 @@ L<https://developer.github.com/v3/issues/#get-a-single-issue>
 
 sub Ghojo::PublicUser::get_issue_by_number ( $self, $owner, $repo, $number ) {
 	$self->get_single_resource(
-		$self->endpoint_to_url( '/repos/:owner/:repo/issues/:id' => {
+		endpoint   => '/repos/:owner/:repo/issues/:id',
+		endpoint_params => {
 			owner => $owner,
 			repo  => $repo,
-			id    => $number }),
+			id    => $number },
 		bless_into => 'Ghojo::Data::Issue',
 		accepts    => 'application/vnd.github.squirrel-girl-preview',
 		);
@@ -212,7 +214,7 @@ sub Ghojo::AuthenticatedUser::get_issues_owned_by_you ( $self, $callback = sub {
 	return $result if $result->is_error;
 
 	$self->get_paged_resources(
-		$self->endpoint_to_url( '/issues' ),
+		endpoint   => '/issues',
 		bless_into => 'Ghojo::Data::Issue',
 		callback   => $callback,
 		accepts    => 'application/vnd.github.squirrel-girl-preview',
@@ -235,7 +237,7 @@ sub Ghojo::AuthenticatedUser::get_issues_owned_by_you2 ( $self, $callback = sub 
 	return $result if $result->is_error;
 
 	$self->get_paged_resources(
-		$self->endpoint_to_url( '/issues' ),
+		endpoint   => '/issues',
 		bless_into => 'Ghojo::Data::Issue',
 		callback   => $callback,
 		accepts    => 'application/vnd.github.squirrel-girl-preview',
@@ -257,7 +259,8 @@ sub Ghojo::AuthenticatedUser::get_issues_in_org_owned_by_you ( $self, $organizat
 	return $result if $result->is_error;
 
 	$self->get_paged_resources(
-		$self->endpoint_to_url( '/orgs/:org/issues', { org => $organization } ),
+		endpoint   => '/orgs/:org/issues',
+		endpoint_params => { org => $organization },
 		bless_into => 'Ghojo::Data::Issue',
 		callback   => $callback,
 		accepts    => 'application/vnd.github.squirrel-girl-preview',
@@ -284,7 +287,7 @@ L<https://developer.github.com/v3/issues/#create-an-issue>
 sub Ghojo::AuthenticatedUser::create_an_issue ( $self, $owner, $repo, $args = {} ) {
 	$self->entered_sub;
 
-	my $profile = {
+	state $profile = {
 		params => {
 			title     => qr/\S/,
 			body      => qr/\S/,
@@ -300,10 +303,11 @@ sub Ghojo::AuthenticatedUser::create_an_issue ( $self, $owner, $repo, $args = {}
 	return $result if $result->is_error;
 
 	$self->post_single_resource(
-		$self->endpoint_to_url( '/repos/:owner/:repo/issues' => {
+		endpoint => '/repos/:owner/:repo/issues',
+		endpoint_params => {
 			owner  => $owner,
 			repo   => $repo,
-			}),
+			},
 		json => $args,
 		);
 	}
@@ -331,7 +335,7 @@ L<https://developer.github.com/v3/issues/#edit-an-issue>
 sub edit_an_issue ( $self, $owner, $repo, $number, $args = {} ) {
 	$self->entered_sub;
 
-	my $profile = {
+	state $profile = {
 		params => {
 			title     => qr/\S/,
 			body      => qr/\S/,
@@ -347,11 +351,12 @@ sub edit_an_issue ( $self, $owner, $repo, $number, $args = {} ) {
 	return $result if $result->is_error;
 
 	$self->patch_single_resource(
-		$self->endpoint_to_url( '/repos/:owner/:repo/issues/:number' => {
+		endpoint => '/repos/:owner/:repo/issues/:number',
+		endpoint_params => {
 			owner  => $owner,
 			repo   => $repo,
 			number => $number,
-			}),
+			},
 		json => $args,
 		);
 	}
@@ -370,10 +375,11 @@ L<https://developer.github.com/v3/issues/#lock-an-issue>
 
 sub lock_an_issue ( $self, $owner, $repo, $number ) {
 	$self->put_single_resource(
-		$self->endpoint_to_url( '/repos/:owner/:repo/issues/:number/lock' => {
+		endpoint => '/repos/:owner/:repo/issues/:number/lock',
+		endpoint_params => {
 			owner => $owner,
 			repo  => $repo,
-			number => $number }),
+			number => $number },
 		expected_http_status => 204,
 		);
 	}
@@ -392,10 +398,11 @@ L<https://developer.github.com/v3/issues/#unlock-an-issue>
 
 sub unlock_an_issue ( $self, $owner, $repo, $number ) {
 	$self->delete_single_resource(
-		$self->endpoint_to_url( '/repos/:owner/:repo/issues/:number/lock' => {
+		endpoint => '/repos/:owner/:repo/issues/:number/lock',
+		endpoint_params  => {
 			owner => $owner,
 			repo  => $repo,
-			number => $number }),
+			number => $number },
 		);
 	}
 

@@ -47,8 +47,8 @@ sub Ghojo::AuthenticatedUser::get_authenticated_user ( $self ) {
 	$self->logger->trace( 'Getting the authenticated user record' );
 
 	$self->get_single_resource(
-		$self->endpoint_to_url( '/user' ),
-		bless_into           => 'Ghojo::Data::UserRecord',
+		endpoint   => '/user',
+		bless_into => 'Ghojo::Data::UserRecord',
 		);
 	}
 
@@ -65,8 +65,9 @@ L<https://developer.github.com/v3/users/#get-a-single-user>
 sub Ghojo::PublicUser::get_user ( $self, $user ) {
 	$self->entered_sub;
 	$self->get_single_resource(
-		$self->endpoint_to_url( '/users/:username', {username => $user} ),
-		bless_into           => 'Ghojo::Data::UserRecord',
+		endpoint        => '/users/:username',
+		endpoint_params => { username => $user },
+		bless_into      => 'Ghojo::Data::UserRecord',
 		);
 	}
 
@@ -96,9 +97,9 @@ L<https://developer.github.com/v3/users/#get-all-users>
 sub Ghojo::PublicUser::get_all_users ( $self, $callback = sub { $_[0] } ) {
 	$self->entered_sub;
 	my $result = $self->get_paged_resources(
-		$self->endpoint_to_url( '/users' ),
-		bless_into           => 'Ghojo::Data::UserRecord',
-		callback             => $callback,
+		endpoint   => '/users',
+		bless_into => 'Ghojo::Data::UserRecord',
+		callback   => $callback,
 		);
 	}
 
@@ -151,9 +152,9 @@ sub Ghojo::AuthenticatedUser::update_user ( $self, $args = {} ) {
 		};
 
 	$self->patch_single_resource(
-		$self->endpoint_to_url( '/user' ),
-		bless_into           => 'Ghojo::Data::UserRecord',
-		data                 => \%data,
+		endpoint   => '/user',
+		bless_into => 'Ghojo::Data::UserRecord',
+		data       => \%data,
 		);
 	}
 
@@ -183,9 +184,9 @@ L<https://developer.github.com/v3/users/emails/#list-email-addresses-for-a-user>
 
 sub Ghojo::AuthenticatedUser::get_authenticated_user_emails ( $self, $callback = sub { $_[0] } ) {
 	my $collection = $self->get_paged_resources(
-		$self->endpoint_to_url( '/user/emails' ),
-		requires_scope       => [ qw(user:email) ],
-		bless_into           => 'Ghojo::Data::Email',
+		endpoint       => '/user/emails',
+		requires_scope => [ qw(user:email) ],
+		bless_into     => 'Ghojo::Data::Email',
 		);
 	}
 
@@ -199,9 +200,9 @@ L<https://developer.github.com/v3/users/emails/#add-email-addresses>
 
 sub Ghojo::AuthenticatedUser::add_authenticated_user_emails ( $self, @emails ) {
 	my $collection = $self->post_paged_resources(
-		$self->endpoint_to_url( '/user/emails' ),
-		bless_into           => 'Ghojo::Data::Email',
-		data                 => \@emails,
+		endpoint    => '/user/emails',
+		bless_into  => 'Ghojo::Data::Email',
+		data        => \@emails,
 		);
 	}
 
@@ -215,8 +216,8 @@ L<https://developer.github.com/v3/users/emails/#delete-email-addresses>
 
 sub Ghojo::AuthenticatedUser::delete_authenticated_user_emails ( $self, @emails ) {
 	my $collection = $self->delete_resources(
-		$self->endpoint_to_url( '/user/emails' ),
-		data                 => \@emails,
+		endpoint => '/user/emails',
+		data     => \@emails,
 		);
 	}
 
@@ -236,8 +237,9 @@ L<https://developer.github.com/v3/users/followers/#list-followers-of-a-user>
 
 sub Ghojo::PublicUser::get_followers_of_user ( $self, $user, $callback = sub { $_[0] } ) {
 	my $collection = $self->get_paged_resources(
-		$self->endpoint_to_url( '/user/following/:username', {username => $user} ),
-		bless_into           => 'Ghojo::Data::UserRecord',
+		endpoint        => '/user/following/:username',
+		endpoint_params => {username => $user},
+		bless_into      => 'Ghojo::Data::UserRecord',
 		);
 	}
 
@@ -251,8 +253,8 @@ L<https://developer.github.com/v3/users/followers/#list-followers-of-a-user>
 
 sub Ghojo::AuthenticatedUser::get_your_followers ( $self, $callback = sub { $_[0] } ) {
 	my $collection = $self->get_paged_resources(
-		$self->endpoint_to_url( '/user/followers' ),
-		bless_into           => 'Ghojo::Data::UserRecord',
+		endpoint   => '/user/followers',
+		bless_into => 'Ghojo::Data::UserRecord',
 		);
 	}
 
@@ -266,8 +268,9 @@ L<https://developer.github.com/v3/users/followers/#list-users-followed-by-anothe
 
 sub Ghojo::PublicUser::get_users_followed_by_another ( $self, $user, $callback = sub { $_[0] } ) {
 	my $collection = $self->get_paged_resources(
-		$self->endpoint_to_url( '/user/:username/following', {username => $user} ),
-		bless_into           => 'Ghojo::Data::UserRecord',
+		endpoint        => '/user/:username/following',
+		endpoint_params => {username => $user},
+		bless_into      => 'Ghojo::Data::UserRecord',
 		);
 	}
 
@@ -281,8 +284,8 @@ L<https://developer.github.com/v3/users/followers/#check-if-you-are-following-a-
 
 sub Ghojo::AuthenticatedUser::you_are_following ( $self ) {
 	my $collection = $self->get_paged_resources(
-		$self->endpoint_to_url( '/user/following' ),
-		bless_into           => 'Ghojo::Data::UserRecord',
+		endpoint   => '/user/following',
+		bless_into => 'Ghojo::Data::UserRecord',
 		);
 	}
 
@@ -299,7 +302,8 @@ sub Ghojo::AuthenticatedUser::follow_users ( $self, @users ) {
 
 	foreach my $user ( @users ) {
 		push @results, $self->put_single_resource(
-			$self->endpoint_to_url( '/user/following/:username', {username => $user} ),
+			endpoint             => '/user/following/:username',
+			endpoint_params      => {username => $user},
 			requires_scope       => [ qw(user:follow) ],
 			expected_http_status => 204,
 			);
@@ -320,9 +324,11 @@ sub Ghojo::AuthenticatedUser::unfollow_users ( $self, @users ) {
 	my @results;
 
 	foreach my $user ( @users ) {
+		# this returns a bunch of Result objects?
 		push @results, $self->delete_single_resource(
-			$self->endpoint_to_url( '/user/following/:username', {username => $user} ),
-			requires_scope       => [ qw(user:follow) ],
+			endpoint        => '/user/following/:username',
+			endpoint_params => { username => $user },
+			requires_scope  => [ qw(user:follow) ],
 			);
 		}
 
@@ -345,8 +351,9 @@ L<https://developer.github.com/v3/users/keys/#list-public-keys-for-a-user>
 
 sub Ghojo::PublicUser::get_ssh_keys_for_user ( $self, $user ) {
 	my $collection = $self->get_paged_resources(
-		$self->endpoint_to_url( '/user/:username/keys' ),
-		bless_into           => 'Ghojo::Data::SSHKey',
+		endpoint        => '/user/:username/keys',
+		endpoint_params => { username => $user },
+		bless_into      => 'Ghojo::Data::SSHKey',
 		);
 	}
 
@@ -360,9 +367,9 @@ L<https://developer.github.com/v3/users/keys/#list-your-public-keys>
 
 sub Ghojo::AuthenticatedUser::get_ssh_keys ( $self ) {
 	my $collection = $self->get_paged_resources(
-		$self->endpoint_to_url( '/user/keys' ),
-		requires_scope       => [ qw(read:public_key) ],
-		bless_into           => 'Ghojo::Data::SSHKey',
+		endpoint       => '/user/keys',
+		requires_scope => [ qw(read:public_key) ],
+		bless_into     => 'Ghojo::Data::SSHKey',
 		);
 	}
 
@@ -379,9 +386,10 @@ sub Ghojo::AuthenticatedUser::get_ssh_keys_by_id ( $self, @ids ) {
 
 	foreach my $id ( @ids ) {
 		push @results, $self->get_single_resource(
-			$self->endpoint_to_url( '/user/keys/:id', { id => $id } ),
-			requires_scope       => [ qw(read:public_key) ],
-			bless_into           => 'Ghojo::Data::SSHKey',
+			endpoint        => '/user/keys/:id',
+			endpoint_params => { id => $id },
+			requires_scope  => [ qw(read:public_key) ],
+			bless_into      => 'Ghojo::Data::SSHKey',
 			);
 		}
 
@@ -402,7 +410,7 @@ L<https://developer.github.com/v3/users/keys/#create-a-public-key>
 
 sub Ghojo::AuthenticatedUser::create_public_key ( $self, %args ) {
 	$self->post_single_resource(
-		$self->endpoint_to_url( '/user/keys' ),
+		endpoint             => '/user/keys',
 		expected_http_status => 201,
 		requires_scope       => [ qw(write:public_key) ],
 		bless_into           => 'Ghojo::Data::SSHKey',
@@ -423,7 +431,8 @@ sub Ghojo::AuthenticatedUser::delete_keys_by_id ( $self, @ids ) {
 
 	foreach my $id ( @ids ) {
 		push @results, $self->delete_single_resource(
-			$self->endpoint_to_url( '/user/keys/:id', { id => $id } ),
+			endpoint             => '/user/keys/:id',
+			endpoint_params      => { id => $id },
 			expected_http_status => 204,
 			requires_scope       => [ qw(admin:public_key) ],
 			);
@@ -438,7 +447,7 @@ sub Ghojo::AuthenticatedUser::delete_keys_by_id ( $self, @ids ) {
 
 =over 4
 
-=item * get_gpg_keys
+=item * get_gpg_keys( CALLBACK )
 
 This is an authenticated API endpoint. This requires the C<read:gpg_key> scope.
 
@@ -446,11 +455,11 @@ L<https://developer.github.com/v3/users/gpg_keys/#list-your-gpg-keys>
 
 =cut
 
-sub Ghojo::AuthenticatedUser::get_gpg_keys ( $self ) {
+sub Ghojo::AuthenticatedUser::get_gpg_keys ( $self, $callback = sub { $_[0] } ) {
 	my $collection = $self->get_paged_resources(
-		$self->endpoint_to_url( '/user/gpg_keys' ),
-		requires_scope       => [ qw(read:public_key) ],
-		bless_into           => 'Ghojo::Data::GPGKey',
+		endpoint       => '/user/gpg_keys',
+		requires_scope => [ qw(read:public_key) ],
+		bless_into     => 'Ghojo::Data::GPGKey',
 		);
 	}
 
@@ -467,9 +476,10 @@ sub Ghojo::AuthenticatedUser::get_gpg_key_by_id ( $self, @ids ) {
 
 	foreach my $id ( @ids ) {
 		push @results, $self->get_single_resource(
-			$self->endpoint_to_url( '/user/gpg_keys/:id', { id => $id } ),
-			requires_scope       => [ qw(read:public_key) ],
-			bless_into           => 'Ghojo::Data::GPGKey',
+			endpoint        => '/user/gpg_keys/:id',
+			endpoint_params => { id => $id },
+			requires_scope  => [ qw(read:public_key) ],
+			bless_into      => 'Ghojo::Data::GPGKey',
 			);
 		}
 
@@ -497,10 +507,10 @@ sub Ghojo::AuthenticatedUser::add_gpg_keys ( $self, @keys ) {
 		my $data = { armored_public_key => $key };
 
 		push @results, $self->post_single_resource(
-			$self->endpoint_to_url( '/user/gpg_keys' ),
-			requires_scope       => [ qw(write:gpg_key) ],
-			data                 => $data,
-			bless_into           => 'Ghojo::Data::GPGKey',
+			endpoint       => '/user/gpg_keys',
+			requires_scope => [ qw(write:gpg_key) ],
+			data           => $data,
+			bless_into     => 'Ghojo::Data::GPGKey',
 			);
 		}
 
@@ -520,8 +530,9 @@ sub Ghojo::AuthenticatedUser::delete_gpg_keys_by_id ( $self, @ids ) {
 
 	foreach my $id ( @ids ) {
 		push @results, $self->delete_single_resource(
-			$self->endpoint_to_url( '/user/gpg_keys/:id', { id => $id } ),
-			requires_scope       => [ qw(write:gpg_key) ],
+			endpoint        => '/user/gpg_keys/:id',
+			endpoint_params => { id => $id },
+			requires_scope  => [ qw(write:gpg_key) ],
 			);
 		}
 

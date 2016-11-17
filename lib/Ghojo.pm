@@ -3,6 +3,9 @@ use feature qw(signatures);
 no warnings qw(experimental::signatures);
 
 package Ghojo;
+
+use Mojo::Util qw(dumper);
+
 # The endpoints are divided into public and authenticated parts
 # We'll use this inheritance chain to divide them. The public
 # class can't see the stuff in the authorized class, but the
@@ -370,7 +373,7 @@ public parts of the API.
 
 	username  - (required) The GitHub username
 	password  - (required) The GitHub password
-	authenticate - (optional) If true, create a personal access token.
+	authorize - (optional) If true, create a personal access token.
 	            Default: true
 
 If the login was successful, it returns
@@ -419,12 +422,15 @@ sub login ( $self, $args = {} ) {
 	bless $self, $self->authenticated_user_class;
 
 	# now we should be ready to proceed
-	if ($args->{authenticate}) {
+	if( $args->{authorize} ) {
 		$self->logger->trace( "Trying to get a token" );
 		$tx = $self->ua->get( $self->api_base_url );
 		my $result = $self->create_authorization; #needs to call the method in the right class
 		return $result if $result->is_error;
 		delete $self->{password};
+		}
+	else {
+		$self->add_basic_auth_to_all_requests;
 		}
 
 	Ghojo::Result->success;
@@ -744,6 +750,7 @@ sub has_basic_auth ( $self ) {
 =cut
 
 sub add_basic_auth_to_all_requests ( $self ) {
+	$self->entered_sub;
 	$self->ua->on( start => sub {
 		my( $ua, $tx ) = @_;
 		$tx->req->headers->authorization( $self->basic_auth_string );
@@ -913,7 +920,10 @@ sub query_url ( $self, $path, $params=[], $query={} ) {
 =item * endpoint_to_url( END_POINT, REST_PARAMS_HASH, QUERY_PARAMS_HASH )
 
 Translates an endpoint, such as C</users/:username> to the URL to
-access. The REST_PARAMS_HASH has values for the names in the enpoint (such
+access. Returns a L<Ghojo::Result>. If the operation is successful,
+the value in the result object is a L<Mojo::URL> object.
+
+The REST_PARAMS_HASH has values for the names in the enpoint (such
 as C<:username> in this example). The QUERY_PARAMS_HASH hash translates into
 the GET query string.
 
@@ -928,7 +938,7 @@ the GET query string.
 		);
 
 TODO XXX: There are a couple of complicated query setups that require
-extra handling. This just squirts the hash to Mojo::URL's query.
+extra handling. This just squirts the hash to L<Mojo::URL>'s query.
 
 =cut
 
@@ -950,13 +960,16 @@ sub endpoint_to_url ( $self, $endpoint, $rest_params = {}, $query_params = {} ) 
 
 	my $url = $api->clone->path( $copy )->query( $query_params );
 
-	return $url;
+	return Ghojo::Result->success( {
+		values => [ $url ]
+		} );
 	}
 
 sub validate_profile ( $self, $args, $profile ) {
-	my @caller = caller(1);
+	my @caller = caller(2);
 	my $description = "Validating parameters for $caller[3]";
 
+	# profile needs to be a hash ref and
 	unless( ref $profile eq ref {} and exists $profile->{params} ) {
 		return Ghojo::Result->error({
 			description  => $description,
@@ -980,7 +993,6 @@ sub validate_profile ( $self, $args, $profile ) {
 	my $message = $extra;
 	$message .= "\n" if $message;
 	$message .= $missing if $missing;
-
 
 	if( $message ) {
 		return Ghojo::Result->error({
@@ -1055,7 +1067,27 @@ BEGIN {
 	sub clear_query_count     ( $self ) { $query_count = 0 }
 	};
 
-sub single_resource ( $self, $verb, $url, %args  ) {
+sub single_resource ( $self, $verb, %args  ) {
+	$self->entered_sub;
+	$self->debug( sub { dumper( \%args ) } );
+	# validate the query parameters
+	if( exists $args{query_params} and exists $args{query_profile} ) {
+		my $result = $self->validate_profile( @args{ qw(query_params query_profile) } );
+		return $result if $result->is_error;
+		}
+
+	# validate the endpoint parameters
+	if( exists $args{endpoint_params} and exists $args{endpoint_profile} ) {
+		my $result = $self->validate_profile( @args{ qw(endpoint_params endpoint_profile) } );
+		return $result if $result->is_error;
+		}
+
+	my $url_result = $self->endpoint_to_url( @args{ qw(endpoint endpoint_params query_params) } );
+	return $url_result if $url_result->is_error;
+
+	my $url = $url_result->values->first;
+	$self->logger->debug( "URL to single resource is <$url>" );
+
 	state $allowed_verbs = { # with default expected http statuses
 		get      => 200,
 		post     => 201,
@@ -1135,6 +1167,8 @@ sub single_resource ( $self, $verb, $url, %args  ) {
 
 	# if it was the expected status, take the JSON in the
 	# message body and bless it into the right class
+
+	# Can't have raw_content and bless_into at the same time?
 	if( grep { $_ == $status } $args{expected_http_status}->@* ) {
 		my $data = $args{raw_content} ? $tx->res->body : $tx->res->json;
 		if( exists $args{bless_into} ) {
@@ -1218,36 +1252,48 @@ sub single_resource ( $self, $verb, $url, %args  ) {
 		});
 	}
 
-sub get_single_resource ( $self, $url, %args ) {
+sub get_single_resource ( $self, %args ) {
 	$self->entered_sub;
-	$self->single_resource( GET => $url => %args );
+	$self->single_resource( GET => %args );
 	}
 
-sub post_single_resource ( $self, $url, %args ) {
+sub post_single_resource ( $self, %args ) {
 	$self->entered_sub;
-	$self->single_resource( POST => $url => %args );
+	$self->single_resource( POST => %args );
 	}
 
-sub put_single_resource ( $self, $url, %args ) {
+sub put_single_resource ( $self, %args ) {
 	$self->entered_sub;
-	$self->single_resource( PUT => $url => %args );
+	$self->single_resource( PUT => %args );
 	}
 
-sub patch_single_resource ( $self, $url, %args ) {
+sub patch_single_resource ( $self, %args ) {
 	$self->entered_sub;
-	$self->single_resource( PATCH => $url => %args );
+	$self->single_resource( PATCH => %args );
 	}
 
-sub delete_single_resource ( $self, $url, %args ) {
+sub delete_single_resource ( $self, %args ) {
 	$self->entered_sub;
-	$self->single_resource( DELETE => $url => %args );
+	$self->single_resource( DELETE => %args );
 	}
 
 
 # this is blocking, but there's not another way around it
 # you don't know the next one until you see the response
-sub get_paged_resources ( $self, $url, %args ) {
+sub get_paged_resources ( $self, %args ) {
 	$self->entered_sub;
+
+	# validate the endpoint parameters
+	if( exists $args{endpoint_params} and exists $args{endpoint_profile} ) {
+		my $result = $self->validate_profile( @args{ qw(endpoint_params endpoint_profile) } );
+		return $result if $result->is_error;
+		}
+
+	my $url_result = $self->endpoint_to_url( @args{ qw(endpoint endpoint_params query_params) } );
+	return $url_result if $url_result->is_error;
+
+	my $url = $url_result->values->first;
+	$self->logger->debug( "URL to single resource is <$url>" );
 
 	my @results;
 
@@ -1261,9 +1307,13 @@ sub get_paged_resources ( $self, $url, %args ) {
 	$args{'sleep'} //=    3;
 
 	my @queue = ( $url );
+	$self->logger->debug( "Queue is @queue" );
 	LOOP: while( @results < $args{limit} and my $url = shift @queue ) {
 		my $tx = $self->ua->get( $url );
 		unless( $tx->success ) {
+			$self->logger->debug( "Error fetching $url -> " . $tx->res->code );
+			$self->logger->debug( $tx->res->body );
+			$self->logger->debug( $tx->req->to_string );
 			return Ghojo::Result->error({
 				description => "Fetching $url",
 				message => 'Error fetching paged results',

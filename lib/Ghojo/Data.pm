@@ -12,7 +12,7 @@ use Ghojo::Mixins::SuccessError;
 my @classes = qw(
 	SSHKey GPGKey UserRecord Email Grant Repo
 	Emojis License Gitignore Content RawContent LicenseContent
-	Issue
+	Issue Reaction
 	);
 
 foreach my $class ( @classes ) {

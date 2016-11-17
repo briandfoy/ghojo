@@ -78,9 +78,33 @@ This is a public API endpoint.
 
 =cut
 
-sub repos ( $self, $callback = sub {}, $query = {} ) {
-	$self->logger->trace( 'In repos' );
-	my $perl = $self->paged_get( '/user/repos', [], $callback, $query );
+sub Ghojo::AuthenticatedUser::repos ( $self, $callback = sub { $_[0] }, $query = {} ) {
+	$self->entered_sub;
+
+	# handle type present with visibility or affiliation
+	state $query_profile = {
+		params => {
+			visibility  => [ qw(public private all) ],
+			affiliation => sub ( $s ) {
+				state $allowed = { map { $_, 1 } qw( owner collaborator organization_member ) };
+				my @parts = split /,/, $s;
+				foreach my $part ( @parts ) {
+					return 0 unless exists $allowed->{$part};
+					}
+				return 1;
+				},
+			type        => [ qw(all owner public private member) ],
+			'sort'      => [ qw(created updated pushed full_name) ],
+			direction   => [ qw(asc desc) ],
+			},
+		};
+
+	my $perl = $self->get_paged_resources(
+		endpoint      => '/user/repos',
+		callback      => $callback,
+		query_params  => $query,
+		query_profile => $query_profile,
+		);
 	}
 
 
@@ -99,7 +123,8 @@ L<https://developer.github.com/v3/repos/#list-your-repositories>
 sub Ghojo::PublicUser::get_repo ( $self, $owner, $repo ) {
 	$self->entered_sub;
 	$self->get_single_resource(
-		$self->endpoint_to_url( '/repos/:owner/:repo', {owner => $owner, repo => $repo} ),
+		endpoint             => '/repos/:owner/:repo',
+		endpoint_params      => { owner => $owner, repo => $repo },
 		bless_into           => 'Ghojo::Data::Repo',
 		);
 	}
@@ -133,10 +158,10 @@ L<https://developer.github.com/v3/repos/#list-user-repositories>
 
 =cut
 
-sub Ghojo::PublicUser::get_repos_for_username ( $self, $username, $callback = sub { $_[0] }, $args = {} ) {
+sub Ghojo::PublicUser::get_repos_for_username ( $self, $username, $callback = sub { $_[0] }, $query = {} ) {
 	$self->entered_sub;
 
-	my $profile = {
+	state $query_profile = {
 		params => {
 			type      => [ qw(all owner member) ],
 			'sort'    => [ qw(created updated pushed full_name) ],
@@ -144,15 +169,13 @@ sub Ghojo::PublicUser::get_repos_for_username ( $self, $username, $callback = su
 			},
 		};
 
-	my $result = $self->validate_profile( $args, $profile );
-	return $result if $result->is_error;
-
-	my $query = $result->values->first;
-
 	$self->get_paged_resources(
-		$self->endpoint_to_url( '/users/:username/repos', { username => $username }, $query ),
-		bless_into           => 'Ghojo::Data::Repo',
-		callback             => $callback,
+		endpoint        => '/users/:username/repos',
+		endpoint_params => { username => $username },
+		query_params    => $query,
+		query_profile   => $query_profile,
+		bless_into      => 'Ghojo::Data::Repo',
+		callback        => $callback,
 		);
 	}
 
@@ -174,9 +197,9 @@ L<https://developer.github.com/v3/repos/#list-user-repositories>
 
 =cut
 
-sub Ghojo::PublicUser::get_repos_owned_by ( $self, $username, $callback = sub { $_[0] }, $args = {} ) {
-	$args->{type} = 'owner';
-	$self->get_repos_for_username( $username, $callback, $args );
+sub Ghojo::PublicUser::get_repos_owned_by ( $self, $username, $callback = sub { $_[0] }, $query = {} ) {
+	$query->{type} = 'owner';
+	$self->get_repos_for_username( $username, $callback, $query );
 	}
 
 =item * get_repos_with_member( USER, CALLBACK, ARGS )
@@ -197,9 +220,9 @@ L<https://developer.github.com/v3/repos/#list-user-repositories>
 
 =cut
 
-sub Ghojo::PublicUser::get_repos_with_member ( $self, $username, $callback = sub { $_[0] }, $args = {} ) {
-	$args->{type} = 'member';
-	$self->get_repos_for_username( $username, $callback, $args );
+sub Ghojo::PublicUser::get_repos_with_member ( $self, $username, $callback = sub { $_[0] }, $query = {} ) {
+	$query->{type} = 'member';
+	$self->get_repos_for_username( $username, $callback, $query );
 	}
 
 =item * repos_by_organization
@@ -230,7 +253,17 @@ This is a public API endpoint.
 =cut
 
 sub Ghojo::PublicUser::all_public_repos ( $self, $callback = sub {}, $query = {} ) {
-	my $perl = $self->paged_get( '/repositories', [], $callback, $query );
+	state $profile = {
+		params => {
+			since => qr/\A\[0-9]+\z/,
+			},
+		};
+
+	$self->get_paged_resources(
+		endpoint => '/repositories',
+		query    => $query,
+		callback => $callback,
+		);
 	}
 
 =item * create_repo( )
@@ -259,13 +292,14 @@ repo scope to create a private repository
 
 =cut
 
-sub Ghojo::AuthenticatedUser::create_repo ( ) {
+sub Ghojo::AuthenticatedUser::create_repo ( $self ) {
 	# POST /user/repos
-
+	$self->unimplemented;
 	}
 
-sub Ghojo::AuthenticatedUser::create_repo_in_org ( ) {
+sub Ghojo::AuthenticatedUser::create_repo_in_org ( $self ) {
 	# POST /orgs/:org/repos
+	$self->unimplemented;
 	}
 
 
