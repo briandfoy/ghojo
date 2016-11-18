@@ -29,16 +29,6 @@ package Ghojo::Data::LicenseContent {
 		}
 	}
 
-package Ghojo::Data::Label {
-	# how do I track the repo in here?
-	sub update ( $self, $hash ) {
-		$self->not_implemented;
-		}
-
-	sub delete ( $self ) {
-		$self->not_implemented;
-		}
-	}
 
 =encoding utf8
 
