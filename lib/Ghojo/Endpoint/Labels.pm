@@ -17,6 +17,15 @@ Ghojo::Endpoint::Labels - The endpoints that deal with labels
 
 =head1 SYNOPSIS
 
+	use Ghojo;
+
+	my $ghojo = Ghojo->new( ... );
+
+	my $result = $ghojo->labels( $owner, $repo );
+	if( $result->is_success ) {
+		my $labels = $result->values;  # A Mojo::Collection object
+		}
+
 =head1 DESCRIPTION
 
 =head2 Labels
