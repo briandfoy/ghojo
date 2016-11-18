@@ -173,6 +173,8 @@ This is a public API endpoint.
 =cut
 
 sub Ghojo::PublicUser::get_labels_for_issue ( $self, $owner, $repo, $number, $callback = sub { $_[0] } ) {
+	$number = $number->id if eval { $number->can( 'id' ) };
+
 	$self->get_paged_resources(
 		endpoint        => '/repos/:owner/:repo/issues/:number/labels',
 		endpoint_params => { owner => $owner, repo => $repo, number => $number },
@@ -201,10 +203,12 @@ This is a public API endpoint.
 
 =cut
 
-sub Ghojo::PublicUser::get_labels_for_all_issus_in_milestone ( $self, $owner, $repo, $milestone, $callback = sub { $_[0] } ) {
+sub Ghojo::PublicUser::get_labels_for_all_issus_in_milestone ( $self, $owner, $repo, $milestone_id, $callback = sub { $_[0] } ) {
+	$milestone_id = $milestone_id->id if eval { $milestone_id->can( 'id' ) };
+
 	$self->get_paged_resources(
 		endpoint        => '/repos/:owner/:repo/milestones/:number/labels',
-		endpoint_params => { owner => $owner, repo => $repo, milestone => $milestone },
+		endpoint_params => { owner => $owner, repo => $repo, number => $milestone_id },
 		callback        => $callback,
 		bless_into      => 'Ghojo::Data::Label',
 		);
@@ -242,6 +246,8 @@ This is an authenticated endpoint.
 =cut
 
 sub Ghojo::AuthenticatedUser::add_labels_to_issue ( $self, $owner, $repo, $number, @names ) {
+	$number = $number->id if eval { $number->can( 'id' ) };
+
 	$self->post_single_resource(
 		endpoint        => '/repos/:owner/:repo/issues/:number/labels',
 		endpoint_params => { owner => $owner, repo => $repo, number => $number },
@@ -262,6 +268,8 @@ This is an authenticated endpoint.
 =cut
 
 sub Ghojo::AuthenticatedUser::remove_label_from_issue ( $self, $owner, $repo, $number, $name ) {
+	$number = $number->id if eval { $number->can( 'id' ) };
+
 	$self->delete_single_resource(
 		endpoint        => '/repos/:owner/:repo/issues/:number/labels/:name',
 		endpoint_params => { owner => $owner, repo => $repo, number => $number, name => $name },
@@ -279,7 +287,9 @@ This is an authenticated endpoint.
 
 =cut
 
-sub Ghojo::AuthenticatedUser::remove_all_labels_from_issue ( $self, $owner, $repo, $issue_id ) {
+sub Ghojo::AuthenticatedUser::remove_all_labels_from_issue ( $self, $owner, $repo, $number ) {
+	$number = $number->id if eval { $number->can( 'id' ) };
+
 	$self->delete_single_resource(
 		endpoint        => '/repos/:owner/:repo/issues/:number/labels',
 		endpoint_params => { owner => $owner, repo => $repo, number => $issue_id },
@@ -297,6 +307,8 @@ This is an authenticated endpoint.
 =cut
 
 sub Ghojo::AuthenticatedUser::replace_all_labels_for_issue ( $self, $owner, $repo, $number, @names ) {
+	$number = $number->id if eval { $number->can( 'id' ) };
+
 	$self->put_single_resource(
 		endpoint        => '/repos/:owner/:repo/issues/:number/labels',
 		endpoint_params => { owner => $owner, repo => $repo, number => $number },
