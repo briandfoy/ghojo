@@ -12,7 +12,7 @@ use Ghojo::Mixins::SuccessError;
 my @classes = qw(
 	SSHKey GPGKey UserRecord Email Grant Repo
 	Emojis License Gitignore Content RawContent LicenseContent
-	Issue Reaction
+	Issue Reaction Label
 	);
 
 foreach my $class ( @classes ) {
@@ -26,6 +26,17 @@ package Ghojo::Data::LicenseContent {
 	sub raw_content ( $self ) {
 		return $self->{raw_content} if exists $self->{raw_content};
 		$self->{raw_content} = b64_decode( $self->{content} )
+		}
+	}
+
+package Ghojo::Data::Label {
+	# how do I track the repo in here?
+	sub update ( $self, $hash ) {
+		$self->not_implemented;
+		}
+
+	sub delete ( $self ) {
+		$self->not_implemented;
 		}
 	}
 
