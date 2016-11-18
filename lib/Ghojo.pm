@@ -26,7 +26,8 @@ sub DESTROY {}
 sub AUTOLOAD ( $self, @ ) {
 	$self->entered_sub;
 	our $AUTOLOAD;
-	$self->logger->trace( "AUTOLOADing $AUTOLOAD" );
+	my @caller = caller(0);
+	$self->logger->trace( "AUTOLOADing $AUTOLOAD from @caller[1,2]" );
 
 	my( $class, $method ) = do {
 		if( $AUTOLOAD =~ m/(?<class>.*)::(?<method>.+)/ ) {
