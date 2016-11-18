@@ -129,7 +129,8 @@ sub Ghojo::PublicUser::issues_on_repo ( $self, $owner, $repo, $callback = sub { 
 		endpoint_params => { owner => $owner, repo => $repo },
 		callback        => $callback,
 		bless_into      => 'Ghojo::Data::Issue',
-		form            => $args
+		query_params    => $args,
+		query_profile   => $self->get_all_issues_profile,
 		);
 	}
 
