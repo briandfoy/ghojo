@@ -72,7 +72,7 @@ our $VERSION = '1.001001';
 
 use Mojo::Collection;
 use Mojo::URL;
-use Mojo::Util qw(dumper);
+use Mojo::Util qw(b64_encode dumper);
 
 =encoding utf8
 
@@ -767,12 +767,11 @@ If basic authentication is not setup, this return nothing.
 =cut
 
 sub basic_auth_string ( $self ) {
-	my $rc = require MIME::Base64;
 	$self->warnif( ! $self->has_username, "Missing username for basic authorization!" );
 	$self->warnif( ! $self->has_password, "Missing password for basic authorization!" );
 
 	return Ghojo::Result->error unless $self->has_basic_auth;
-	'Basic ' . MIME::Base64::encode_base64(
+	'Basic ' . b64_encode(
 		join( ':', $self->username, $self->password ),
 		''
 		);
