@@ -1235,6 +1235,16 @@ sub single_resource ( $self, $verb, %args  ) {
 			});
 		}
 
+	if( $status == 422 ) {
+		$self->logger->debug( "The request was invalid" );
+		return Ghojo::Result->error({
+			message => "The request was invalid",
+			extras => {
+				tx => $tx,
+				},
+			});
+		}
+
 	if( 400 <= $status and $status <= 499 ) {
 		$self->logger->debug( "Unhandled 4xx request" );
 		return Ghojo::Result->error({
