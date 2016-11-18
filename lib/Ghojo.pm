@@ -4,7 +4,7 @@ no warnings qw(experimental::signatures);
 
 package Ghojo;
 
-use Mojo::Util qw(dumper);
+use Mojo::Util qw(b64_encode dumper);
 
 # The endpoints are divided into public and authenticated parts
 # We'll use this inheritance chain to divide them. The public
@@ -72,7 +72,7 @@ our $VERSION = '1.001001';
 
 use Mojo::Collection;
 use Mojo::URL;
-use Mojo::Util qw(b64_encode dumper);
+use Mojo::Util qw(dumper);
 
 =encoding utf8
 
