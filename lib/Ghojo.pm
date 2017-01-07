@@ -1171,11 +1171,8 @@ sub single_resource ( $self, $verb, %args  ) {
 	# Can't have raw_content and bless_into at the same time?
 	if( grep { $_ == $status } $args{expected_http_status}->@* ) {
 		my $data = $args{raw_content} ? $tx->res->body : $tx->res->json;
-		if( exists $args{bless_into} ) {
-			$self->logger->debug( sprintf "Response has %s reference", ref $data );
-			$self->logger->debug( "Blessing into $args{bless_into}" );
-			bless $data, $args{bless_into};
-			}
+		my $result = $self->bless_into( $data, \%args );
+		return $result if eval { $result->is_error };
 		return Ghojo::Result->success( {
 			values => [ $data ],
 			extras => {
@@ -1287,6 +1284,22 @@ sub delete_single_resource ( $self, %args ) {
 	$self->single_resource( DELETE => %args );
 	}
 
+sub bless_into ( $self, $ref, $args ) {
+	return unless $args->{bless_into};
+	unless( $args->{bless_into} =~ m/\A [A-Za-z][A-Za-z0..9_]* (::[A-Za-z][A-Za-z0..9_]*)* \z/x ) {
+		return Ghojo::Result->error( {
+			description => "Fetching single resource",
+			message     => "Bad package name for bless_into: $args->{bless_into}",
+			error_code  => 999,
+			extras      => {
+				args => $args,
+				},
+			} );
+		}
+
+	eval "require $args->{bless_into}";
+	bless $ref, $args->{bless_into};
+	}
 
 # this is blocking, but there's not another way around it
 # you don't know the next one until you see the response
@@ -1337,7 +1350,8 @@ sub get_paged_resources ( $self, %args ) {
 
 		foreach my $item ( $tx->res->json->@* ) {
 			$self->logger->trace( "get_paged_resources processing item ", @results + 1 );
-			bless $item, $args{bless_into} if $args{bless_into};
+			my $result = $self->bless_into( $item, \%args );
+			return $result if eval { $result->is_error };
 			my $result = $args{callback}->( $item, $tx );
 			last LOOP unless defined $result;
 			push @results, $result;
