@@ -11,10 +11,11 @@ use lib $FindBin::Bin;
 use Data::Dumper;
 use Ghojo;
 
-my $user = shift;
+my( $user, $field ) = @ARGV;
+$field //= 'full_name';
 
 my $callback = sub ( $repo, $tx ) {
-	$repo->full_name;
+	$repo->$field();
 	};
 
 my $result = Ghojo->new->get_repos_for_username( $user, $callback );
@@ -23,7 +24,7 @@ if( $result->is_success ) {
 	say "Found " . $result->value_count . " repos";
 	my $count = 1;
 	$result->values->map( sub {
-		say "$count: $_";
+		say "$_";
 		$count++;
 		});
 	exit;
