@@ -2,6 +2,7 @@
 
 use Ghojo::Endpoint::Activity;
 use Ghojo::Endpoint::Authorizations;
+use Ghojo::Endpoint::Contents;
 use Ghojo::Endpoint::Gist;
 use Ghojo::Endpoint::GitData;
 use Ghojo::Endpoint::Integrations;
