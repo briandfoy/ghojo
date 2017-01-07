@@ -207,6 +207,15 @@ object.
 
 sub values ( $self ) { $self->is_success ? $self->{values} : Mojo::Collection->new() }
 
+=item * single_value
+
+If you're expecting a single return value as the result, you can get
+it here.
+
+=cut
+
+sub single_value ( $self ) { scalar $self->values->first }
+
 =item * value_count
 
 If the result is a success, this is the count of what you normally think of as
