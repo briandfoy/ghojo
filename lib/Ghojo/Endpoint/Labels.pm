@@ -243,6 +243,8 @@ Status: 200 OK
 
 This is an authenticated endpoint.
 
+TO DO: Better errors if the issue id does not exist
+
 =cut
 
 sub Ghojo::AuthenticatedUser::add_labels_to_issue ( $self, $owner, $repo, $number, @names ) {
@@ -292,7 +294,7 @@ sub Ghojo::AuthenticatedUser::remove_all_labels_from_issue ( $self, $owner, $rep
 
 	$self->delete_single_resource(
 		endpoint        => '/repos/:owner/:repo/issues/:number/labels',
-		endpoint_params => { owner => $owner, repo => $repo, number => $issue_id },
+		endpoint_params => { owner => $owner, repo => $repo, number => $number },
 		);
 	}
 
