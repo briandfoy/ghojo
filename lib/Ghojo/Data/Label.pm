@@ -20,6 +20,7 @@ Ghojo::Data::Label - Do the things a label can do
 This module mostly wraps the actions in L<Ghojo::Endpoint::Labels>
 to apply them to specific label objects.
 
+A label has three parts:
 
 =over 4
 
@@ -30,6 +31,12 @@ to apply them to specific label objects.
 =item * url
 
 These methods return the string that represents that value in the label.
+
+=back
+
+Additionally, a label belongs to a repo:
+
+=over 4
 
 =item * owner_repo_name
 
@@ -123,6 +130,8 @@ Delete's the label.
 sub delete ( $self, $ghojo ) {
 	$ghojo->delete_label( $self->owner_repo_name );
 	}
+
+=back
 
 =head1 SOURCE AVAILABILITY
 
