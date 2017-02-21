@@ -8,7 +8,7 @@ sub default_username  { 'BurnItToTheGround' }
 sub username          { $ENV{GHOJO_USERNAME} // default_username() }
 sub default_repo      { 'test_repo' }
 
-sub password          { $ENV{PASSWORD} // prompt_for_password() }
+sub password          { $ENV{GHOJO_PASSWORD} // prompt_for_password() }
 
 sub default_log_level { 'OFF' }
 sub log_level         { $ENV{GHOJO_LOG_LEVEL} // default_log_level() }
@@ -20,7 +20,7 @@ sub prompt_for_password {
 	my $password = Term::ReadKey::ReadLine(0);
 	Term::ReadKey::ReadMode('restore');
 	print $1 if $password =~ s/(\s+)\z//;
-	$password;
+	$ENV{PASSWORD} = $password;
 	}
 
 sub get_authenticated_user {
