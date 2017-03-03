@@ -57,12 +57,13 @@ This is a public API endpoint.
 
 =cut
 
-sub Ghojo::PublicUser::labels ( $self, $owner, $repo, $callback = sub { $_[0] } ) {
+sub Ghojo::PublicUser::labels ( $self, $owner, $repo, $callback = sub { $_[0] }, $args = {} ) {
 	$self->get_paged_resources(
 		endpoint        => '/repos/:owner/:repo/labels',
 		endpoint_params => { owner => $owner, repo => $repo },
 		callback        => $callback,
 		bless_into      => 'Ghojo::Data::Label',
+		%$args,
 		);
 	}
 
