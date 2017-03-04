@@ -11,7 +11,7 @@ my $user = shift;
 my $result = Ghojo->new->get_user( $user );
 
 if( $result->is_success ) {
-	say $result->values->first->{email}
+	say $result->single_value->{email}
 		// '(No email found, or it is private)';
 	exit;
 	}
