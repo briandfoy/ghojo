@@ -252,7 +252,7 @@ This is a public API endpoint.
 
 =cut
 
-sub Ghojo::PublicUser::all_public_repos ( $self, $callback = sub {}, $query = {} ) {
+sub Ghojo::PublicUser::all_public_repos ( $self, $callback = sub {}, $query = {}, $args = {} ) {
 	state $profile = {
 		params => {
 			since => qr/\A\[0-9]+\z/,
@@ -260,9 +260,11 @@ sub Ghojo::PublicUser::all_public_repos ( $self, $callback = sub {}, $query = {}
 		};
 
 	$self->get_paged_resources(
-		endpoint => '/repositories',
-		query    => $query,
-		callback => $callback,
+		endpoint        => '/repositories',
+		callback        => $callback,
+		query_params    => $query,
+		query_profile   => $profile,
+		%$args,
 		);
 	}
 
