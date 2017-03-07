@@ -5,6 +5,7 @@ no warnings qw(experimental::signatures);
 package Ghojo;
 
 use Mojo::Util qw(b64_encode dumper);
+use Mojo::JSON qw(decode_json);
 
 # The endpoints are divided into public and authenticated parts
 # We'll use this inheritance chain to divide them. The public
@@ -881,9 +882,9 @@ sub ua ( $self ) {
 	state $rc = require Mojo::UserAgent;
 	state $ua = do {
 		my $ua = Mojo::UserAgent->new;
+		$ua->transactor->name( sprintf "Ghojo %s", __PACKAGE__->VERSION );
 		$ua;
 	};
-	$ua->transactor->name( sprintf "Ghojo %s", __PACKAGE__->VERSION );
 	$ua;
 	}
 
@@ -1332,6 +1333,7 @@ sub get_paged_resources ( $self, %args ) {
 	my @queue = ( $url );
 	$self->logger->debug( "Queue is @queue" );
 	LOOP: while( @results < $args{limit} and my $url = shift @queue ) {
+		state $error_count = 0;
 		my $tx = $self->ua->get( $url );
 		unless( $tx->success ) {
 			$self->logger->debug( "Error fetching $url -> " . $tx->res->code );
@@ -1339,24 +1341,35 @@ sub get_paged_resources ( $self, %args ) {
 			$self->logger->debug( $tx->req->to_string );
 			return Ghojo::Result->error({
 				description => "Fetching $url",
-				message => 'Error fetching paged results',
+				message => sprintf( 'Error fetching paged results: %s', $tx->res->code ),
 				extras  => {
 					tx => $tx,
 					},
 				});
 			}
 		my $link_header = $self->parse_link_header( $tx );
+		$self->logger->trace( "next is $link_header->{'next'}" );
 		push @queue, $link_header->{'next'} if exists $link_header->{'next'};
 
-		foreach my $item ( $tx->res->json->@* ) {
-			$self->logger->trace( "get_paged_resources processing item ", @results + 1 );
-			my $result = $self->bless_into( $item, \%args );
-			return $result if eval { $result->is_error };
-			my $result = $args{callback}->( $item, $tx );
-			last LOOP unless defined $result;
-			push @results, $result;
-			}
+		eval {
+			foreach my $item ( $tx->res->json->@* ) {
+				$self->logger->trace( "get_paged_resources processing item ", @results + 1 );
+				my $result = $self->bless_into( $item, \%args );
+				return $result if eval { $result->is_error };
+				my $result = $args{callback}->( $item, $tx );
+				last LOOP unless defined $result;
+				push @results, $result;
+				}
+			1;
+			} // do {
+				$self->logger->error( "Processing response failed! $@" );
+				$self->logger->error( eval { $tx->res->as_string } );
+				sleep 10;
+				last LOOP if $error_count++ > 5;
+				redo LOOP;  # redo loop and count errors for that?
+				};
 
+		$error_count = 0;
 		sleep $args{'sleep'} unless @queue == 0;
 		}
 
