@@ -728,21 +728,18 @@ L<https://developer.github.com/v3/rate_limit/>
 BEGIN {
 	my $cache = [];
 	package Ghojo;
-	sub rate_limit_cache_time { 60 }
+	sub rate_limit_cache_time { 15 }
 	sub set_rate_limit_cache   ( $self, $data ) { $cache = [ $data, time ] }
 	sub get_rate_limit_cache   ( $self )        { $cache }
 	sub clear_rate_limit_cache ( $self )        { $cache = [] }
 	sub rate_limit_cache_is_fresh ( $self )    {
 		defined $cache->[0]
 			and
-		time - $cache->[0] <= $self->rate_limit_cache_time
+		time - $cache->[1] <= $self->rate_limit_cache_time
 		}
 	}
 
-sub Ghojo::PublicUser::get_rate_limit ( $self ) {
-	my $cache = $self->get_rate_limit_cache;
-	return $cache->[0] if $self->rate_limit_cache_is_fresh;
-
+sub Ghojo::PublicUser::get_fresh_rate_limit ( $self ) {
 	my $result = $self->get_single_resource(
 		endpoint => '/rate_limit',
 		bless_into => 'Ghojo::Data::Rate',
@@ -751,6 +748,16 @@ sub Ghojo::PublicUser::get_rate_limit ( $self ) {
 	return $result if $result->is_error;
 
 	delete $result->{rate};
+
+	$result->single_value;
+	}
+
+sub Ghojo::PublicUser::get_rate_limit ( $self ) {
+	my $cache = $self->get_rate_limit_cache;
+	return $cache->[0] if $self->rate_limit_cache_is_fresh;
+
+	my $result = $self->get_fresh_rate_limit;
+	return $result if $result->is_error;
 
 	$self->set_rate_limit_cache( $result );
 
