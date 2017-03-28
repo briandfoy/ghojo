@@ -333,7 +333,7 @@ L<https://developer.github.com/v3/issues/#edit-an-issue>
 
 =cut
 
-sub edit_an_issue ( $self, $owner, $repo, $number, $args = {} ) {
+sub Ghojo::AuthenticatedUser::edit_an_issue ( $self, $owner, $repo, $number, $args = {} ) {
 	$self->entered_sub;
 
 	state $profile = {
@@ -374,7 +374,7 @@ L<https://developer.github.com/v3/issues/#lock-an-issue>
 
 =cut
 
-sub lock_an_issue ( $self, $owner, $repo, $number ) {
+sub Ghojo::AuthenticatedUser::lock_an_issue ( $self, $owner, $repo, $number ) {
 	$self->put_single_resource(
 		endpoint => '/repos/:owner/:repo/issues/:number/lock',
 		endpoint_params => {
@@ -397,7 +397,7 @@ L<https://developer.github.com/v3/issues/#unlock-an-issue>
 
 =cut
 
-sub unlock_an_issue ( $self, $owner, $repo, $number ) {
+sub Ghojo::AuthenticatedUser::unlock_an_issue ( $self, $owner, $repo, $number ) {
 	$self->delete_single_resource(
 		endpoint => '/repos/:owner/:repo/issues/:number/lock',
 		endpoint_params  => {
@@ -408,6 +408,37 @@ sub unlock_an_issue ( $self, $owner, $repo, $number ) {
 	}
 
 =back
+
+=head1 Comments
+
+POST /repos/:owner/:repo/issues/:number/comments
+
+body	string	Required. The contents of the comment.
+
+=cut
+
+sub Ghojo::AuthenticatedUser::create_issue_comment ( $self, $owner, $repo, $number, $args ) {
+	$self->entered_sub;
+
+	state $profile = {
+		params => {
+			body      => qr/\S/,
+			},
+		required => [ qw(body) ],
+		};
+
+	$self->post_single_resource(
+		endpoint => '/repos/:owner/:repo/issues/:number/comments',
+		endpoint_params  => {
+			owner         => $owner,
+			repo          => $repo,
+			number        => $number,
+			},
+		json          => $args,
+		query_profile => $profile,
+
+		);
+	}
 
 =head1 SOURCE AVAILABILITY
 
