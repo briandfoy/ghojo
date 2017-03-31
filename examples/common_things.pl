@@ -1,4 +1,6 @@
 use v5.24;
+use feature qw(signatures);
+no warnings qw(experimental::signatures);
 
 use Ghojo;
 use Mojo::Util qw(dumper);
@@ -32,5 +34,32 @@ sub get_authenticated_user {
 
 	my $ghojo = Ghojo->new( $hash );
 	}
+
+sub go_go_ghojo () {
+	state $rc = require Ghojo;
+	$ENV{GHOJO_LOG_LEVEL} = log_level();
+	say "GHOJO_LOG_LEVEL is " . log_level();
+
+	# we log in because there's a higher API rate limit.
+	my $hash = {
+		username     => username(),
+		password     => password(),
+		authenticate => 0,
+		};
+	my $ghojo = Ghojo->new( $hash );
+
+	$ghojo->logger->trace( "Checking Login" );
+	if( $ghojo->is_error ) {
+		say "Error logging in! " . $ghojo->message;
+		my @keys = keys $ghojo->extras->%*;
+		say "Exiting!";
+		exit;
+		}
+	$ghojo->logger->trace( "Login was not an error" );
+
+	$ghojo;
+	}
+
+say "Common things loaded!";
 
 1;
