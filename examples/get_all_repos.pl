@@ -134,7 +134,7 @@ sub make_callback ( $repo_file ) {
 
 sub exit_if_already_running ( $program_name ) {
 	my @files = glob "$program_name-*.pid";
-		say "Found pid files> @files";
+	say "Found pid files> @files";
 
 	my $running = 0;
 	my @running = ();
