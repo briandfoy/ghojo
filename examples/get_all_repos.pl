@@ -37,6 +37,7 @@ make_pid_file( $pid_file );
 my $error = 0;
 while( $error < 500 ) {
 	my $ghojo =  go_go_ghojo();
+	my $logger = $ghojo->logger;
 
 	my $result = $ghojo->all_public_repos(
 		make_callback( $repo_file ),
@@ -44,7 +45,7 @@ while( $error < 500 ) {
 		{ 'sleep' => 1, limit => 5_000_000     } # extra method args
 		);
 	if( $result->is_error ) {
-		say "Encountered an error: " . $result->message;
+		$logger->error( "Encountered an error: " . $result->message );
 		say $result->extras->{tx}->req->to_string;
 		say $result->extras->{tx}->res->to_string;
 
@@ -52,9 +53,9 @@ while( $error < 500 ) {
 		my $remaining   = $rate_result->{resources}{core}{remaining};
 		my $reset       = $rate_result->{resources}{core}{'reset'};
 		if( $remaining <= 100 ) {
-			say "Rate remaining is $remaining, resets at $reset";
+			$logger->info( "Rate remaining is $remaining, resets at $reset" );
 			my $sleep = $reset - time;
-			say "Sleeping for $sleep";
+			$logger->info( "Sleeping for $sleep" );
 			sleep $sleep + 60;
 			}
 		else {
@@ -83,7 +84,6 @@ sub make_pid_file ( $pid_file ) {
 sub go_go_ghojo () {
 	state $rc = require Ghojo;
 	$ENV{GHOJO_LOG_LEVEL} = log_level();
-	say "GHOJO_LOG_LEVEL is " . log_level();
 
 	# we log in because there's a higher API rate limit.
 	my $hash = {
@@ -92,13 +92,13 @@ sub go_go_ghojo () {
 		authenticate => 0,
 		};
 	my $ghojo = Ghojo->new( $hash );
+	$ghojo->logger->debug( "GHOJO_LOG_LEVEL is " . log_level() );
 
 	$ghojo->logger->trace( "Checking Login" );
 	if( $ghojo->is_error ) {
-		say "Error logging in! " . $ghojo->message;
+		$ghojo->logger->error( "Error logging in! " . $ghojo->message );
 		my @keys = keys $ghojo->extras->%*;
-		say "Exiting!";
-		exit;
+		$ghojo->logger->error( "Exiting!" );
 		}
 	$ghojo->logger->trace( "Login was not an error" );
 
