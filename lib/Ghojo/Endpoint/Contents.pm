@@ -30,8 +30,6 @@ Ghojo::Endpoint::Contents - The endpoints that deal with gists
 
 =item *
 
-=back
-
 =cut
 
 # GET /repos/:owner/:repo/readme
