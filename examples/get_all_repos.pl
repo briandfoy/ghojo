@@ -81,30 +81,6 @@ sub make_pid_file ( $pid_file ) {
 	close $fh;
 	}
 
-sub go_go_ghojo () {
-	state $rc = require Ghojo;
-	$ENV{GHOJO_LOG_LEVEL} = log_level();
-
-	# we log in because there's a higher API rate limit.
-	my $hash = {
-		username     => username(),
-		password     => password(),
-		authenticate => 0,
-		};
-	my $ghojo = Ghojo->new( $hash );
-	$ghojo->logger->debug( "GHOJO_LOG_LEVEL is " . log_level() );
-
-	$ghojo->logger->trace( "Checking Login" );
-	if( $ghojo->is_error ) {
-		$ghojo->logger->error( "Error logging in! " . $ghojo->message );
-		my @keys = keys $ghojo->extras->%*;
-		$ghojo->logger->error( "Exiting!" );
-		}
-	$ghojo->logger->trace( "Login was not an error" );
-
-	$ghojo;
-	}
-
 sub make_callback ( $repo_file ) {
 	open my $list_fh, '>>:utf8', $repo_file;
 
