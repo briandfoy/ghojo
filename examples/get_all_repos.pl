@@ -42,7 +42,7 @@ while( $error < 500 ) {
 	my $result = $ghojo->all_public_repos(
 		make_callback( $repo_file ),
 		{ since   => get_last_id( $repo_file ) },  # query args
-		{ 'sleep' => 1, limit => 5_000_000     } # extra method args
+		{ 'sleep' => sleep_time(), limit => request_limit() } # extra method args
 		);
 	if( $result->is_error ) {
 		$logger->error( "Encountered an error: " . $result->message );
@@ -62,8 +62,13 @@ while( $error < 500 ) {
 			sleep 60 * (++$error % 10);
 			}
 		}
+
+	$logger->info( 'Sleeping for an hour' );
+	sleep 3600;
 	}
 
+sub sleep_time ()    { $ENV{GHOJO_SLEEP_SECONDS} // 0 }
+sub request_limit () { $ENV{GHOJO_REQUEST_LIMIT} // 50_000 }
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
