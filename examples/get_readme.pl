@@ -5,32 +5,25 @@ no warnings qw(experimental::signatures);
 
 use lib qw(lib);
 
-use Mojo::Util qw(dumper);
-
 use Ghojo;
-use Data::Dumper;
+use Mojo::Util qw(dumper);
 
 my $ghojo = Ghojo->new;
 
-my $result = $ghojo->get_readme( 'briandfoy', 'ghojo' );
-if( $result->is_success ) {
-	my $file = $result->single_value->contents;
-	print $file;
+# the third parameter is a boolean for HTMLized contents
+my $result = $ghojo->get_readme(
+	'briandfoy',
+	'ghojo',
+	{
+	  'as_html' => !! $ARGV[0],
+	  'ref'     => $ARGV[1] // 'master',
 	}
+	);
 
-my $result = $ghojo->get_contents( 'briandfoy', 'ghojo', 'Makefile.PL' );
 if( $result->is_success ) {
-	my $file = $result->single_value->contents;
-	print $file;
-	}
-
-
-my $result = $ghojo->get_contents( 'briandfoy', 'ghojo', 'not-there' );
-if( $result->is_success ) {
-	my $file = $result->single_value->contents;
+	my $file = $result->single_value;
 	print $file;
 	}
 else {
-	delete $result->{extras};
-	say Dumper( $result );
+	say "There was an error!";
 	}
