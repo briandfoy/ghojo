@@ -63,7 +63,7 @@ sub _new ( $class, $hash ) {
 	my @caller;
 	for( my $i = 1; $i <= 5; $i++ ) {
 		@caller = caller($i);
-		$class->logger->trace( "Should I skip $caller[3]" );
+		#$class->logger->trace( "Should I skip $caller[3]" );
 		next if exists $Skip_caller->{ $caller[3] };
 		last;
 		}
