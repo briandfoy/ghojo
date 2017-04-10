@@ -12,7 +12,7 @@ use Ghojo::Mixins::SuccessError;
 my @classes = qw(
 	SSHKey GPGKey UserRecord Email Grant Repo
 	Emojis License Gitignore Content RawContent LicenseContent
-	Issue Reaction Label
+	Issue Reaction Label HTMLContent
 	);
 
 foreach my $class ( @classes ) {
@@ -29,6 +29,101 @@ package Ghojo::Data::LicenseContent {
 		}
 	}
 
+package Ghojo::Data::Content {
+	sub new ( $class, $content ) {
+		say "Creating $class with\n$content";
+		bless { content => $content }, $class;
+		}
+
+	sub content ( $self ) { $self->{content} }
+	sub type ( $self ) {
+		my $class = ref $self;
+		$class =~ s/.*:://;
+		lc $class;
+		}
+
+	sub is_raw       ( $self ) { 0 }
+	sub is_html      ( $self ) { 0 }
+	sub is_base64    ( $self ) { 0 }
+	sub is_file      ( $self ) { 0 }
+	sub is_directory ( $self ) { 0 }
+	sub is_symlink   ( $self ) { 0 }
+	sub is_submodule ( $self ) { 0 }
+	sub is_unknown   ( $self ) { 1 }
+	}
+
+package Ghojo::Data::Content::KnownType {
+	our @ISA = qw(Ghojo::Data::Content);
+	sub is_unknown ( $self ) { 0 }
+	}
+
+package Ghojo::Data::Content::Raw {
+	our @ISA = qw(Ghojo::Data::Content::KnownType);
+
+	sub new ( $class, $content ) {
+		$class->SUPER::new( $content );
+		}
+
+	sub is_raw ( $self ) { 1 }
+	}
+
+package Ghojo::Data::Content::HTML {
+	our @ISA = qw(Ghojo::Data::Content::KnownType);
+
+	sub new ( $class, $content ) {
+		$class->SUPER::new( $content );
+		}
+
+	sub is_html ( $self ) { 1 }
+	}
+
+=pod
+
+
+	state $types_to_classes = {
+		'file'      => 'Ghojo::Data::Content::File',
+		'symlink'   => 'Ghojo::Data::Content::Symlink',
+		'submodule' => 'Ghojo::Data::Content::Submodule',
+		'dir'       => 'Ghojo::Data::Content::Directory',
+		'default'   => 'Ghojo::Data::Content::Unknown',
+		};
+
+=cut
+
+package Ghojo::Data::Content::File {
+	our @ISA = qw(Ghojo::Data::Content::KnownType);
+
+	use Mojo::Util qw(b64_decode);
+
+	sub content ( $self ) {
+		return $self->{decoded_content} if exists $self->{decoded_content};
+		$self->{decoded_content} = b64_decode( $self->{content} );
+		}
+
+	sub is_file    ( $self ) { 1 }
+	sub is_unknown ( $self ) { 0 }
+	}
+
+package Ghojo::Data::Content::Symlink {
+	our @ISA = qw(Ghojo::Data::Content::KnownType);
+	sub is_symlink ( $self ) { 1 }
+	}
+
+package Ghojo::Data::Content::Submodule {
+	our @ISA = qw(Ghojo::Data::Content::KnownType);
+	sub is_submodule ( $self ) { 1 }
+	}
+
+package Ghojo::Data::Content::Directory {
+	our @ISA = qw(Ghojo::Data::Content::KnownType);
+	sub is_diretory ( $self ) { 1 }
+	}
+
+package Ghojo::Data::Content::DirectoryListing {
+	our @ISA = qw(Ghojo::Data::Content::KnownType);
+	sub is_diretory_listing ( $self ) { 1 }
+	sub files ( $self ) { $self->@* }
+	}
 
 =encoding utf8
 
