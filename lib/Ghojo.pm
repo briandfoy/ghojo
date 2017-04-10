@@ -1337,16 +1337,7 @@ sub get_paged_resources ( $self, %args ) {
 		state $error_count = 0;
 		my $tx = $self->ua->get( $url );
 		unless( $tx->success ) {
-			$self->logger->debug( "Error fetching $url -> " . $tx->res->code );
-			$self->logger->debug( $tx->res->body );
-			$self->logger->debug( $tx->req->to_string );
-			return Ghojo::Result->error({
-				description => "Fetching $url",
-				message => sprintf( 'Error fetching paged results: %s', $tx->res->code ),
-				extras  => {
-					tx => $tx,
-					},
-				});
+			return $self->classify_error( $url, $tx );
 			}
 		my $link_header = $self->parse_link_header( $tx );
 		$self->logger->trace( "next is $link_header->{'next'}" );
