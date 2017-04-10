@@ -3,6 +3,7 @@ use feature qw(signatures);
 no warnings qw(experimental::signatures);
 
 use Ghojo;
+use Data::Dumper;
 use Mojo::Util qw(dumper);
 
 # BurnItToTheGround is my throw-away account for GitHub API testing
