@@ -1183,6 +1183,20 @@ sub single_resource ( $self, $verb, %args  ) {
 			} )
 		}
 
+	$self->logger->debug( sub {
+		"Got HTTP status $status while expecting one of "
+		. join ', ', $args{expected_http_status}->@*
+		} );
+
+	# by this time an error has definitely occurred, so figure out
+	# what it is
+	$self->classify_error( $url, $tx );
+	}
+
+sub classify_error ( $self, $url, $tx ) {
+	my $status = $tx->res->code;
+	my $verb   = lc $tx->req->method;
+
 	if( $status == 404 and $verb eq 'get' ) {
 		return Ghojo::Result->error( {
 			description  => 'Fetching a single resource',
@@ -1194,11 +1208,6 @@ sub single_resource ( $self, $verb, %args  ) {
 				},
 			} )
 		}
-
-	$self->logger->debug( sub {
-		"Got HTTP status $status while expecting one of "
-		. join ', ', $args{expected_http_status}->@*
-		} );
 
 	# XXX: if it's forbidden, what should we do about what we think
 	# we good credentials? Check that the token is still valid?
