@@ -1223,9 +1223,18 @@ sub classify_error ( $self, $url, $tx ) {
 		}
 
 	if( $status == 403 ) {
+		my $message = "The request was forbidden!";
 		$self->logger->debug( "The request was forbidden!" );
+
+		my $json = eval { $tx->res->json };
+
+		if( $json->{message} =~ /(API rate limit exceeded for \S+)/ ) {
+			$message = $1;
+			}
+		$self->logger->debug( "$message" );
+
 		return Ghojo::Result->error({
-			message => "The request was forbidden!",
+			message => $message,
 			extras => {
 				tx => $tx,
 				},
