@@ -5,6 +5,7 @@ no warnings qw(experimental::signatures);
 package Ghojo::Result;
 
 use Ghojo;
+use Mojo::Util qw(dumper);
 
 =encoding utf8
 
@@ -48,12 +49,29 @@ Ghojo::Result - Meta-data about the API response
 =cut
 
 sub _new ( $class, $hash ) {
+	state $Skip_caller = { # ignore these when looking for the offending method
+		map { $_, undef } qw(
+			Ghojo::Result::success
+			Ghojo::Result::error
+			Ghojo::classify_error
+			Ghojo::get_paged_resources
+			)
+		};
+
 	$hash->{success} //= 1;
-	my $self = bless $hash, $class;
 
-	$self->{caller}->@{qw(package filename line sub)}  = (caller(2))[0..3];
+	my @caller;
+	for( my $i = 1; $i <= 5; $i++ ) {
+		@caller = caller($i);
+		$class->logger->trace( "Should I skip $caller[3]" );
+		next if exists $Skip_caller->{ $caller[3] };
+		last;
+		}
 
-	$self;
+	$hash->{caller}->@{qw(package filename line sub)}
+		= @caller[0..3];
+
+	bless $hash, $class;
 	}
 
 =over 4
@@ -309,7 +327,7 @@ sub caller     ( $self ) { $self->{caller} }
 sub package    ( $self ) { $self->{caller}{'package'}    }
 sub file       ( $self ) { $self->{caller}{'file'}       }
 sub line       ( $self ) { $self->{caller}{'line'}       }
-sub subroutine ( $self ) { $self->{caller}{'subroutine'} }
+sub subroutine ( $self ) { $self->{caller}{'sub'} }
 
 =back
 
