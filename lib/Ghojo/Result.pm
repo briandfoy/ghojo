@@ -26,7 +26,7 @@ Ghojo::Result - Meta-data about the API response
 		values       => [ ],
 		description  => ..., # some string
 		message      => ..., # some string
-		error_code   =>
+		error_code   => ..., # something in Ghojo::Constants, perhaps?
 		extras       => { },
 		);
 

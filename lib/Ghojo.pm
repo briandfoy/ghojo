@@ -17,6 +17,7 @@ use Mojo::JSON qw(decode_json);
 @Ghojo::PublicUser::ISA        = qw(Ghojo);
 @Ghojo::AuthenticatedUser::ISA = qw(Ghojo::PublicUser);
 
+use Ghojo::Constants;
 use Ghojo::Data;
 use Ghojo::Endpoints;
 use Ghojo::Result;
@@ -412,7 +413,7 @@ sub login ( $self, $args = {} ) {
 		return Ghojo::Result->error( {
 			description => 'Login failure',
 			message     => 'Undetermined error while logging in',
-			error_code  => 8,
+			error_code  => LOGIN_FAILURE,
 			extras      => {
 				tx => $tx
 				},
@@ -445,7 +446,7 @@ sub requires_one_time_password ( $self, $tx ) {
 	return Ghojo::Result->error( {
 		description => 'Login failure',
 		message     => 'This account requires two-factor authentication',
-		error_code  => 5,
+		error_code  => REQUIRES_TWO_FACTOR,
 		extras      => {
 			tx => $tx
 			},
@@ -458,7 +459,7 @@ sub requires_authentication ( $self, $tx ) {
 	return Ghojo::Result->error( {
 		description => 'Login failure',
 		message     => "This resource requires authentication",
-		error_code  => 6,
+		error_code  => REQUIRES_AUTHENTICATION,
 		extras      => {
 			tx => $tx
 			},
@@ -471,7 +472,7 @@ sub is_bad_credentials ( $self, $tx ) {
 	return Ghojo::Result->error( {
 		description => 'Login failure',
 		message     => "Bad username or password",
-		error_code  => 6,
+		error_code  => BAD_CREDENTIALS,
 		extras      => {
 			tx => $tx
 			},
@@ -484,7 +485,7 @@ sub too_many_login_attempts( $self, $tx ) {
 	return Ghojo::Result->error( {
 		description => 'Login failure',
 		message     => "Too many failed login attempts",
-		error_code  => 7,
+		error_code  => TOO_MANY_LOGIN_ATTEMPTS,
 		extras      => {
 			tx => $tx
 			},
@@ -524,7 +525,7 @@ sub read_token ( $self, $token_file ) {
 		return Ghojo::Result->error(
 			description  =>  "Reading token from file",
 			message      =>  "Could not read token file $token_file",
-			error_code   =>  2,
+			error_code   =>  COULD_NOT_READ_TOKEN_FILE,
 			extras       =>  {
 				args => [@_],
 				}
@@ -559,7 +560,7 @@ sub get_repo_object ( $self, $owner, $repo ) {
 		return Ghojo::Result->error( {
 			description => 'Currying repo object',
 			message     => "Could not find the $owner/$repo repo",
-			error_code  => 3,
+			error_code  => NO_OWNER_REPO_PAIR,
 			extras      => {
 				args => [ @_ ]
 				},
@@ -975,7 +976,7 @@ sub validate_profile ( $self, $args, $profile ) {
 		return Ghojo::Result->error({
 			description  => $description,
 			message      => 'Error specifying profile',
-			error_code   => 11,
+			error_code   => PROFILE_ERROR,
 			extras       => {
 				args       => $args,
 				profile    => $profile,
@@ -999,7 +1000,7 @@ sub validate_profile ( $self, $args, $profile ) {
 		return Ghojo::Result->error({
 			description  => $description,
 			message      => $message,
-			error_code   => 10,
+			error_code   => PROFILE_INPUT_ERROR,
 			extras       => {
 				args       => $args,
 				profile    => $profile,
@@ -1033,7 +1034,7 @@ sub validate_profile ( $self, $args, $profile ) {
 		return Ghojo::Result->error({
 			description  => $description,
 			message      => $message,
-			error_code   => 11,
+			error_code   => PROFILE_VALIDATION_ERROR,
 			extras       => {
 				args       => $args,
 				profile    => $profile,
@@ -1104,7 +1105,7 @@ sub single_resource ( $self, $verb, %args  ) {
 	return Ghojo::Result->error( {
 		description => 'Fetching a single resource',
 		message     => "Unknown HTTP verb $verb",
-		error_code  => 4,
+		error_code  => UNKNOWN_HTTP_VERB,
 		extras      => {
 			args => [ @_ ],
 			},
@@ -1186,7 +1187,7 @@ sub single_resource ( $self, $verb, %args  ) {
 		return Ghojo::Result->error( {
 			description  => 'Fetching a single resource',
 			message      => 'Got a 404 response. Object not found!',
-			error_code   => 9,
+			error_code   => RESOURCE_NOT_FOUND,
 			extras => {
 				url => $url,
 				tx  => $tx,
@@ -1291,7 +1292,7 @@ sub bless_into ( $self, $ref, $args ) {
 		return Ghojo::Result->error( {
 			description => "Fetching single resource",
 			message     => "Bad package name for bless_into: $args->{bless_into}",
-			error_code  => 999,
+			error_code  => BAD_PACKAGE_NAME,
 			extras      => {
 				args => $args,
 				},
