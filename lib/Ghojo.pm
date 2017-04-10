@@ -1449,6 +1449,37 @@ sub Ghojo::check_repo ( $self, $owner, $repo ) {
 
 =back
 
+=head2 Content types
+
+
+=over 4
+
+=item * version_raw
+
+	application/vnd.github.VERSION.raw
+
+=cut
+
+sub version_raw { 'application/vnd.github.VERSION.raw' }
+
+=item * version_html
+
+	application/vnd.github.VERSION.html
+
+=cut
+
+sub version_html { 'application/vnd.github.VERSION.html' }
+
+=item * version_object
+
+	application/vnd.github.VERSION.object
+
+=cut
+
+sub version_object { 'application/vnd.github.VERSION.object' }
+
+=back
+
 =head1 SOURCE AVAILABILITY
 
 This module is in Github:
