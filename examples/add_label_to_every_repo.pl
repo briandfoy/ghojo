@@ -100,6 +100,11 @@ my $hash = {
 	};
 
 my $ghojo = Ghojo->new( $hash );
+unless( $ghojo->is_success ) {
+	say "Login failed for user $hash->{username}";
+	exit 1;
+	}
+
 $ghojo->logger->level( log_level() );
 
 my $callback = sub ( $item, $tx ) {
