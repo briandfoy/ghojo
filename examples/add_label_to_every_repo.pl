@@ -102,7 +102,7 @@ my $hash = {
 my $ghojo = Ghojo->new( $hash );
 $ghojo->logger->level( log_level() );
 
-my $callback = sub ( $item ) {
+my $callback = sub ( $item, $tx ) {
 	unless( ref $item eq ref {} ) {
 		$ghojo->logger->error( "Not a hashref!" );
 		return;
