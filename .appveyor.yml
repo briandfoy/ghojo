@@ -1,7 +1,7 @@
 branches:
     only:
       - master
-      - appveyor-.*
+      - /appveyor-.*/
 skip_tags: true
 cache:
   - C:\strawberry -> .appveyor.yml
