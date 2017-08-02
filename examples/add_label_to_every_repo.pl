@@ -127,8 +127,7 @@ my $callback = sub ( $item, $tx ) {
 		}
 
 	# get the labels for that repo
-	my %labels = map { $_->@{ qw(name color) } } $repo->labels->@*;
-
+	my %labels = map { $_->@{ qw(name color) } } $repo->labels->values->@*;
 	unless( exists $labels{$label_name} ) {
 		my $rc = $repo->create_label( $label_name, $color );
 		say "\tCreated $label_name label" if $rc;
