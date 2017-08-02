@@ -17,6 +17,7 @@ use Mojo::JSON qw(decode_json);
 @Ghojo::PublicUser::ISA        = qw(Ghojo);
 @Ghojo::AuthenticatedUser::ISA = qw(Ghojo::PublicUser);
 
+use Ghojo::Constants;
 use Ghojo::Data;
 use Ghojo::Endpoints;
 use Ghojo::Result;
@@ -412,7 +413,7 @@ sub login ( $self, $args = {} ) {
 		return Ghojo::Result->error( {
 			description => 'Login failure',
 			message     => 'Undetermined error while logging in',
-			error_code  => 8,
+			error_code  => LOGIN_FAILURE,
 			extras      => {
 				tx => $tx
 				},
@@ -445,7 +446,7 @@ sub requires_one_time_password ( $self, $tx ) {
 	return Ghojo::Result->error( {
 		description => 'Login failure',
 		message     => 'This account requires two-factor authentication',
-		error_code  => 5,
+		error_code  => REQUIRES_TWO_FACTOR,
 		extras      => {
 			tx => $tx
 			},
@@ -458,7 +459,7 @@ sub requires_authentication ( $self, $tx ) {
 	return Ghojo::Result->error( {
 		description => 'Login failure',
 		message     => "This resource requires authentication",
-		error_code  => 6,
+		error_code  => REQUIRES_AUTHENTICATION,
 		extras      => {
 			tx => $tx
 			},
@@ -471,7 +472,7 @@ sub is_bad_credentials ( $self, $tx ) {
 	return Ghojo::Result->error( {
 		description => 'Login failure',
 		message     => "Bad username or password",
-		error_code  => 6,
+		error_code  => BAD_CREDENTIALS,
 		extras      => {
 			tx => $tx
 			},
@@ -484,7 +485,7 @@ sub too_many_login_attempts( $self, $tx ) {
 	return Ghojo::Result->error( {
 		description => 'Login failure',
 		message     => "Too many failed login attempts",
-		error_code  => 7,
+		error_code  => TOO_MANY_LOGIN_ATTEMPTS,
 		extras      => {
 			tx => $tx
 			},
@@ -524,7 +525,7 @@ sub read_token ( $self, $token_file ) {
 		return Ghojo::Result->error(
 			description  =>  "Reading token from file",
 			message      =>  "Could not read token file $token_file",
-			error_code   =>  2,
+			error_code   =>  COULD_NOT_READ_TOKEN_FILE,
 			extras       =>  {
 				args => [@_],
 				}
@@ -552,14 +553,13 @@ sub get_repo_object ( $self, $owner, $repo ) {
 	state $rc = require Ghojo::Repo;
 
 	my $result = $self->get_repo( $owner, $repo );
-	say "result is $result";
 
 	if( $result->is_error ) {
 		$self->logger->error( "Could not find the $owner/$repo repo" );
 		return Ghojo::Result->error( {
 			description => 'Currying repo object',
 			message     => "Could not find the $owner/$repo repo",
-			error_code  => 3,
+			error_code  => NO_OWNER_REPO_PAIR,
 			extras      => {
 				args => [ @_ ]
 				},
@@ -975,7 +975,7 @@ sub validate_profile ( $self, $args, $profile ) {
 		return Ghojo::Result->error({
 			description  => $description,
 			message      => 'Error specifying profile',
-			error_code   => 11,
+			error_code   => PROFILE_ERROR,
 			extras       => {
 				args       => $args,
 				profile    => $profile,
@@ -999,7 +999,7 @@ sub validate_profile ( $self, $args, $profile ) {
 		return Ghojo::Result->error({
 			description  => $description,
 			message      => $message,
-			error_code   => 10,
+			error_code   => PROFILE_INPUT_ERROR,
 			extras       => {
 				args       => $args,
 				profile    => $profile,
@@ -1033,7 +1033,7 @@ sub validate_profile ( $self, $args, $profile ) {
 		return Ghojo::Result->error({
 			description  => $description,
 			message      => $message,
-			error_code   => 11,
+			error_code   => PROFILE_VALIDATION_ERROR,
 			extras       => {
 				args       => $args,
 				profile    => $profile,
@@ -1104,7 +1104,7 @@ sub single_resource ( $self, $verb, %args  ) {
 	return Ghojo::Result->error( {
 		description => 'Fetching a single resource',
 		message     => "Unknown HTTP verb $verb",
-		error_code  => 4,
+		error_code  => UNKNOWN_HTTP_VERB,
 		extras      => {
 			args => [ @_ ],
 			},
@@ -1182,22 +1182,31 @@ sub single_resource ( $self, $verb, %args  ) {
 			} )
 		}
 
+	$self->logger->debug( sub {
+		"Got HTTP status $status while expecting one of "
+		. join ', ', $args{expected_http_status}->@*
+		} );
+
+	# by this time an error has definitely occurred, so figure out
+	# what it is
+	$self->classify_error( $url, $tx );
+	}
+
+sub classify_error ( $self, $url, $tx ) {
+	my $status = $tx->res->code;
+	my $verb   = lc $tx->req->method;
+
 	if( $status == 404 and $verb eq 'get' ) {
 		return Ghojo::Result->error( {
 			description  => 'Fetching a single resource',
 			message      => 'Got a 404 response. Object not found!',
-			error_code   => 9,
+			error_code   => RESOURCE_NOT_FOUND,
 			extras => {
 				url => $url,
 				tx  => $tx,
 				},
 			} )
 		}
-
-	$self->logger->debug( sub {
-		"Got HTTP status $status while expecting one of "
-		. join ', ', $args{expected_http_status}->@*
-		} );
 
 	# XXX: if it's forbidden, what should we do about what we think
 	# we good credentials? Check that the token is still valid?
@@ -1213,9 +1222,18 @@ sub single_resource ( $self, $verb, %args  ) {
 		}
 
 	if( $status == 403 ) {
+		my $message = "The request was forbidden!";
 		$self->logger->debug( "The request was forbidden!" );
+
+		my $json = eval { $tx->res->json };
+
+		if( $json->{message} =~ /(API rate limit exceeded for \S+)/ ) {
+			$message = $1;
+			}
+		$self->logger->debug( "$message" );
+
 		return Ghojo::Result->error({
-			message => "The request was forbidden!",
+			message => $message,
 			extras => {
 				tx => $tx,
 				},
@@ -1291,7 +1309,7 @@ sub bless_into ( $self, $ref, $args ) {
 		return Ghojo::Result->error( {
 			description => "Fetching single resource",
 			message     => "Bad package name for bless_into: $args->{bless_into}",
-			error_code  => 999,
+			error_code  => BAD_PACKAGE_NAME,
 			extras      => {
 				args => $args,
 				},
@@ -1336,16 +1354,7 @@ sub get_paged_resources ( $self, %args ) {
 		state $error_count = 0;
 		my $tx = $self->ua->get( $url );
 		unless( $tx->success ) {
-			$self->logger->debug( "Error fetching $url -> " . $tx->res->code );
-			$self->logger->debug( $tx->res->body );
-			$self->logger->debug( $tx->req->to_string );
-			return Ghojo::Result->error({
-				description => "Fetching $url",
-				message => sprintf( 'Error fetching paged results: %s', $tx->res->code ),
-				extras  => {
-					tx => $tx,
-					},
-				});
+			return $self->classify_error( $url, $tx );
 			}
 		my $link_header = $self->parse_link_header( $tx );
 		$self->logger->trace( "next is $link_header->{'next'}" );
@@ -1445,6 +1454,37 @@ sub Ghojo::check_repo ( $self, $owner, $repo ) {
 		};
 
 	}
+
+=back
+
+=head2 Content types
+
+
+=over 4
+
+=item * version_raw
+
+	application/vnd.github.VERSION.raw
+
+=cut
+
+sub version_raw { 'application/vnd.github.VERSION.raw' }
+
+=item * version_html
+
+	application/vnd.github.VERSION.html
+
+=cut
+
+sub version_html { 'application/vnd.github.VERSION.html' }
+
+=item * version_object
+
+	application/vnd.github.VERSION.object
+
+=cut
+
+sub version_object { 'application/vnd.github.VERSION.object' }
 
 =back
 

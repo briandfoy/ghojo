@@ -65,12 +65,13 @@
 ^MYMETA\.
 #!end included /usr/local/perls/perl-5.24.0/lib/5.24.0/ExtUtils/MANIFEST.SKIP
 
-.releaserc
-.lwpcookies
+\.travis\.yml
+\.?appveyor.yml
+\.releaserc
+\.lwpcookies
 
 Ghojo-.*
 
-\.travis\.yml
 test.pl
 
 \.github_token

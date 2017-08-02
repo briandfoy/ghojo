@@ -30,6 +30,8 @@ exit_if_already_running( $program_name );
 
 my $pid_file     = "$program_name-$$.pid";
 my $repo_file    = 'github_repos.txt';
+my $summary_file = 'github_repos_summary.txt';
+my $user_file    = 'github_users.txt';
 
 make_pid_file( $pid_file );
 
@@ -42,7 +44,7 @@ while( $error < 500 ) {
 	my $result = $ghojo->all_public_repos(
 		make_callback( $repo_file ),
 		{ since   => get_last_id( $repo_file ) },  # query args
-		{ 'sleep' => 1, limit => 5_000_000     } # extra method args
+		{ 'sleep' => sleep_time(), limit => request_limit() } # extra method args
 		);
 	if( $result->is_error ) {
 		$logger->error( "Encountered an error: " . $result->message );
@@ -62,8 +64,13 @@ while( $error < 500 ) {
 			sleep 60 * (++$error % 10);
 			}
 		}
+
+	$logger->info( 'Sleeping for an hour' );
+	sleep 3600;
 	}
 
+sub sleep_time ()    { $ENV{GHOJO_SLEEP_SECONDS} // 0 }
+sub request_limit () { $ENV{GHOJO_REQUEST_LIMIT} // 50_000 }
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -81,52 +88,31 @@ sub make_pid_file ( $pid_file ) {
 	close $fh;
 	}
 
-sub go_go_ghojo () {
-	state $rc = require Ghojo;
-	$ENV{GHOJO_LOG_LEVEL} = log_level();
-
-	# we log in because there's a higher API rate limit.
-	my $hash = {
-		username     => username(),
-		password     => password(),
-		authenticate => 0,
-		};
-	my $ghojo = Ghojo->new( $hash );
-	$ghojo->logger->debug( "GHOJO_LOG_LEVEL is " . log_level() );
-
-	$ghojo->logger->trace( "Checking Login" );
-	if( $ghojo->is_error ) {
-		$ghojo->logger->error( "Error logging in! " . $ghojo->message );
-		my @keys = keys $ghojo->extras->%*;
-		$ghojo->logger->error( "Exiting!" );
-		}
-	$ghojo->logger->trace( "Login was not an error" );
-
-	$ghojo;
-	}
-
 sub make_callback ( $repo_file ) {
 	open my $list_fh, '>>:utf8', $repo_file;
+	open my $user_fh, '>>:utf8', $user_file;
+	open my $repo_fh, '>>:utf8', $summary_file;
 
 	my $callback = sub ( $item, $tx ) {
 		state $count = 0;
 
-		say join "\t", $item->{id}, $item->{full_name};
-		say { $list_fh } join "\t", $item->{id}, $item->{full_name};
+		my $owner = $item->{owner};
 
-		my $user = $item->{owner}{login};
-		my $path = catfile(
-			substr( $user, 0, 1 ),
-			substr( $user, 0, 2 ),
-			$user);
-		make_path $path unless -d $path;
+		my $string = join "\t",
+			$item->{'id'},
+			$item->{'fork'},
+			$owner->{login},
+			$item->{name},
+			$item->{private},
+			$item->{description},
+			;
 
-		my $file = catfile( $path, $item->{name} );
-		my %hash = %$item;
-		open my $fh, '>:utf8', $file or
-			warn "Could not open $file: $!";
-		print { $fh } encode_json( \%hash );
-		close $fh;
+		say { $repo_fh } $string;
+		say { $user_fh } join "\t",
+			$owner->{id},
+			$owner->{login},
+			$item->{gravatar_id},
+			;
 
 		return $count++;
 		};
@@ -157,7 +143,8 @@ sub exit_if_already_running ( $program_name ) {
 sub get_last_id ( $repo_file ) {
 	# Find the last ID that we have in the file. That's our starting
 	# point for the next batch of things.
-	my $last_line = get_last_line( $repo_file );
+	my $last_line = get_last_line( $summary_file );
+	say "Last line is > $last_line";
 	my $since = ( split /\s+/, $last_line )[0] // 0;
 	say "Last repo id was>  $since";
 	return $since;
@@ -168,8 +155,8 @@ sub get_last_line ( $repo_file ) {
 	use Fcntl;
 
 	open my $fh, '<:raw', $repo_file or die "Could not open $repo_file: $!";
-	seek $fh, -500, Fcntl::SEEK_END;
-	read $fh, my $raw_octets, 500 or die "Could not read: $!";  # these are raw octets
+	seek $fh, -5000, Fcntl::SEEK_END;
+	read $fh, my $raw_octets, 5000 or return '';  # these are raw octets
 
 	# We might have read in the middle of a UTF-8 character
 	# FB_DEFAULT will replace the incomplete bits with the

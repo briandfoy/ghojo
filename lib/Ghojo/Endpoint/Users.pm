@@ -6,6 +6,7 @@ package Ghojo::Endpoint::Users;
 
 our $VERSION = '1.001001';
 
+use Ghojo::Constants;
 use Mojo::Collection;
 use Mojo::URL;
 
@@ -133,7 +134,7 @@ sub Ghojo::AuthenticatedUser::update_user ( $self, $args = {} ) {
 	return Ghojo::Result->error( {
 		description => 'Update the authenticated user',
 		message     => 'Argument should have been a hash reference, but was not',
-		error_code  => 4,
+		error_code  => ARGS_MUST_BE_HASH_REF,
 		extras      => {
 			args => [ @_ ]
 			},

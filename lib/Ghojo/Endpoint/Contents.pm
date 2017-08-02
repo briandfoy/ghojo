@@ -28,31 +28,136 @@ Ghojo::Endpoint::Contents - The endpoints that deal with gists
 
 =over 4
 
-=item *
+=item * get_readme( $owner, $repo, $args = HASH_REF )
+
+Get the contents of the readme file. If the third argument,
+C<$as_html>, is true, the result is the HTML-ized version from the
+GitHub translators. GitHub determines what file represents the readme
+file. It might be F<README>, F<README.md>, F<README.pod>, or something
+else.
+
+The args hash ref:
+
+	as_html - return the GitHub HTML version if true (raw contents otherwise)
 
 =cut
 
-# GET /repos/:owner/:repo/readme
-sub Ghojo::PublicUser::get_readme ( $self, $owner, $repo ) {
-	my $result = $self->get_single_resource(
+sub Ghojo::PublicUser::get_readme ( $self, $owner, $repo, $args = {} ) {
+	state $profile = {
+		params => {
+			'ref'   => qr/\A \S+ \z/x,
+			},
+		required => [],
+		};
+
+	my $accepts_type_method = 'version_' . ( $args->{as_html} ? 'html' : 'raw' );
+	my $class =  'Ghojo::Data::Content::' .
+		( $args->{as_html} ? 'HTML' : 'Raw' );
+
+	delete $args->{as_html};
+
+	$args->{'ref'} = 'master' unless defined $args->{'ref'};
+
+	my $result = $self->validate_profile( $args, $profile );
+	return $result if $result->is_error;
+
+	$result = $self->get_single_resource(
 		endpoint        => '/repos/:owner/:repo/readme',
 		endpoint_params => { owner => $owner, repo => $repo },
-		bless_into      => 'Ghojo::Data::File',
+		accepts         => $self->$accepts_type_method(),
+		raw_content     => 1,
+		json            => $args,
 		);
+
+	$class->new( $result->single_value );
 	}
 
+=item * get_readme_raw( $owner, $repo, $args )
+
+Get the raw contents of the readme file.
+
+=cut
+
+sub Ghojo::PublicUser::get_readme_raw ( $self, $owner, $repo, $args = {} ) {
+	$args->{as_html} = 0;
+	$self->get_readme( $owner, $repo, $args );
+	}
+
+=item * get_readme_html( $owner, $repo, $args )
+
+Get the HTML contents of the README file. This uses the internal HTML
+formatters in GitHub to translate the readme file.
+
+=cut
+
+sub Ghojo::PublicUser::get_readme_html ( $self, $owner, $repo, $args = {} ) {
+	$args->{as_html} = 1;
+	$self->get_readme( $owner, $repo, $args );
+	}
+
+=item * get_contents( $owner, $repe, $path
+
+The args hash ref:
+
+	ref - a ref for the file (a branch, commit, or tag). Default is "master".
+
+
 # GET /repos/:owner/:repo/contents/:path
-# file
-# directory
-# symlink
+	# file - hash
+	# directory - array
+	# symlink - hash
 
 # what happens if the file doesn't exist?
-sub Ghojo::PublicUser::get_contents ( $self, $owner, $repo, $path ) {
-	$self->get_single_resource(
+
+=cut
+
+sub Ghojo::PublicUser::get_contents ( $self, $owner, $repo, $path, $args = {} ) {
+	state $profile = {
+		params => {
+			'ref'   => qr/\A \S+ \z/x,
+			},
+		required => [],
+		};
+
+	$args->{'ref'} = 'master' unless defined $args->{'ref'};
+
+	my $result = $self->validate_profile( $args, $profile );
+	return $result if $result->is_error;
+
+	my $result = $self->get_single_resource(
 		endpoint        => '/repos/:owner/:repo/contents/:path',
 		endpoint_params => { owner => $owner, repo => $repo, path => $path },
-		bless_into      => 'Ghojo::Data::File',
+		json            => $args,
 		);
+
+	return $result unless $result->is_success;
+
+	my $content = $result->single_value;
+
+	state $types_to_classes = {
+		'file'      => 'Ghojo::Data::Content::File',
+		'symlink'   => 'Ghojo::Data::Content::Symlink',
+		'submodule' => 'Ghojo::Data::Content::Submodule',
+		'dir'       => 'Ghojo::Data::Content::Directory',
+		'default'   => 'Ghojo::Data::Content::Unknown',
+		};
+
+	if( ref $content eq ref {} ) {    # file, symlink, submodule
+		my $type = $types_to_classes->{ $content->{type} } //
+			$types_to_classes->{ 'default' };
+		bless $content, $type;
+		}
+	elsif( ref $content eq ref [] ) { # directory
+		foreach my $c ( $content->@* ) {
+			my $type = $types_to_classes->{ $c->{type} } // $types_to_classes->{ 'default' };
+			bless $c, $type;
+			}
+		bless $content, 'Ghojo::Data::Content::DirectoryListing',
+		}
+
+	return Ghojo::Result->success( {
+		values => [ $content ],
+		} );
 	}
 
 # PUT /repos/:owner/:repo/contents/:path
@@ -69,10 +174,12 @@ sub Ghojo::PublicUser::get_contents ( $self, $owner, $repo, $path ) {
 #	name	string	The name of the author (or committer) of the commit
 #	email	string	The email of the author (or committer) of the commit
 
-sub Ghojo::AuthenticatedUser::create_file () {
+sub Ghojo::AuthenticatedUser::create_file ( $self ) {
+	$self->not_implemented;
 	}
 
-sub Ghojo::AuthenticatedUser::update_file () {
+sub Ghojo::AuthenticatedUser::update_file ($self ) {
+	$self->not_implemented;
 	}
 
 =item *
@@ -85,8 +192,8 @@ branch	string	The branch name. Default: the repository’s default branch (usual
 
 =cut
 
-sub Ghojo::AuthenticatedUser::delete_file () {
-
+sub Ghojo::AuthenticatedUser::delete_file ( $self ) {
+	$self->not_implemented;
 	}
 
 =item *
@@ -99,7 +206,8 @@ ref	string	A valid Git reference. Default: the repository’s default branch (us
 
 =cut
 
-sub Ghojo::AuthenticatedUser::get_archive_link () {
+sub Ghojo::AuthenticatedUser::get_archive_link ( $self ) {
+	$self->not_implemented;
 	}
 
 =back
@@ -116,7 +224,7 @@ brian d foy, C<< <bdfoy@cpan.org> >>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2016, brian d foy <bdfoy@cpan.org>. All rights reserved.
+Copyright © 2016-2017, brian d foy C<< <bdfoy@cpan.org> >>. All rights reserved.
 
 This program is free software; you can redistribute it and/or modify
 it under the Artistic License 2. A LICENSE file should have accompanied
