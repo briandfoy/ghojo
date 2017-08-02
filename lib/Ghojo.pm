@@ -553,7 +553,6 @@ sub get_repo_object ( $self, $owner, $repo ) {
 	state $rc = require Ghojo::Repo;
 
 	my $result = $self->get_repo( $owner, $repo );
-	say "result is $result";
 
 	if( $result->is_error ) {
 		$self->logger->error( "Could not find the $owner/$repo repo" );
