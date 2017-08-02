@@ -117,7 +117,7 @@ my $callback = sub ( $item, $tx ) {
 	my( $user, $repo ) = split m{/}, $item->{full_name};
 
 	my $owner = $item->{owner}{login};
-	return unless $ghojo->logged_in_user eq $owner;
+	return 1 unless $username eq $owner;
 
 	say $item->{full_name};
 	my $repo = $ghojo->get_repo_object( $owner, $repo );
