@@ -7,7 +7,39 @@ use lib qw(lib);
 use FindBin;
 use lib $FindBin::Bin;
 
-BEGIN{ require 'common_things.pl' }
+use Data::Dumper;
+use Getopt::Long;
+
+my $options = GetOptions(
+	'username=s' => \my $username,
+	'debug'      => \my $debug,
+	'label=s'    => \my $label_name,
+	'color=s'    => \my $color,
+	'help'       => \my $help,
+	);
+
+# XXX: Check color for validity
+$color //= 'FF0000';
+$debug //= 0;
+
+print help_and_exit() if( ! $options || $help || ! $label_name || ! $username );
+sub help_and_exit {
+	say "Help message";
+	exit 1;
+	}
+
+my $password = do {
+	state $rc = require Term::ReadKey;
+	Term::ReadKey::ReadMode('noecho');
+	print "Type in your secret password: ";
+	my $password = Term::ReadKey::ReadLine(0);
+	Term::ReadKey::ReadMode('restore');
+	print $1 if $password =~ s/(\s+)\z//;
+	$ENV{PASSWORD} = $password;
+	};
+
+sub default_log_level { 'OFF' }
+sub log_level         { $ENV{GHOJO_LOG_LEVEL} // default_log_level() }
 
 use Ghojo;
 
@@ -63,8 +95,8 @@ it under the Artistic License 2.0.
 
 
 my $hash = {
-	username => username(),
-	password => password(),
+	username => $username,
+	password => $password,
 	};
 
 my $ghojo = Ghojo->new( $hash );
