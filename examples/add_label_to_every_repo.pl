@@ -13,13 +13,13 @@ use Ghojo;
 
 =head1 NAME
 
-hacktoberfest.pl - Add the Hacktoberfest label to all open issues in GitHub
+add_label_to_every_repo.pl - Add a label to all open issues in GitHub
 
 =head1 SYNOPSIS
 
 	# run it out of the cloned repo. It's not ready for installation
 	% cpan Term::ReadKey Log::Log4perl Mojolicious
-	% perl5.24 examples/hacktoberfest.pl github_username
+	% perl5.24 examples/add_label_to_every_repo.pl github_username
 	Type in your secret password:  ...
 
 =head1 DESCRIPTION
