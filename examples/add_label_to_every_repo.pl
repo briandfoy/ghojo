@@ -134,14 +134,6 @@ my $callback = sub ( $item, $tx ) {
 		say "\tCreated $label_name label" if $rc;
 		}
 
-	my $callback = sub ( $item ) {
-		my( $number, $title ) = $item->@{ qw(number title) };
-		say "\t$number: $title";
-		$repo->add_labels_to_issue( $number, $label_name );
-		return $item;
-		};
-
-	my $issues = $repo->issues( $callback );
 	return 1;
 	};
 
