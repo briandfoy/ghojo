@@ -24,23 +24,6 @@ add_label_to_every_repo.pl - Add a label to all open issues in GitHub
 
 =head1 DESCRIPTION
 
-October is time for Hacktoberfest (https://hacktoberfest.digitalocean.com),
-a partnership between DigitalOcean and GitHub. Create four pull requests
-against issues with the label "Hacktoberfest" and they will send you
-a t-shirt.
-
-=over 4
-
-=item 1. Register your GitHub account at https://hacktoberfest.digitalocean.com/sign_up/register
-
-=item 2. Make four pull requests between Oct 1 and Oct 31
-
-=item 3. Success!
-
-=back
-
-That's it.
-
 This program goes through all of the GitHub repositories owned by you.
 It adds the GitHub label to each repo, and applies that label to every
 open issue. You must be the owner of the repository.
@@ -83,8 +66,6 @@ my $hash = {
 	username => username(),
 	password => password(),
 	};
-
-my $label_name = 'Hacktoberfest';
 
 my $ghojo = Ghojo->new( $hash );
 $ghojo->logger->level( log_level() );
