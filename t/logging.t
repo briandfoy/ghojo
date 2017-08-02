@@ -4,8 +4,8 @@ use v5.24.0;
 use Test::More 1;
 use Data::Dumper;
 use File::Spec::Functions;
+use Mojo::File;
 use Mojo::Loader qw{data_section};
-use Mojo::Util qw{spurt};
 use Ghojo;
 
 ## remove any existing log files
@@ -40,7 +40,7 @@ subtest filename => sub {
 	ok( ! -e $filename, "logfile [$filename] does not exist yet for file-conf" );
 
 	my $conf_filename = catfile( qw(t log4perl.conf) );
-	spurt $file_conf_data => $conf_filename;
+	Mojo::File->new( $conf_filename )->spurt( $file_conf_data );
 	ok( -e $conf_filename, "log config [$conf_filename] is there" );
 
 	my $ghojo = Ghojo->new( { logging_conf => $conf_filename } );
