@@ -1,3 +1,7 @@
+branches:
+    only:
+      - master
+      - /appveyor-.*/
 skip_tags: true
 cache:
   - C:\strawberry -> .appveyor.yml
@@ -5,7 +9,7 @@ install:
   - if not exist "C:\strawberry" cinst strawberryperl
   - set PATH=C:\strawberry\perl\bin;C:\strawberry\perl\site\bin;C:\strawberry\c\bin;%PATH%
   - cd C:\projects\%APPVEYOR_PROJECT_NAME%
-  - cpanm --installdeps .
+  - cpanm --verbose --installdeps .
 build_script:
   - perl Makefile.PL
   - gmake test
