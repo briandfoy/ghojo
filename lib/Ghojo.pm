@@ -592,7 +592,6 @@ C<logging_conf()>.
 
 sub setup_logging ( $self, $conf = __PACKAGE__->logging_conf ) {
 	require Log::Log4perl;
-
 	$self->{logger} = do {
 		if( eval "require Log::Log4perl; 1" ) {
 			Log::Log4perl::init( $conf );
