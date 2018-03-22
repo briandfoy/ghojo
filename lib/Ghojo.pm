@@ -641,7 +641,9 @@ logging object through the Ghojo object:
 
 =cut
 
-sub logger ( $self ) { $self->{logger} }
+sub logger ( $self ) {
+	ref $self ? $self->{logger} : Log::Log4perl->get_logger
+	}
 
 =item * entered_sub
 
