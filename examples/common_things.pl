@@ -48,7 +48,11 @@ sub go_go_ghojo () {
 		authenticate => 0,
 		};
 	my $ghojo = Ghojo->new( $hash );
-
+	unless( defined $ghojo ) {
+		warn "Could not log $hash->{username} into GitHub!\n";
+		warn dumper( $hash );
+		return;
+		}
 	$ghojo->logger->trace( "Checking Login" );
 	if( $ghojo->is_error ) {
 		say "Error logging in! " . $ghojo->message;
