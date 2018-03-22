@@ -13,8 +13,10 @@ use constant PROFILE_INPUT_ERROR       =>  9;
 use constant PROFILE_VALIDATION_ERROR  => 10;
 use constant UNKNOWN_HTTP_VERB         => 11;
 use constant ARGS_MUST_BE_HASH_REF     => 12;
-use constant RESOURCE_NOT_FOUND        => 404;
+use constant MODULE_LOAD_FAILURE       => 13;
 use constant BAD_PACKAGE_NAME          => 14;
+
+use constant RESOURCE_NOT_FOUND        => 404;
 
 our @EXPORT = qw(
 	LOGIN_FAILURE
@@ -29,6 +31,7 @@ our @EXPORT = qw(
 	PROFILE_VALIDATION_ERROR
 	UNKNOWN_HTTP_VERB
 	ARGS_MUST_BE_HASH_REF
+	MODULE_LOAD_FAILURE
 	RESOURCE_NOT_FOUND
 	BAD_PACKAGE_NAME
 	);

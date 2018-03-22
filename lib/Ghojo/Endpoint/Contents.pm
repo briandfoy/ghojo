@@ -145,6 +145,18 @@ sub Ghojo::PublicUser::get_contents ( $self, $owner, $repo, $path, $args = {} ) 
 	if( ref $content eq ref {} ) {    # file, symlink, submodule
 		my $type = $types_to_classes->{ $content->{type} } //
 			$types_to_classes->{ 'default' };
+		unless( eval "require $type; 1" ) {
+			my $message = "Could not load $type: $@";
+			$self->logger->error( $message );
+			my $error_result = Ghojo::Result->error( {
+				values       => [ ],
+				description  => "Failed to type a content module",
+				message      => $message,
+				error_code   => MODULE_LOAD_FAILURE,
+				extras       => { },
+				} );
+			return $error_result;
+			}
 		bless $content, $type;
 		}
 	elsif( ref $content eq ref [] ) { # directory
