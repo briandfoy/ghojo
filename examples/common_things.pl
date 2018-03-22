@@ -14,7 +14,7 @@ sub default_repo      { 'test_repo' }
 sub password          { $ENV{GHOJO_PASSWORD} // prompt_for_password() }
 
 sub default_log_level { 'OFF' }
-sub log_level         { $ENV{GHOJO_LOG_LEVEL} // default_log_level() }
+sub log_level         { uc($ENV{GHOJO_LOG_LEVEL}) // default_log_level() }
 
 sub prompt_for_password {
 	state $rc = require Term::ReadKey;
