@@ -95,7 +95,7 @@ sub Ghojo::PublicUser::get_readme_html ( $self, $owner, $repo, $args = {} ) {
 	$self->get_readme( $owner, $repo, $args );
 	}
 
-=item * get_contents( $owner, $repe, $path
+=item * get_contents( $owner, $repo $path, $args )
 
 The args hash ref:
 
