@@ -51,6 +51,8 @@ package Ghojo::Data::Content {
 	sub is_submodule ( $self ) { 0 }
 	sub is_unknown   ( $self ) { 1 }
 	sub is_known     ( $self ) { ! $self->is_unknown }
+
+	sub DESTROY ( $self ) { 1 }
 	}
 
 package Ghojo::Data::Content::KnownType {
