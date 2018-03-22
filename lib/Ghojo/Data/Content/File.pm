@@ -2,8 +2,10 @@ use v5.24;
 use feature qw(signatures);
 no warnings qw(experimental::signatures);
 
-package Ghojo::Data::File;
-use parent qw(Ghojo::Data);
+use Ghojo::Data;
+
+package Ghojo::Data::Content::File;
+use parent -norequire, qw(Ghojo::Data::Content::KnownType);
 
 =encoding utf8
 
@@ -24,14 +26,22 @@ Ghojo::Data::File - Do the things a file can do
 =cut
 
 use Mojo::Util qw(b64_decode);
-sub contents ( $self ) {
-	b64_decode( $self->{content} );
+
+sub encoded_content ( $self ) { $self->content }
+sub decoded_content ( $self ) {
+	return $self->{decoded_content} if exists $self->{decoded_content};
+	$self->{decoded_content} = b64_decode( $self->encoded_content );
 	}
+
+sub is_base64  ( $self ) { 1 }
+sub is_file    ( $self ) { 1 }
 
 sub AUTOLOAD  ( $self ) {
 	my $method = our $AUTOLOAD =~ s/.*:://r;
+	say "File method is $method";
 	unless( exists $self->{$method} ) {
-		carp "Unknown method $method\n"
+		$self->logger->error( "Unknown method $method\n" );
+		return;
 		}
 	$self->{$method};
 	}
@@ -50,7 +60,7 @@ brian d foy, C<< <bdfoy@cpan.org> >>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2017, brian d foy <bdfoy@cpan.org>. All rights reserved.
+Copyright © 2017-2018, brian d foy <bdfoy@cpan.org>. All rights reserved.
 
 This program is free software; you can redistribute it and/or modify
 it under the Artistic License 2. A LICENSE file should have accompanied
