@@ -175,6 +175,43 @@ sub Ghojo::PublicUser::get_contents ( $self, $owner, $repo, $path, $args = {} ) 
 		} );
 	}
 
+=item * get_decoded_contents( $owner, $repo, $path, $args )
+
+The args hash ref:
+
+	ref - a ref for the file (a branch, commit, or tag). Default is "master".
+
+
+# GET /repos/:owner/:repo/contents/:path
+	# file - hash
+	# directory - array
+	# symlink - hash
+
+# what happens if the file doesn't exist?
+
+=cut
+
+sub Ghojo::PublicUser::get_decoded_contents ( $self, $owner, $repo, $path, $args = {} ) {
+	my $result = $self->get_contents( $owner, $repo, $path, $args );
+
+	return $result if $result->is_error;
+
+	my $content_obj = $result->single_value;
+
+	if( $content_obj->can( 'decoded_content' ) ) {
+		my $decoded = $content_obj->decoded_content;
+
+		return Ghojo::Result->success( {
+			values => [ $decoded ],
+			} );
+		}
+	else {
+		return Ghojo::Result->error( {
+			values  => [ ],
+			message => 'Could not decoded content for type ' . ref $content_obj,
+			} );
+		}
+	}
 # PUT /repos/:owner/:repo/contents/:path
 # path	string	Required. The content path.
 # message	string	Required. The commit message.
