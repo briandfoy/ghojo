@@ -6,6 +6,9 @@ package Ghojo::Endpoint::Contents;
 
 our $VERSION = '1.001001';
 
+use Ghojo::Constants;
+use Ghojo::Data; # All sorts of basic types
+
 use Mojo::Collection;
 use Mojo::URL;
 use Mojo::Util qw(b64_decode);
