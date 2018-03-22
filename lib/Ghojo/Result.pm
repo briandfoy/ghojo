@@ -17,19 +17,19 @@ Ghojo::Result - Meta-data about the API response
 
 	use Ghojo::Result;
 
-	my $success_result = Ghojo::Result->success(
+	my $success_result = Ghojo::Result->success( {
 		values       => [ ],
 		description  => ..., # some string
 		message      => ..., # some string
-		);
+		} );
 
-	my $error_result = Ghojo::Result->error(
+	my $error_result = Ghojo::Result->error( {
 		values       => [ ],
 		description  => ..., # some string
 		message      => ..., # some string
 		error_code   => ..., # something in Ghojo::Constants, perhaps?
 		extras       => { },
-		);
+		} );
 
 	if( $result->is_success ) {
 		...
