@@ -302,7 +302,10 @@ sub new ( $class, $args = {} ) {
 		$self->logger->trace( 'Authenticating with username and password' );
 		$args->{authenticate} //= 0;
 		my $result = $self->login( $args );
-		return $result if $result->is_error;
+		if( $result->is_error ) {
+			$self->logger->error( "Could not log in" );
+			return;
+			}
 		$self->logger->debug( "Login was a success" );
 		$self->logger->debug( "Class is " . $self->class_name );
 		}
