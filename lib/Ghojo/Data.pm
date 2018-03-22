@@ -35,6 +35,8 @@ package Ghojo::Data::Content {
 		bless { content => $content }, $class;
 		}
 
+	sub logger ( $self ) { Ghojo->logger }
+
 	sub content ( $self ) { $self->{content} }
 	sub type ( $self ) {
 		my $class = ref $self;
