@@ -13,7 +13,6 @@ BEGIN { require 'common_things.pl' }
 my $ghojo = go_go_ghojo();
 
 my %needs_appveyor;
-my %needs_travis;
 
 my $callback = sub( $item, $tx ) {
 	my $repo = $item->{name};
@@ -37,13 +36,7 @@ my $callback = sub( $item, $tx ) {
 		$needs_appveyor{$repo} = 1;
 		}
 
-	my $travis_result = $ghojo->get_contents( $owner, $repo, '.travis.yml' );
-	unless( $travis_result->is_success ) {
-		say "\tNo travis in $repo";
-		$needs_travis{$repo} = 1;
-		}
-
-	if( $appveyor_result->is_error or  $travis_result->is_error ) {
+	if( $appveyor_result->is_error ) {
 		return 0;
 		}
 
@@ -56,4 +49,4 @@ unless( $result->is_success ) {
 	say "Error from " . $result->subroutine;
 	}
 
-say dumper( \%needs_appveyor, \%needs_travis );
+say dumper( \%needs_appveyor );
