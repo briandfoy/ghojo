@@ -14,3 +14,4 @@ github_repo_list.txt
 local
 cpanfile.snapshot
 perltidy.ERR
+*.icould
