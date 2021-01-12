@@ -130,21 +130,34 @@ sub Ghojo::AuthenticatedUser::get_workflow_run_usage ( $self, $owner, $repo, $ru
 		);
 	}
 
-sub Ghojo::AuthenticatedUser::list_workflow_runs ( $self, $owner, $repo, $workflow_id ) {
+sub Ghojo::AuthenticatedUser::list_workflow_runs ( $self, $owner, $repo ) {
 #GET /repos/{owner}/{repo}/actions/workflows/{workflow_id}/runs
 	$self->entered_sub;
 	state $endpoint_profile = {
 		params => {
-			owner => qr/\A\w+\z/,
-			repo  => qr/\A\w+\z/
+			owner    => qr/\A\w+\z/,
+			repo     => qr/\A[\w-]+\z/,
+			page     => qr/\A\d+\z/,
 			},
 		};
 
-	my $result = $self->delete_single_resource(
-		endpoint         => '/repos/:owner/:repo/actions/workflows/:workflow_id/runs',
+	state $query_profile = {
+		params => {
+			actor    => qr/\A\w+\z/,
+			branch   => qr/\A\w+\z/,
+			event    => qr/\A\w+\z/,
+			status   => qr/\A\w+\z/,
+			per_page => qr/\A\d+\z/,
+			page     => qr/\A\d+\z/,
+			},
+		};
+
+	my $result = $self->get_single_resource(
+		endpoint         => '/repos/:owner/:repo/actions/runs',
 		endpoint_params  =>  { owner => $owner, repo => $repo },
 		endpoint_profile => $endpoint_profile,
-		bless_into       => 'Ghojo::Data::Reaction',
+		query_profile    => $query_profile,
+		bless_into       => 'Ghojo::Data::Workflow',
 		);
 	}
 
