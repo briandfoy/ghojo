@@ -675,12 +675,12 @@ on the log level).
 
 =cut
 
-sub traceif ( $self, $flag, $message ) { $flag ? $self->logger->trace( $message )   : $flag }
-sub debugif ( $self, $flag, $message ) { $flag ? $self->logger->debug( $message )   : $flag }
-sub infoif  ( $self, $flag, $message ) { $flag ? $self->logger->info( $message )    : $flag }
-sub warnif  ( $self, $flag, $message ) { $flag ? $self->logger->warn( $message )    : $flag }
+sub traceif ( $self, $flag, $message ) { $flag ? $self->logger->trace(   $message ) : $flag }
+sub debugif ( $self, $flag, $message ) { $flag ? $self->logger->debug(   $message ) : $flag }
+sub infoif  ( $self, $flag, $message ) { $flag ? $self->logger->info(    $message ) : $flag }
+sub warnif  ( $self, $flag, $message ) { $flag ? $self->logger->warn(    $message ) : $flag }
 sub errorif ( $self, $flag, $message ) { $flag ? $self->logger->logwarn( $message ) : $flag }
-sub fatalif ( $self, $flag, $message ) { $flag ? $self->logger->logdie( $message )  : $flag }
+sub fatalif ( $self, $flag, $message ) { $flag ? $self->logger->logdie(  $message ) : $flag }
 
 =back
 
