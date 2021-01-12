@@ -140,6 +140,16 @@ backup clones at Bitbucket just in case.
 
 Parts marked with an * are done.
 
+	Actions
+		Artifacts
+		Permissions
+		Secrets
+		Self-hosted runners
+		Self-hosted runner groups
+		Workflows
+		Workflow jobs
+		Workflow runs
+
 	Activity
 		Events
 		Feeds
