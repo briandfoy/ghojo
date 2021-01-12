@@ -1,5 +1,6 @@
 #!/Users/brian/bin/perls/perl5.24.0
 use v5.24;
+use experimental qw(signatures);
 
 use lib qw(lib);
 

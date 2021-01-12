@@ -1,5 +1,6 @@
 #!perl
 use v5.24;
+use experimental qw(signatures);
 
 use File::Spec::Functions qw(catfile rel2abs);
 use JSON::XS;
