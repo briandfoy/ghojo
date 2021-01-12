@@ -10,10 +10,14 @@ use Data::Dumper;
 use Ghojo;
 use Mojo::Util qw(dumper);
 
-my( $user, $field ) = @ARGV;
-$field //= 'full_name';
+my( $owner, $repo ) = @ARGV;
 
-my $result = Ghojo->new->list_workflows( $owner, $repo );
+my $ghojo = Ghojo->new({
+	token => $ENV{GITHUB_TOKEN},
+	});
+
+my $result = $ghojo->list_workflow_runs( $owner, $repo );
+say dumper( $result );
 
 if( $result->is_success ) {
 	say "Found " . $result->value_count . " repos";
@@ -24,8 +28,8 @@ else {
 	say "There was an error";
 	say $result->message;
 
-	if( $result->extras->{tx}->res->code == 404 ) {
-		say "User <$user> not found";
+	if( eval { $result->extras->{tx}->res->code } == 404 ) {
+		say "User <$owner> not found";
 		exit 1;
 		}
 	else {
