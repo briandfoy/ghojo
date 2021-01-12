@@ -15,3 +15,6 @@ local
 cpanfile.snapshot
 perltidy.ERR
 *.icould
+MANIFEST*[123456789]
+Changes*[123456789]
+
