@@ -1,6 +1,5 @@
 use v5.24;
-use feature qw(signatures);
-no warnings qw(experimental::signatures);
+use experimental qw(signatures);
 
 use Exporter qw(import);
 our @EXPORT = qw( is_success is_error );

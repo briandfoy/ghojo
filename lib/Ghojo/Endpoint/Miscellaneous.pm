@@ -1,6 +1,5 @@
 use v5.24.0;
-use feature qw(signatures);
-no warnings qw(experimental::signatures);
+use experimental qw(signatures);
 
 package Ghojo::Endpoint::Miscellaneous;
 

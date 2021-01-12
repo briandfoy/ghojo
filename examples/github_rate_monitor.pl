@@ -1,7 +1,6 @@
 #!perl
 use v5.24;
-use feature qw(signatures);
-no warnings qw(experimental::signatures);
+use experimental qw(signatures);
 
 =head1 NAME
 

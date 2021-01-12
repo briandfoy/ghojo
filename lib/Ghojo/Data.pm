@@ -1,6 +1,5 @@
 use v5.24;
-use feature qw(signatures);
-no warnings qw(experimental::signatures);
+use experimental qw(signatures);
 
 package Ghojo::Data;
 use parent qw( Hash::AsObject ); # as a quick fix. I'd rather lose the dependency

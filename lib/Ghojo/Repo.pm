@@ -1,6 +1,5 @@
 use v5.24;
-use feature qw(signatures);
-no warnings qw(experimental::signatures);
+use experimental qw(signatures);
 
 package Ghojo::Repo 0.001001 {
 	sub new_from_response ( $class, $ghojo, $response ) {
