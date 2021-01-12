@@ -80,3 +80,6 @@ scratch
 t/.+\.log$
 t/log4perl.conf
 
+\bMANIFEST\s\d
+\bChanges\s\d
+
