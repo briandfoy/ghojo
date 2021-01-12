@@ -1,5 +1,6 @@
 # This module loads all of the endpoint modules.
 
+use Ghojo::Endpoint::Actions;
 use Ghojo::Endpoint::Activity;
 use Ghojo::Endpoint::Authorizations;
 use Ghojo::Endpoint::Contents;
