@@ -1088,6 +1088,7 @@ BEGIN {
 sub single_resource ( $self, $verb, %args  ) {
 	$self->entered_sub;
 	$self->logger->debug( sub { dumper( \%args ) } );
+
 	# validate the query parameters
 	if( exists $args{query_params} and exists $args{query_profile} ) {
 		my $result = $self->validate_profile( @args{ qw(query_params query_profile) } );
