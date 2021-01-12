@@ -41,12 +41,12 @@ sub Ghojo::AuthenticatedUser::get_workflow_run ( $self, $owner, $repo, $run_id )
 	state $endpoint_profile = {
 		params => {
 			owner  => qr/\A\w+\z/,
-			repo   => qr/\A\w+\z/
+			repo   => qr/\A[\w-]+\z/,
 			run_id => qr/\A\d+\z/,
 			},
 		};
 
-	my $result = $self->delete_single_resource(
+	my $result = $self->get_single_resource(
 		endpoint         => '/repos/:owner/:repo/actions/runs/:run_id',
 		endpoint_params  =>  { owner => $owner, repo => $repo, run_id => $run_id },
 		endpoint_profile => $endpoint_profile,
@@ -60,7 +60,7 @@ sub Ghojo::AuthenticatedUser::delete_workflow_run ( $self, $owner, $repo, $run_i
 	state $endpoint_profile = {
 		params => {
 			owner  => qr/\A\w+\z/,
-			repo   => qr/\A\w+\z/
+			repo   => qr/\A[\w-]\z/,
 			run_id => qr/\A\d+\z/,
 			},
 		};
@@ -79,7 +79,7 @@ sub Ghojo::AuthenticatedUser::cancel_workflow_run ( $self, $owner, $repo, $run_i
 	state $endpoint_profile = {
 		params => {
 			owner  => qr/\A\w+\z/,
-			repo   => qr/\A\w+\z/,
+			repo   => qr/\A[\w-]\z/,
 			run_id => qr/\A\d+\z/,
 			},
 		};
@@ -98,7 +98,7 @@ sub Ghojo::AuthenticatedUser::rerun_workflow_run ( $self, $owner, $repo, $run_id
 	state $endpoint_profile = {
 		params => {
 			owner  => qr/\A\w+\z/,
-			repo   => qr/\A\w+\z/,
+			repo   => qr/\A[\w-]\z/,
 			run_id => qr/\A\d+\z/,
 			},
 		};
@@ -117,7 +117,7 @@ sub Ghojo::AuthenticatedUser::get_workflow_run_usage ( $self, $owner, $repo, $ru
 	state $endpoint_profile = {
 		params => {
 			owner  => qr/\A\w+\z/,
-			repo   => qr/\A\w+\z/,
+			repo   => qr/\A[\w-]\z/,
 			run_id => qr/\A\d+\z/,
 			},
 		};
