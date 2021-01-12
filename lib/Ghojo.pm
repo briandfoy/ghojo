@@ -42,9 +42,13 @@ sub AUTOLOAD ( $self, @ ) {
 	# What about the case where the method hasn't been loaded?
 
 	if( $self->authenticated_user_class->can( $method ) and not $self->handles_authenticated_api ) {
-		$self->logger->error( "Method [$method] is part of the authenticated user API, but this object only handles the public API" );
+		my $message = "Method [$method] is part of the authenticated user API, but this object only handles the public API";
+		$self->logger->error( $message );
 		$self->logger->debug( sub { scalar $self->stacktrace(3) } );
-		return Ghojo::Result->error;
+		return Ghojo::Result->error({
+			message     => $message,
+			description => "Authenticate to use [$method]",
+			});
 		}
 	}
 
