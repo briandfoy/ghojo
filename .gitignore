@@ -14,7 +14,8 @@ github_repo_list.txt
 local
 cpanfile.snapshot
 perltidy.ERR
-*.icould
+*.icloud
+
 MANIFEST*[123456789]
 Changes*[123456789]
 
