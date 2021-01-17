@@ -1349,6 +1349,12 @@ sub get_paged_resources ( $self, %args ) {
 		return $result if $result->is_error;
 		}
 
+	# validate the query parameters
+	if( exists $args{query_params} and exists $args{query_profile} ) {
+		my $result = $self->validate_profile( @args{ qw(query_params query_profile) } );
+		return $result if $result->is_error;
+		}
+
 	my $url_result = $self->endpoint_to_url( @args{ qw(endpoint endpoint_params query_params) } );
 	return $url_result if $url_result->is_error;
 
