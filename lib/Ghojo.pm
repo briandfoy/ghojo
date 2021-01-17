@@ -1388,23 +1388,34 @@ sub get_paged_resources ( $self, %args ) {
 		$self->logger->trace( sprintf "next is <%s>", $link_header->{'next'} // '' );
 		push @queue, $link_header->{'next'} if exists $link_header->{'next'};
 
-		eval {
-			foreach my $item ( $tx->res->json->@* ) {
-				$self->logger->trace( "get_paged_resources processing item ", @results + 1 );
-				my $result = $self->bless_into( $item, \%args );
-				return $result if eval { $result->is_error };
-				my $result = $args{callback}->( $item, $tx );
-				last LOOP unless defined $result;
-				push @results, $result;
-				}
-			1;
-			} // do {
-				$self->logger->error( "Processing response failed! $@" );
-				$self->logger->error( eval { $tx->res->as_string } );
-				sleep 10;
-				last LOOP if $error_count++ > 5;
-				redo LOOP;  # redo loop and count errors for that?
-				};
+		# The workflow API really screwed the pooch by returning a
+		# hash with a count and then a key that has the array. It's
+		# unlike the rest of the API. Hence, result_key.
+		my $json = eval { $tx->res->json };
+		$self->logger->debug( "Result JSON ref type is " . ref($json) );
+		$self->logger->debug( sprintf "result_key is <%s>", $args{result_key} // '' );
+
+		if( ref($json) eq ref({}) and ! exists $args{result_key} ) {
+			$self->logger->debug( "JSON is a hash, should be an error" );
+			return Ghojo::Result->error({
+				description => "Error fetching paged resource",
+				message     => "The paged response is a hash and result key is not set",
+				});
+			}
+
+		my $array = do {
+			if( exists $args{result_key} ) { $json->{$args{result_key}} }
+			else                           { $json }
+			};
+
+		foreach my $item ( $array->@* ) {
+			$self->logger->trace( "get_paged_resources processing item ", @results + 1 );
+			my $result = $self->bless_into( $item, \%args );
+			return $result if eval { $result->is_error };
+			$result = $args{callback}->( $item, $tx );
+			last LOOP unless defined $result;
+			push @results, $result;
+			}
 
 		$error_count = 0;
 		sleep $args{'sleep'} unless @queue == 0;
