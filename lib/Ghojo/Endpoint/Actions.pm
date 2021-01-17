@@ -157,6 +157,7 @@ sub Ghojo::AuthenticatedUser::list_workflow_runs ( $self, $owner, $repo, $callba
 		endpoint_params  =>  { owner => $owner, repo => $repo },
 		endpoint_profile => $endpoint_profile,
 		query_profile    => $query_profile,
+		query_params     => { },
 		bless_into       => 'Ghojo::Data::Workflow',
 		callback         => $callback,
 		);
