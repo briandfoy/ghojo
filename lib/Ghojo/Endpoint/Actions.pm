@@ -130,7 +130,7 @@ sub Ghojo::AuthenticatedUser::get_workflow_run_usage ( $self, $owner, $repo, $ru
 		);
 	}
 
-sub Ghojo::AuthenticatedUser::list_workflow_runs ( $self, $owner, $repo ) {
+sub Ghojo::AuthenticatedUser::list_workflow_runs ( $self, $owner, $repo, $callback = sub { $_[0] } ) {
 #GET /repos/{owner}/{repo}/actions/workflows/{workflow_id}/runs
 	$self->entered_sub;
 	state $endpoint_profile = {
@@ -158,6 +158,7 @@ sub Ghojo::AuthenticatedUser::list_workflow_runs ( $self, $owner, $repo ) {
 		endpoint_profile => $endpoint_profile,
 		query_profile    => $query_profile,
 		bless_into       => 'Ghojo::Data::Workflow',
+		callback         => $callback,
 		);
 	}
 
