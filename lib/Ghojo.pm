@@ -1366,7 +1366,9 @@ sub get_paged_resources ( $self, %args ) {
 	$args{callback} //= sub { 1 };
 	unless( ref $args{callback} eq ref sub {} ) {
 		$self->logger->error( "Callback argument is not a subroutine reference!" );
-		return Ghojo::Result->error;
+		return Ghojo::Result->error({
+			message     => "The callback entry was not a coderef",
+			});
 		}
 
 	$args{limit}   //= 1000;
