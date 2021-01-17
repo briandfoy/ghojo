@@ -160,6 +160,7 @@ sub Ghojo::AuthenticatedUser::list_workflow_runs ( $self, $owner, $repo, $callba
 		query_params     => { },
 		bless_into       => 'Ghojo::Data::Workflow',
 		callback         => $callback,
+		result_key       => 'workflow_runs',
 		);
 	}
 
