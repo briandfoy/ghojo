@@ -630,7 +630,7 @@ sub Ghojo::PublicUser::render_markdown ( $self, $markdown, $repo = undef ) {
 	my $result = $self->validate_profile( $args, $profile );
 	return $result if $result->is_error;
 
-	my $result = $self->post_single_resource(
+	$result = $self->post_single_resource(
 		endpoint             => '/markdown',
 		expected_http_status => 200,
 		raw_content          => 1,

@@ -126,7 +126,7 @@ sub Ghojo::PublicUser::get_contents ( $self, $owner, $repo, $path, $args = {} ) 
 	my $result = $self->validate_profile( $args, $profile );
 	return $result if $result->is_error;
 
-	my $result = $self->get_single_resource(
+	$result = $self->get_single_resource(
 		endpoint        => '/repos/:owner/:repo/contents/:path',
 		endpoint_params => { owner => $owner, repo => $repo, path => $path },
 		json            => $args,
