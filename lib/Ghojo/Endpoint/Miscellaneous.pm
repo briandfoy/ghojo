@@ -1,7 +1,7 @@
 use v5.26;
-use experimental qw(signatures);
 
 package Ghojo::Endpoint::Miscellaneous;
+use experimental qw(signatures);
 
 our $VERSION = '1.001001';
 

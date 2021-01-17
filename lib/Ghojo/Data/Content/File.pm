@@ -1,10 +1,9 @@
 use v5.26;
-use feature qw(signatures);
-no warnings qw(experimental::signatures);
 
 use Ghojo::Data;
 
 package Ghojo::Data::Content::File;
+use experimental qw(signatures);
 use parent -norequire, qw(Ghojo::Data::Content::KnownType);
 
 =encoding utf8

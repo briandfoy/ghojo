@@ -1,7 +1,7 @@
 use v5.26;
-use experimental qw(signatures);
 
 package Ghojo::Result;
+use experimental qw(signatures);
 
 use Ghojo;
 use Mojo::Util qw(dumper);

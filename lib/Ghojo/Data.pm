@@ -1,7 +1,7 @@
 use v5.26;
-use experimental qw(signatures);
 
 package Ghojo::Data;
+use experimental qw(signatures);
 use parent qw( Hash::AsObject ); # as a quick fix. I'd rather lose the dependency
 
 use Ghojo::Mixins::SuccessError;

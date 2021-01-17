@@ -1,7 +1,7 @@
 use v5.26;
-use experimental qw(signatures);
 
 package Ghojo::Repo 0.001001 {
+	use experimental qw(signatures);
 	sub new_from_response ( $class, $ghojo, $response ) {
 		my( $owner, $repo ) = split m{/}, $response->{full_name};
 		bless {

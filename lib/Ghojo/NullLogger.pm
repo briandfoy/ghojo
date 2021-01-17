@@ -1,5 +1,4 @@
 use v5.26;
-use experimental qw(signatures);
 
 =encoding utf8
 
@@ -40,6 +39,7 @@ this distribution.
 =cut
 
 package Ghojo::NullLogger 0.001 {
+	use experimental qw(signatures);
 	sub new ( $class ) { bless { }, $class }
 	sub is_null_logger ( $self ) { 1 }
 	sub AUTOLOAD ( $self ) { $self }

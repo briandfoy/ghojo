@@ -1,8 +1,7 @@
 use v5.26;
-use feature qw(signatures);
-no warnings qw(experimental::signatures);
 
 package Ghojo::Data::Label;
+use experimental qw(signatures);
 use parent qw(Ghojo::Data);
 
 =encoding utf8
