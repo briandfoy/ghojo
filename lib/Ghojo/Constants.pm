@@ -1,3 +1,5 @@
+use v5.26;
+
 package Ghojo::Constants;
 use Exporter qw(import);
 
