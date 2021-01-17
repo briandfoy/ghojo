@@ -31,7 +31,7 @@ subtest good_repo => sub {
 		my $array = $result->values;
 		ok( ref $array, 'Values for label list is a reference' );
 		isa_ok( $array, ref [] );
-		diag( "Labels is [@$array]" );
+		diag( "Labels are " . join " ", map { $_->name } $array->@* );
 		};
 	};
 
