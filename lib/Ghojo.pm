@@ -1378,6 +1378,7 @@ sub get_paged_resources ( $self, %args ) {
 	$self->logger->debug( "Queue is @queue" );
 	LOOP: while( @results < $args{limit} and my $url = shift @queue ) {
 		state $error_count = 0;
+		$self->logger->trace( "Fetching URL $url" );
 		my $tx = $self->ua->get( $url );
 
 		unless( $tx->res->is_success ) {
