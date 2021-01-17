@@ -18,6 +18,11 @@ my $ghojo = Ghojo->new({
 
 my $result = $ghojo->list_workflow_runs( $owner, $repo );
 
+if( $result->values->size == 0 ) {
+	say "There are no workflows to list";
+	}
+
+# queued in_progress success
 foreach my $item ( $result->values->to_array->@* ) {
 	state $id = $item->head_commit->id;
 	last unless $id eq $item->head_commit->id;
