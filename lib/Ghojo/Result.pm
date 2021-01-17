@@ -204,16 +204,6 @@ of this like an explanation (most likely for the failure).
 
 sub message ( $self ) { $self->{message} // 'No one added a reason for this result' }
 
-=item * description
-
-A string that describes the attempted operation. Make this any string
-that makes sense to you. It should be general to the operation and not
-the particular result.
-
-=cut
-
-sub description ( $self ) { $self->{description} // 'Someone did not add a description' }
-
 =item * values
 
 If the result is a success, these are what you normally think of as

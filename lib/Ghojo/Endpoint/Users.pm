@@ -148,7 +148,7 @@ sub Ghojo::AuthenticatedUser::update_user ( $self, $args = {} ) {
 		} $allowed_fields->@*;
 
 	if( exists $data{hireable} ) {
-		$data{hireable} ? \1 : \0 # This is how Mojo::JSON handles booleans
+		$data{hireable} = $data{hireable} ? \1 : \0 # This is how Mojo::JSON handles booleans
 		};
 
 	$self->patch_single_resource(
@@ -511,28 +511,6 @@ sub Ghojo::AuthenticatedUser::add_gpg_keys ( $self, @keys ) {
 			requires_scope => [ qw(write:gpg_key) ],
 			data           => $data,
 			bless_into     => 'Ghojo::Data::GPGKey',
-			);
-		}
-
-	Mojo::Collection->new( @results );
-	}
-
-=item * delete_gpg_keys_by_id
-
-This is an authenticated API endpoint. This requires the C<write:gpg_key> scope.
-
-L<https://developer.github.com/v3/users/gpg_keys/#delete-a-gpg-key>
-
-=cut
-
-sub Ghojo::AuthenticatedUser::delete_gpg_keys_by_id ( $self, @ids ) {
-	my @results;
-
-	foreach my $id ( @ids ) {
-		push @results, $self->delete_single_resource(
-			endpoint        => '/user/gpg_keys/:id',
-			endpoint_params => { id => $id },
-			requires_scope  => [ qw(write:gpg_key) ],
 			);
 		}
 
