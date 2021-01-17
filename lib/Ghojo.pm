@@ -1384,7 +1384,7 @@ sub get_paged_resources ( $self, %args ) {
 			return $self->classify_error( $url, $tx );
 			}
 		my $link_header = $self->parse_link_header( $tx );
-		$self->logger->trace( "next is $link_header->{'next'}" );
+		$self->logger->trace( sprintf "next is <%s>", $link_header->{'next'} // '' );
 		push @queue, $link_header->{'next'} if exists $link_header->{'next'};
 
 		eval {
@@ -1431,7 +1431,7 @@ sub paged_get ( $self, $path, $params = [], $callback=sub{ $_[0] }, $query = {} 
 # <https://api.github.com/repositories?since=367>; rel="next", <https://api.github.com/repositories{?since}>; rel="first"';
 sub parse_link_header ( $self, $tx ) {
 	my $link_header = $tx->res->headers->header( 'Link' );
-	$self->logger->trace( "Link header is <$link_header>" );
+	$self->logger->trace( sprintf "next is <%s>", $link_header->{'next'} // '' );
 	return {} unless $link_header;
 
 	my @parts = $link_header =~ m{
