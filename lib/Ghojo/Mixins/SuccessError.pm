@@ -16,10 +16,29 @@ Ghojo::Mixins::SuccessError - mixins for some polymorphic shenanigans
 
 =head1 DESCRIPTION
 
+These are mixins for two methods: C<is_success> and C<is_error>. In
+many cases you probably want to provide your own versions of this, but
+in this many other cases these are exactly what you want.
+
+=over 4
+
+=item * is_success
+
+Returns 1
+
 =cut
 
 sub is_success { 1 }
+
+=item * is_error
+
+Returns 0
+
+=cut
+
 sub is_error   { 0 }
+
+=back
 
 =head1 SOURCE AVAILABILITY
 
