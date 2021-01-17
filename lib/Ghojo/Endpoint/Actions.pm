@@ -152,7 +152,7 @@ sub Ghojo::AuthenticatedUser::list_workflow_runs ( $self, $owner, $repo, $callba
 			},
 		};
 
-	my $result = $self->get_single_resource(
+	my $result = $self->get_paged_resources(
 		endpoint         => '/repos/:owner/:repo/actions/runs',
 		endpoint_params  =>  { owner => $owner, repo => $repo },
 		endpoint_profile => $endpoint_profile,
