@@ -1379,7 +1379,8 @@ sub get_paged_resources ( $self, %args ) {
 	LOOP: while( @results < $args{limit} and my $url = shift @queue ) {
 		state $error_count = 0;
 		my $tx = $self->ua->get( $url );
-		unless( $tx->success ) {
+
+		unless( $tx->res->is_success ) {
 			return $self->classify_error( $url, $tx );
 			}
 		my $link_header = $self->parse_link_header( $tx );
