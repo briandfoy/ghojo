@@ -17,23 +17,13 @@ my $ghojo = Ghojo->new({
 	});
 
 my $result = $ghojo->list_workflow_runs( $owner, $repo );
-say dumper( $result );
 
-if( $result->is_success ) {
-	say "Found " . $result->value_count . " repos";
-	say dumper( $result );
-	exit;
-	}
-else {
-	say "There was an error";
-	say $result->message;
+foreach my $item ( $result->values->to_array->@* ) {
+	state $id = $item->head_commit->id;
+	last unless $id eq $item->head_commit->id;
+	printf "%-10s %-10s %-10s %s\n",
+		map( { $item->{$_} } qw(name status conclusion) ),
+		$item->head_commit->message;
 
-	if( eval { $result->extras->{tx}->res->code } == 404 ) {
-		say "User <$owner> not found";
-		exit 1;
-		}
-	else {
-		say 'Unspecified error';
-		exit 9;
-		}
 	}
+
