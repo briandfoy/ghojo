@@ -44,7 +44,7 @@ my $github    = 'https://github.com/briandfoy/ghojo';
 my $main_file = catfile( 'lib', split /::/, "$module.pm" );
 
 my %WriteMakefile = (
-	'MIN_PERL_VERSION' => '5.024',
+	'MIN_PERL_VERSION' => '5.026',
 
 	'NAME'          => $module,
 	'VERSION_FROM'  => $main_file,

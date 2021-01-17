@@ -1,4 +1,4 @@
-use v5.24;
+use v5.26;
 use experimental qw(signatures);
 
 package Ghojo::Endpoint::Migrations;

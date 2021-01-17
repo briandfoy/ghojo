@@ -1,4 +1,4 @@
-use v5.24;
+use v5.26;
 
 package Ghojo::Endpoint::Actions;
 use experimental qw(signatures);

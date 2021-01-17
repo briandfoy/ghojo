@@ -1,4 +1,4 @@
-use v5.24;
+use v5.26;
 use experimental qw(signatures);
 
 package Ghojo;
@@ -1542,7 +1542,7 @@ brian d foy, C<< <bdfoy@cpan.org> >>
 Copyright © 2016-2021, brian d foy <bdfoy@cpan.org>. All rights reserved.
 
 This program is free software; you can redistribute it and/or modify
-it under the Artistic License 2. A LICENSE file should have accompanied
+it under the Artistic License 2. A F<LICENSE> file should have accompanied
 this distribution.
 
 =cut

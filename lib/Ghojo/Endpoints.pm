@@ -1,3 +1,5 @@
+use v5.26;
+
 # This module loads all of the endpoint modules.
 
 use Ghojo::Endpoint::Actions;
