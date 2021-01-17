@@ -115,6 +115,11 @@ package Ghojo::Data::Content::DirectoryListing {
 	sub files ( $self ) { $self->@* }
 	}
 
+package Ghojo::Data::Workflow {
+	our @ISA = qw(Ghojo::Data::Content::KnownType);
+	sub files ( $self ) { $self->@* }
+	}
+
 =encoding utf8
 
 =head1 NAME
