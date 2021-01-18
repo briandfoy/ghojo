@@ -63,13 +63,14 @@ sub stacktrace ( $self, $level = 1 ) {
 		last unless $caller[0] =~ /^Ghojo/;
 		}
 
-	return @callers, if wantarray;
+	return @callers if wantarray;
 
 	my $string = "Stacktrace\n";
 	foreach my $i ( 0 .. $#callers ) {
 		$string .= '-->' . ("\t" x $i) .
 			sprintf "$i: %s (%s %s)\n", $callers[$i]->@[-3..-1]
 		}
+
 	return $string;
 	}
 
