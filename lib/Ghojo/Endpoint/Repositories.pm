@@ -314,7 +314,7 @@ This is a public API endpoint.
 
 =cut
 
-sub Ghojo::AuthenticatedUser::edit_repo( $self, $owner, $repo, $hash = {} ) {
+sub Ghojo::AuthenticatedUser::edit_repo ( $self, $owner, $repo, $hash = {} ) {
 	$self->unimplemented;
 	}
 
