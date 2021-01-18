@@ -8,6 +8,8 @@ our $VERSION = '1.001001';
 use Mojo::Collection;
 use Mojo::URL;
 
+use Ghojo::Mixins::QueryValidators;
+
 =encoding utf8
 
 =head1 NAME
@@ -293,9 +295,34 @@ repo scope to create a private repository
 
 =cut
 
-sub Ghojo::AuthenticatedUser::create_repo ( $self ) {
+sub Ghojo::AuthenticatedUser::create_repo ( $self, $repo, $callback = sub { $_[0] }, $query = {}, $args = {} ) {
+	# https://docs.github.com/en/rest/reference/repos#create-a-repository-for-the-authenticated-user
 	# POST /user/repos
-	$self->unimplemented;
+
+	state $query_profile = {
+		params => {
+			name          => \&github_name,
+			description   => \&basic_string,
+			homepage      => \&url,
+			private       => \&boolean,
+			has_wiki      => \&boolean,
+			has_downloads => \&boolean,
+			auto_init     => \&boolean,
+
+			gitignore_template => \&basic_string,
+			license_template   => \&basic_string,
+			},
+		required => [ qw(name) ],
+		};
+
+	$args->{name} = $repo;
+
+	$self->post_single_resource(
+		endpoint        => '/user/repos',
+		query_profile   => $query_profile,
+		query_params    => $args,
+		json            => $args,
+		);
 	}
 
 sub Ghojo::AuthenticatedUser::create_repo_in_org ( $self ) {
