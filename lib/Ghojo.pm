@@ -997,7 +997,7 @@ sub validate_profile ( $self, $args, $profile ) {
 			extras       => {
 				args       => $args,
 				profile    => $profile,
-				stacktrace => $self->stacktrace(1)
+				stacktrace => [ $self->stacktrace(1) ],
 				},
 			});
 		}
@@ -1021,7 +1021,7 @@ sub validate_profile ( $self, $args, $profile ) {
 			extras       => {
 				args       => $args,
 				profile    => $profile,
-				stacktrace => $self->stacktrace(1)
+				stacktrace => [ $self->stacktrace(1) ],
 				},
 			});
 		}
@@ -1055,7 +1055,7 @@ sub validate_profile ( $self, $args, $profile ) {
 			extras       => {
 				args       => $args,
 				profile    => $profile,
-				stacktrace => $self->stacktrace(1)
+				stacktrace => [ $self->stacktrace(1) ],
 				},
 			});
 		}
@@ -1472,7 +1472,7 @@ sub Ghojo::check_repo ( $self, $owner, $repo ) {
 				description => "Checking user",
 				message     => "User $owner is not available",
 				extras      => {
-					stacktrace => $self->stacktrace(1),
+					stacktrace => [ $self->stacktrace(1) ],
 					},
 				});
 			}
@@ -1481,7 +1481,7 @@ sub Ghojo::check_repo ( $self, $owner, $repo ) {
 				description => "Checking repository",
 				message     => "Repo $owner/$repo is not available (but user $owner is)",
 				extras      => {
-					stacktrace => $self->stacktrace(1),
+					stacktrace => [ $self->stacktrace(1) ],
 					},
 				});
 			}
