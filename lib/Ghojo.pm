@@ -19,8 +19,9 @@ use Mojo::JSON qw(decode_json);
 use Ghojo::Constants;
 use Ghojo::Data;
 use Ghojo::Endpoints;
-use Ghojo::Result;
 use Ghojo::Mixins::SuccessError;
+use Ghojo::Result;
+use Ghojo::Scopes;
 
 sub DESTROY {}
 
@@ -1181,10 +1182,12 @@ sub single_resource ( $self, $verb, %args  ) {
 
 	# check that status is one of the expected statuses
 	my $status = $tx->res->code;
+	my $scopes_hash = Ghojo::Scopes->extract_scopes_from( $tx );
 	my @scopes = $tx->res->headers->header( 'X-OAuth-Scopes' );
 
-	$self->logger->debug( "X-OAuth-Scopes header is " . $tx->res->headers->header( 'X-OAuth-Scopes' ) );
-	$self->logger->debug( "scopes are [@scopes]" );
+	$self->logger->debug( "X-OAuth-Scopes header is " . ($tx->res->headers->header( 'X-OAuth-Scopes' ) // '(empty)') );
+	$self->logger->debug( sprintf "scopes has are [%s]", join ', ', $scopes_hash->{has}->scopes );
+	$self->logger->debug( sprintf "scopes requires are [%s]", join ', ', $scopes_hash->{requires}->scopes );
 	$self->logger->debug( "HTTP status was [$status]" );
 
 	# if it was the expected status, take the JSON in the
