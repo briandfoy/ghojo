@@ -94,7 +94,7 @@ sub new ( $class, @scopes ) {
 	}
 
 my sub _extract ( $tx, $header ) {
-	split /\s*,\s*/, $tx->result->headers->header( $header );
+	split /\s*,\s*/, $tx->result->headers->header( $header ) // '';
 	}
 
 =item * CLASS->extract_scopes_from_tx( Mojo::Transaction )
@@ -102,7 +102,7 @@ my sub _extract ( $tx, $header ) {
 
 =cut
 
-sub extract_scopes_from_tx ( $class, $tx ) {
+sub extract_scopes_from ( $class, $tx ) {
 	state %h = (
 		has      => 'x-oauth-scopes',
 		requires => 'x-accepted-oauth-scopes',
