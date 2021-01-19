@@ -318,7 +318,7 @@ sub new ( $class, $args = {} ) {
 		my $result = $self->login( $args );
 		if( $result->is_error ) {
 			$self->logger->error( "Could not log in" );
-			return;
+			return $result;
 			}
 		$self->logger->debug( "Login was a success" );
 		$self->logger->debug( "Class is " . $self->class_name );
