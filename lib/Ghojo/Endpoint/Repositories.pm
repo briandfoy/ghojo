@@ -414,7 +414,27 @@ Deleting a repository requires admin access. If OAuth is used, the delete_repo s
 =cut
 
 sub Ghojo::AuthenticatedUser::delete_repo ( $self, $owner, $repo ) {
-	$self->unimplemented;
+	# https://docs.github.com/en/rest/reference/repos#delete-a-repository
+	# DELETE /repos/{owner}/{repo}
+	$self->entered_sub;
+
+	state $endpoint_profile = {
+		params => {
+			owner => \&github_name,
+			repo  => \&repo_name,
+			},
+		required => [ qw(owner repo) ],
+		};
+
+	$self->delete_single_resource(
+		endpoint         => '/repos/:owner/:repo',
+		endpoint_profile => $endpoint_profile,
+		endpoint_params  => {
+			owner => $owner,
+			repo  => $repo,
+			},
+		required_scopes => [ qw(delete_repo) ],
+		);
 	}
 
 =back
