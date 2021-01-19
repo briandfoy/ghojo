@@ -293,11 +293,15 @@ license_templates
 public_repo scope or repo scope to create a public repository
 repo scope to create a private repository
 
+422 if the repo exists
+
 =cut
 
 sub Ghojo::AuthenticatedUser::create_repo ( $self, $repo, $callback = sub { $_[0] }, $query = {}, $args = {} ) {
 	# https://docs.github.com/en/rest/reference/repos#create-a-repository-for-the-authenticated-user
 	# POST /user/repos
+
+	$self->entered_sub;
 
 	state $query_profile = {
 		params => {
@@ -322,6 +326,7 @@ sub Ghojo::AuthenticatedUser::create_repo ( $self, $repo, $callback = sub { $_[0
 		query_profile   => $query_profile,
 		query_params    => $args,
 		json            => $args,
+		bless_into      => 'Ghojo::Data::Repo',
 		);
 	}
 
