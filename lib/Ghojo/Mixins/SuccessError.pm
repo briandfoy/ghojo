@@ -44,7 +44,7 @@ sub is_error   { 0 }
 
 This module is in Github:
 
-	git://github.com/briandfoy/ghojo.git
+	https://github.com/briandfoy/ghojo.git
 
 =head1 AUTHOR
 

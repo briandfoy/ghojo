@@ -42,7 +42,7 @@ Ghojo::Endpoint::PullRequests - The endpoints that deal with pull requests
 
 This module is in Github:
 
-	git://github.com/briandfoy/ghojo.git
+	https://github.com/briandfoy/ghojo.git
 
 =head1 AUTHOR
 

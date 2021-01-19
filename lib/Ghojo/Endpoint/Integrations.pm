@@ -43,7 +43,7 @@ Ghojo::Endpoint::Integrations - The endpoints that deal with integrations
 
 This module is in Github:
 
-	git://github.com/briandfoy/ghojo.git
+	https://github.com/briandfoy/ghojo.git
 
 =head1 AUTHOR
 

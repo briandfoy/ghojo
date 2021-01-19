@@ -443,7 +443,7 @@ sub Ghojo::AuthenticatedUser::create_issue_comment ( $self, $owner, $repo, $numb
 
 This module is in Github:
 
-	git://github.com/briandfoy/ghojo.git
+	https://github.com/briandfoy/ghojo.git
 
 =head1 AUTHOR
 

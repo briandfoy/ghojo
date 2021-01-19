@@ -255,7 +255,7 @@ sub Ghojo::PublicUser::create_reaction_for_pull_request_comment ( $self, $owner,
 
 This module is in Github:
 
-	git://github.com/briandfoy/ghojo.git
+	https://github.com/briandfoy/ghojo.git
 
 =head1 AUTHOR
 

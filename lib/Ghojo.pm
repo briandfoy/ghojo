@@ -1532,7 +1532,7 @@ sub version_object { 'application/vnd.github.VERSION.object' }
 
 This module is in Github:
 
-	git://github.com/briandfoy/ghojo.git
+	https://github.com/briandfoy/ghojo.git
 
 =head1 AUTHOR
 

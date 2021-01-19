@@ -360,7 +360,7 @@ sub Ghojo::AuthenticatedUser::revoke_grant ( $self, $client_id, $access_token ) 
 
 This module is in Github:
 
-	git://github.com/briandfoy/ghojo.git
+	https://github.com/briandfoy/ghojo.git
 
 =head1 AUTHOR
 

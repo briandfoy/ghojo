@@ -423,7 +423,7 @@ sub Ghojo::AuthenticatedUser::delete_repo ( $self, $owner, $repo ) {
 
 This module is in Github:
 
-	git://github.com/briandfoy/ghojo.git
+	https://github.com/briandfoy/ghojo.git
 
 =head1 AUTHOR
 

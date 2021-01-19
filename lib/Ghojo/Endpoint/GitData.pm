@@ -70,7 +70,7 @@ Ghojo::Endpoint::GitData - The endpoints that deal with git data
 
 This module is in Github:
 
-	git://github.com/briandfoy/ghojo.git
+	https://github.com/briandfoy/ghojo.git
 
 =head1 AUTHOR
 

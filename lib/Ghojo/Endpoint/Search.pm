@@ -70,7 +70,7 @@ Ghojo::Endpoint::Search - The endpoints that deal with searches
 
 This module is in Github:
 
-	git://github.com/briandfoy/ghojo.git
+	https://github.com/briandfoy/ghojo.git
 
 =head1 AUTHOR
 

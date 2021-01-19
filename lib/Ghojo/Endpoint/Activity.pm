@@ -72,7 +72,7 @@ Ghojo::Endpoint::Activity - The endpoints that deal with activity
 
 This module is in Github:
 
-	git://github.com/briandfoy/ghojo.git
+	https://github.com/briandfoy/ghojo.git
 
 =head1 AUTHOR
 

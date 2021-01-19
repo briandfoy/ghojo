@@ -42,7 +42,7 @@ Ghojo::Endpoint::Gist - The endpoints that deal with gists
 
 This module is in Github:
 
-	git://github.com/briandfoy/ghojo.git
+	https://github.com/briandfoy/ghojo.git
 
 =head1 AUTHOR
 
