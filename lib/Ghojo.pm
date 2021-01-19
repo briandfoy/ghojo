@@ -1086,28 +1086,24 @@ BEGIN {
 	sub clear_query_count     ( $self ) { $query_count = 0 }
 	};
 
-sub single_resource ( $self, $verb, %args  ) {
-	$self->entered_sub;
-	$self->logger->debug( sub { dumper( \%args ) } );
-
+sub _validate ( $self, $args = {} ) {
 	# validate the query parameters
-	if( exists $args{query_params} and exists $args{query_profile} ) {
-		my $result = $self->validate_profile( @args{ qw(query_params query_profile) } );
+	if( exists $args->{query_params} and exists $args->{query_profile} ) {
+		my $result = $self->validate_profile( $args->@{ qw(query_params query_profile) } );
 		return $result if $result->is_error;
 		}
 
 	# validate the endpoint parameters
-	if( exists $args{endpoint_params} and exists $args{endpoint_profile} ) {
-		my $result = $self->validate_profile( @args{ qw(endpoint_params endpoint_profile) } );
+	if( exists $args->{endpoint_params} and exists $args->{endpoint_profile} ) {
+		my $result = $self->validate_profile( $args->@{ qw(endpoint_params endpoint_profile) } );
 		return $result if $result->is_error;
 		}
 
-	my $url_result = $self->endpoint_to_url( @args{ qw(endpoint endpoint_params query_params) } );
-	return $url_result if $url_result->is_error;
+	my $url_result = $self->endpoint_to_url( $args->@{ qw(endpoint endpoint_params query_params) } );
+	return $url_result;
+	}
 
-	my $url = $url_result->values->first;
-	$self->logger->debug( "URL to single resource is <$url>" );
-
+sub single_resource ( $self, $verb, %args  ) {
 	state $allowed_verbs = { # with default expected http statuses
 		get      => 200,
 		post     => 201,
@@ -1115,6 +1111,15 @@ sub single_resource ( $self, $verb, %args  ) {
 		patch    => 200,
 		'delete' => 204,
 		};
+
+	$self->entered_sub;
+	$self->logger->debug( sub { dumper( \%args ) } );
+
+	my $url_result = $self->_validate( \%args );
+	return $url_result if $url_result->is_error;
+
+	my $url = $url_result->values->first;
+	$self->logger->debug( "URL to single resource is <$url>" );
 
 	# Check that we have an allowed verb. You shouldn't call this
 	# directly in application code, but this check ensures that
@@ -1142,6 +1147,7 @@ sub single_resource ( $self, $verb, %args  ) {
 	# of scopes.
 	#
 	# There are also scopes for teams and orgs
+	# this isn't implemented yet
 	unless( $self->has_scopes( $args{required_scopes} ) ) {
 		$self->logger->error( "This operation does not have the required scopes []" );
 		return Ghojo::Result->error;
@@ -1162,16 +1168,8 @@ sub single_resource ( $self, $verb, %args  ) {
 
 	push @args, \%headers;
 
-	if( exists $args{json} ) {
-		push @args, 'json' => $args{json};
-		}
-
-	if( exists $args{form} ) {
-		push @args, 'form' => $args{form};
-		}
-
-	if( exists $args{body} ) {
-		push @args, $args{body}
+	foreach my $key ( qw(json form body) ) {
+		push @args, $key => $args{$key} if exists $args{$key};
 		}
 
 	$self->logger->debug( sub { "Args to ua are:\n" . dumper( \@args ) } );
@@ -1183,6 +1181,10 @@ sub single_resource ( $self, $verb, %args  ) {
 
 	# check that status is one of the expected statuses
 	my $status = $tx->res->code;
+	my @scopes = $tx->res->headers->header( 'X-OAuth-Scopes' );
+
+	$self->logger->debug( "X-OAuth-Scopes header is " . $tx->res->headers->header( 'X-OAuth-Scopes' ) );
+	$self->logger->debug( "scopes are [@scopes]" );
 	$self->logger->debug( "HTTP status was [$status]" );
 
 	# if it was the expected status, take the JSON in the
@@ -1193,11 +1195,11 @@ sub single_resource ( $self, $verb, %args  ) {
 		my $data = $args{raw_content} ? $tx->res->body : $tx->res->json;
 		my $result = $self->bless_into( $data, \%args );
 		return $result if eval { $result->is_error };
+		my %extras;
+		$extras{tx} = $tx if 0; # XXX
 		return Ghojo::Result->success( {
 			values => [ $data ],
-			extras => {
-				tx => $tx,
-				},
+			extras => \%extras,
 			} )
 		}
 
@@ -1211,19 +1213,48 @@ sub single_resource ( $self, $verb, %args  ) {
 	$self->classify_error( $url, $tx );
 	}
 
+
+=pod
+
+{"message":"Repository creation failed.",
+	"errors":[
+		{"resource":"Repository",
+		"code":"custom",
+		"field":"name",
+		"message":"name already exists on this account"
+		}],
+"documentation_url":"https://docs.github.com/rest/reference/repos#create-a-repository-for-the-authenticated-user"
+}
+
+=cut
+
 sub classify_error ( $self, $url, $tx ) {
 	my $status = $tx->res->code;
 	my $verb   = lc $tx->req->method;
+
+	my %extras;
+	$extras{tx}        = $tx;
+	$extras{url}       = "$url";
+	$extras{response}  = eval { $tx->result->body };
+	$extras{http_code} = $tx->result->code;
+
+	my $json = eval { $tx->res->json } // {
+		message => "Internal JSON because there was an error: $@",
+		errors  => [],
+		documentation_url => '',
+		};
+
+	my $message = join " ",
+		$json->{message},
+		map { state $n = 0; $_->{message} // '' }
+		$json->{errors}->@*;
 
 	if( $status == 404 and $verb eq 'get' ) {
 		return Ghojo::Result->error( {
 			description  => 'Fetching a single resource',
 			message      => 'Got a 404 response. Object not found!',
 			error_code   => RESOURCE_NOT_FOUND,
-			extras => {
-				url => $url,
-				tx  => $tx,
-				},
+			extras       => \%extras,
 			} )
 		}
 
@@ -1234,28 +1265,28 @@ sub classify_error ( $self, $url, $tx ) {
 		$self->logger->debug( "The request requires authentication!" );
 		return Ghojo::Result->error({
 			message => "The request requires authentication!",
-			extras => {
-				tx => $tx,
-				},
+			extras  => \%extras,
 			});
 		}
 
 	if( $status == 403 ) {
-		my $message = "The request was forbidden!";
 		$self->logger->debug( "The request was forbidden!" );
 
-		my $json = eval { $tx->res->json };
-
 		if( $json->{message} =~ /(API rate limit exceeded for \S+)/ ) {
-			$message = $1;
+			$message .= $1;
 			}
-		$self->logger->debug( "$message" );
+
+		my @scopes = $self->extract_scopes( $tx );
+		my @required_scopes = $self->extract_required_scopes( $tx );
+
+		my $scope_satified = Ghojo::Scopes
+			->new( @scopes )
+			->satisfies( @required_scopes );
+
 
 		return Ghojo::Result->error({
-			message => $message,
-			extras => {
-				tx => $tx,
-				},
+			message => $message // "The request was forbidden!",
+			extras  => \%extras,
 			});
 		}
 
@@ -1263,37 +1294,29 @@ sub classify_error ( $self, $url, $tx ) {
 		$self->logger->debug( "The request requires additional media types in Accept" );
 		return Ghojo::Result->error({
 			message => "The request requires additional media types in Accept!",
-			extras => {
-				tx => $tx,
-				},
+			extras  => \%extras,
 			});
 		}
 
 	if( $status == 422 ) {
-		$self->logger->debug( "The request was invalid" );
+		$self->logger->debug( "The request could not be accomodated" );
 		return Ghojo::Result->error({
-			message => "The request was invalid",
-			extras => {
-				tx => $tx,
-				},
+			message => $message // "The request was invalid",
+			extras  => \%extras,
 			});
 		}
 
 	if( 400 <= $status and $status <= 499 ) {
 		$self->logger->debug( "Unhandled 4xx request" );
 		return Ghojo::Result->error({
-			message => "Unhandled 4xx request",
-			extras => {
-				tx => $tx,
-				},
+			message => $message // "Unhandled 4xx request",
+			extras  => \%extras,
 			});
 		}
 
 	return Ghojo::Result->error({
-		message => "Unhandled error",
-		extras => {
-			tx => $tx,
-			},
+		message => $message // "Unhandled error",
+		extras  => \%extras,
 		});
 	}
 
@@ -1344,19 +1367,7 @@ sub bless_into ( $self, $ref, $args ) {
 sub get_paged_resources ( $self, %args ) {
 	$self->entered_sub;
 
-	# validate the endpoint parameters
-	if( exists $args{endpoint_params} and exists $args{endpoint_profile} ) {
-		my $result = $self->validate_profile( @args{ qw(endpoint_params endpoint_profile) } );
-		return $result if $result->is_error;
-		}
-
-	# validate the query parameters
-	if( exists $args{query_params} and exists $args{query_profile} ) {
-		my $result = $self->validate_profile( @args{ qw(query_params query_profile) } );
-		return $result if $result->is_error;
-		}
-
-	my $url_result = $self->endpoint_to_url( @args{ qw(endpoint endpoint_params query_params) } );
+	my $url_result = $self->_validate( \%args );
 	return $url_result if $url_result->is_error;
 
 	my $url = $url_result->values->first;
