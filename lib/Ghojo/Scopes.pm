@@ -4,6 +4,8 @@ use experimental qw(signatures);
 
 use Carp qw(carp);
 
+=encoding utf8
+
 =head1 NAME
 
 Ghojo::Scopes - Manages OAuth scopes
