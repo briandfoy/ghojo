@@ -99,10 +99,10 @@ L<https://developer.github.com/v3/oauth_authorizations/#list-your-authorizations
 
 sub Ghojo::AuthenticatedUser::get_authorizations ( $self, $callback = sub { $_[0] } ) {
 	state $expected_status = 200;
+	$self->entered_sub;
 
 	my $collection = $self->get_paged_resources(
-		$self->endpoint_to_url( '/authorizations' ),
-		bless_into           => 'Ghojo::Data::Grant',
+		endpoint =>  '/authorizations',
 		);
 	}
 
