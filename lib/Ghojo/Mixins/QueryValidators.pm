@@ -2,7 +2,11 @@ use v5.26;
 use experimental qw(signatures);
 
 use Exporter qw(import);
-our @EXPORT = qw( is_success is_error );
+our @EXPORT = qw(
+	basic_string boolean
+	github_name repo_name
+	url
+	);
 
 =encoding utf8
 
