@@ -72,6 +72,14 @@ Returns true if the argument is a valid Github account name.
 
 sub github_name { $_[0] =~ m/\A\S+\z/ }
 
+=item * repo_name( STRING )
+
+Returns true if the argument is a valid Github repository name.
+
+=cut
+
+sub repo_name { $_[0] =~ m/\A\S+\z/ }
+
 =item * url( STRING )
 
 Returns true if the input looks like a URL
