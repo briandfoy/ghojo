@@ -79,7 +79,7 @@ BEGIN {
 		};
 
 	foreach my $parent ( keys $raw->%* ) {
-		$scopes->{$parent}{parent};
+		$scopes->{$parent}{parent} = undef;
 		foreach my $child ( $raw->{$parent}->@* ) {
 			$scopes->{$parent}{$child} = 1;
 			$scopes->{$child}{parent} = $parent;
