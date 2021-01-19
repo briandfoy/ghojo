@@ -77,7 +77,7 @@ GitHub tools (and, I'd like to try this against GitHub Enterprise).
 
 This module is in Github:
 
-	git://github.com/briandfoy/ghojo.git
+	https://github.com/briandfoy/ghojo.git
 
 =head1 AUTHOR
 
