@@ -202,7 +202,10 @@ of this like an explanation (most likely for the failure).
 
 =cut
 
-sub message ( $self ) { $self->{message} // 'No one added a reason for this result' }
+sub message ( $self, $message = undef ) {
+	$self->{message} = $message if defined $message;
+	$self->{message} // 'No one added a reason for this result'
+	}
 
 =item * values
 
