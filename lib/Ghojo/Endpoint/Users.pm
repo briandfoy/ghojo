@@ -44,8 +44,7 @@ L<https://developer.github.com/v3/users/#get-the-authenticated-user>
 =cut
 
 sub Ghojo::AuthenticatedUser::get_authenticated_user ( $self ) {
-	$self->logger->trace( 'Getting the authenticated user record' );
-
+	$self->entered_sub;
 	$self->get_single_resource(
 		endpoint   => '/user',
 		bless_into => 'Ghojo::Data::UserRecord',
