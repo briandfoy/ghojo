@@ -17,6 +17,8 @@ use constant UNKNOWN_HTTP_VERB         => 11;
 use constant ARGS_MUST_BE_HASH_REF     => 12;
 use constant MODULE_LOAD_FAILURE       => 13;
 use constant BAD_PACKAGE_NAME          => 14;
+use constant MISSING_SCOPE             => 15;
+use constant MISSING_EXPECTED_FIELD    => 16;
 
 use constant RESOURCE_NOT_FOUND        => 404;
 
@@ -36,6 +38,8 @@ our @EXPORT = qw(
 	MODULE_LOAD_FAILURE
 	RESOURCE_NOT_FOUND
 	BAD_PACKAGE_NAME
+	MISSING_SCOPE
+	MISSING_EXPECTED_FIELD
 	);
 
 1;
