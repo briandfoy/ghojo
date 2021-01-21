@@ -28,10 +28,6 @@ sub DESTROY {}
 
 sub AUTOLOAD ( $self, @ ) {
 	our $AUTOLOAD;
-	my @c1 = caller(1);
-	say STDERR "($AUTOLOAD) 1111: @c1";
-	my @c0 = caller(0);
-	say STDERR "0000: @c0";
 	$self->entered_sub;
 	my @caller = caller(0);
 	$self->logger->trace( "AUTOLOADing $AUTOLOAD from @caller[1,2]" );
