@@ -17,10 +17,6 @@ jobs:
                 - ubuntu-18.04
                 - ubuntu-20.04
             perl-version:
-                - '5.26'
-                - '5.28'
-                - '5.30'
-                - '5.32'
                 - 'latest'
 
         container:
