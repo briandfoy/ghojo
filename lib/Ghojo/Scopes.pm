@@ -162,7 +162,12 @@ sub add_scopes ( $self, @scopes ) {
 	return @added;
 	}
 
-sub scopes ( $self ) { keys $self->{scopes}->%* }
+sub scopes ( $self ) {
+	deprecated "scopes is deprecated. Use as_list instead";
+	$self->as_list;
+	}
+
+sub as_list   ( $self ) { keys $self->{scopes}->%* }
 
 sub has_scope ( $self, $scope ) { exists $self->{scopes}{$scope} }
 
