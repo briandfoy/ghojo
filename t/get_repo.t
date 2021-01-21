@@ -1,5 +1,7 @@
 use Test::More 1;
 
+use Mojo::Util qw(dumper);
+
 my $class      = 'Ghojo';
 my $repo_class = 'Ghojo::Repo';
 my $method     = 'get_repo_object';
@@ -19,7 +21,7 @@ subtest good_repo => sub {
 	isa_ok $ghojo, $class;
 
 	my $repo  = $ghojo->$method( $user, $repo );
-	isa_ok( $repo, $repo_class );
+	isa_ok( $repo, $repo_class ) or diag( dumper( $repo ) );
 	can_ok( $repo, 'data' );
 	ok( exists $repo->data->{full_name}, "full_name key exists" );
 	diag( "Repo name is " . $repo->data->{full_name} );
