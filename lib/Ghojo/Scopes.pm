@@ -3,6 +3,7 @@ package Ghojo::Scopes;
 use experimental qw(signatures);
 
 use Carp qw(carp);
+use Mojo::Util qw(deprecated);
 
 =encoding utf8
 
@@ -12,11 +13,33 @@ Ghojo::Scopes - Manages OAuth scopes
 
 =head1 SYNOPSIS
 
+	my $scopes = Ghojo::Scopes->new;
+	$scopes->add_scopes( @scopes );
+
+	# or in one step
+	my $scopes = Ghojo::Scopes->new( @scopes );
+
+	# check that the object recorded a particular scope
+	if( $scopes->has_scope( 'repo' ) ) { ... }
+
+	# check that one of the record scopes is or implies
+	# the scope
+	if( $scopes->satisfies( 'repo:status' ) ) { ... }
+
 =head1 DESCRIPTION
 
-https://docs.github.com/en/developers/apps/scopes-for-oauth-apps
+GitHub's Personal Access Tokens rely on scopes to define what operations
+it can do. This module manages and supports queries about sets of
+scopes.
 
-=head2 Scopes
+A Ghojo object automatically handles all this for you when you
+authenticate with tokens.
+
+On GitHub:
+
+	https://docs.github.com/en/developers/apps/scopes-for-oauth-apps
+
+=head2 Scope hierarchy
 
 	repo
 		repo:status
