@@ -5,6 +5,7 @@ package Ghojo;
 
 use Mojo::Util qw(b64_encode dumper);
 use Mojo::JSON qw(decode_json);
+use Storable   qw(dclone);
 
 # The endpoints are divided into public and authenticated parts
 # We'll use this inheritance chain to divide them. The public
@@ -26,8 +27,12 @@ use Ghojo::Scopes;
 sub DESTROY {}
 
 sub AUTOLOAD ( $self, @ ) {
-	$self->entered_sub;
 	our $AUTOLOAD;
+	my @c1 = caller(1);
+	say STDERR "($AUTOLOAD) 1111: @c1";
+	my @c0 = caller(0);
+	say STDERR "0000: @c0";
+	$self->entered_sub;
 	my @caller = caller(0);
 	$self->logger->trace( "AUTOLOADing $AUTOLOAD from @caller[1,2]" );
 
@@ -301,13 +306,17 @@ sub new ( $class, $args = {} ) {
 	# it will rebless the object for the authenticated class name.
 	my $self = bless {}, $class->public_user_class;
 
+	my $level = $args->{log_level} // $ENV{GHOJO_LOG_LEVEL} // 'OFF';
+
 	$self->setup_logging(
-		$args->{logging_conf} ? $args->{logging_conf} : $class->logging_conf
+		( $args->{logging_conf} ? $args->{logging_conf} : $class->logging_conf($level) )
 		);
 
 	if( exists $args->{token} ) {
 		$self->logger->trace( 'Authenticating with token' );
 		$self->add_token( $args->{token} );
+		my $result = $self->get_authenticated_user;
+		return $result if $result->is_error;
 		}
 	elsif( exists $args->{token_file} ) {
 		$self->logger->trace( 'Authenticating with saved token in named file' );
@@ -384,7 +393,6 @@ sub test_authenticated ( $self ) {
 
 	return 0;
 	}
-
 
 =item * login
 
@@ -509,6 +517,7 @@ sub too_many_login_attempts( $self, $tx ) {
 			},
 		} );
 	}
+
 =item * public_user_class
 
 Returns the class name that comprises the parts of the API that
@@ -640,7 +649,7 @@ sub logging_conf ( $class, $level = $ENV{GHOJO_LOG_LEVEL} // 'OFF' ) {
 
 		log4perl.appender.Screen         = Log::Log4perl::Appender::Screen
 		log4perl.appender.Screen.stderr  = 1
-		log4perl.appender.Screen.layout = Log::Log4perl::Layout::SimpleLayout
+		log4perl.appender.Screen.layout  = Log::Log4perl::Layout::SimpleLayout
 		);
 
 	\$conf;
@@ -734,15 +743,15 @@ log these! The program needs to keep the value around!
 
 =cut
 
-sub authenticated_user ( $self ) { $self->username }
-sub username ( $self )       { $self->{username} }
-sub has_username ( $self )   { !! defined $self->{username} }
+sub authenticated_user  ( $self ) { $self->username }
+sub username            ( $self ) { $self->{username} }
+sub has_username        ( $self ) { !! defined $self->{username} }
 
-sub password ( $self )     { $self->{password} }
-sub has_password ( $self ) { !! defined $self->{password} }
+sub password            ( $self ) { $self->{password} }
+sub has_password        ( $self ) { !! defined $self->{password} }
 
-sub token ( $self )     { $self->{token} }
-sub has_token ( $self ) { !! defined $self->{token} }
+sub token               ( $self ) { $self->{token} }
+sub has_token           ( $self ) { !! defined $self->{token} }
 
 =item * auth_string
 
@@ -884,6 +893,59 @@ sub remember_token ( $self ) {
 		$self->logger->warn( "Token is " . $self->token );
 		}
 	}
+
+=back
+
+=head3 Personal Access Token scopes
+
+A Personal Access Token is one form of authentication, and each token
+can have its own set of permissions. When Ghojo gets a response, it notes
+which scopes the response tells it the token has (and tokens can change
+their set of scopes).
+
+Ghojo endpoints know which scopes they need, and the process can check
+that the token has the right scopes before it makes the request.
+
+Most of this doesn't need to happen at the endpoint level. The innards
+can do various checks like this:
+
+	unless( $ghojo->scopes->satisfies( 'workflows' ) ) {
+		...
+		}
+
+This way, the innards can set appropriate Ghojo::Result error objects
+to note which scopes were missing for a failed operation. See
+C<single_resource> for example.
+
+In user code, the C<error_code> part of the result should be the
+constant C<MISSING_SCOPES>:
+
+	my $result = $ghojo->some_endpoint();
+	if( $result->is_error ) {
+		say "Missing scopes!" if $result->error_code == MISSING_SCOPES;
+		say "Scopes: ", $ghojo->scopes->as_list;
+		say "Required: ", $result->extras->{required}->as_list;
+		}
+
+=over 4
+
+=item * init_scopes()
+
+Initialize the Ghojo::Scopes object. You can also use this to start
+with a fresh object.
+
+=item * scopes()
+
+Return the Ghojo::Scopes object.
+
+=cut
+
+{
+my $key = 'token_scopes';
+
+sub init_scopes ( $self ) { $self->{$key} = Ghojo::Scopes->new }
+sub scopes      ( $self ) { $self->{$key}                      }
+}
 
 =back
 
@@ -1087,24 +1149,76 @@ BEGIN {
 	sub clear_query_count     ( $self ) { $query_count = 0 }
 	};
 
-sub _validate ( $self, $args = {} ) {
-	# validate the query parameters
-	if( exists $args->{query_params} and exists $args->{query_profile} ) {
-		my $result = $self->validate_profile( $args->@{ qw(query_params query_profile) } );
-		return $result if $result->is_error;
-		}
 
-	# validate the endpoint parameters
-	if( exists $args->{endpoint_params} and exists $args->{endpoint_profile} ) {
-		my $result = $self->validate_profile( $args->@{ qw(endpoint_params endpoint_profile) } );
-		return $result if $result->is_error;
-		}
-
-	my $url_result = $self->endpoint_to_url( $args->@{ qw(endpoint endpoint_params query_params) } );
-	return $url_result;
+sub single_resource_steps ( $self ) {
+	qw(
+		_preprocess_request
+		_check_http_verb _check_scopes
+		_setup_request_headers _check_rate_limiting
+		_make_request
+		_pre_process_response
+		_process_response
+		);
 	}
 
 sub single_resource ( $self, $verb, %args  ) {
+	$self->entered_sub;
+	$self->logger->debug( sub { "Args are " . dumper( \%args ) } );
+
+	my $stash = {
+		original_args => dclone( \%args ),
+		args          => \%args,
+        extras        => {},
+        verb          => $verb,
+		};
+
+	# each step can modify the stash for the next step
+	my $result;
+	foreach my $step ( $self->single_resource_steps ) {
+		$result = $self->$step( $stash );
+		return $result if $result->is_error;
+		}
+
+	# the last result
+	return $result;
+	}
+
+sub _validate ( $self, $stash ) {
+	$self->entered_sub;
+	my $args = $stash->{args};
+
+	return Ghojo::Result->error({
+		message     => 'Validation error',
+		description => 'The endpoint argument is missing',
+		}) unless exists $args->{endpoint};
+
+	my @sets = (
+		[ qw(query_params query_profile)       ],
+		[ qw(endpoint_params endpoint_profile) ],
+		);
+
+	foreach my $set ( @sets ) {
+		next unless @$set == grep { exists $args->{$_} } $set->@*;
+		my $result = $self->validate_profile( $args->@{ @$set } );
+		return $result if $result->is_error;
+		}
+
+	$self->endpoint_to_url( $args->@{ qw(endpoint endpoint_params query_params) } );
+	}
+
+sub _preprocess_request ( $self, $stash ) {
+	$self->entered_sub;
+	my $url_result = $self->_validate( $stash );
+	return $url_result if $url_result->is_error;
+
+	$stash->{url} = $url_result->values->first;
+	$self->logger->debug( "URL to single resource is <$stash->{url}>" );
+
+	return Ghojo::Result->success;
+	}
+
+sub _check_http_verb ( $self, $stash ) {
+	$self->entered_sub;
 	state $allowed_verbs = { # with default expected http statuses
 		get      => 200,
 		post     => 201,
@@ -1113,35 +1227,30 @@ sub single_resource ( $self, $verb, %args  ) {
 		'delete' => 204,
 		};
 
-	$self->entered_sub;
-	$self->logger->debug( sub { dumper( \%args ) } );
-
-	my $url_result = $self->_validate( \%args );
-	return $url_result if $url_result->is_error;
-
-	my $url = $url_result->values->first;
-	$self->logger->debug( "URL to single resource is <$url>" );
+	$stash->{verb} = lc $stash->{verb};
 
 	# Check that we have an allowed verb. You shouldn't call this
 	# directly in application code, but this check ensures that
 	# $verb is something we can handle.
-	$verb = lc $verb;
 	return Ghojo::Result->error( {
 		description => 'Fetching a single resource',
-		message     => "Unknown HTTP verb $verb",
+		message     => "Unknown HTTP verb $stash->{verb}",
 		error_code  => UNKNOWN_HTTP_VERB,
-		extras      => {
-			args => [ @_ ],
-			},
-		} ) unless exists $allowed_verbs->{$verb};
+		extras      => $stash,
+		} ) unless exists $allowed_verbs->{ $stash->{verb} };
 
 	# turn every value for expected_http_status into an array. There
 	# are some operations that have more than one HTTP status that
 	# signifies normal operation.
-	$args{expected_http_status} //= $allowed_verbs->{$verb};
-	$args{expected_http_status} = [ $args{expected_http_status} ]
-		unless ref $args{expected_http_status} eq ref [];
+	my $args = $stash->{args};
+	$args->{expected_http_status} //= $allowed_verbs->{$stash->{verb}};
+	$args->{expected_http_status} = [ $args->{expected_http_status} ]
+		unless ref $args->{expected_http_status} eq ref [];
 
+	return Ghojo::Result->success;
+	}
+
+sub _check_scopes( $self, $stash ) {
 	# Before we make the query, check that we have the right scope.
 	# When you create a personal access token, you can specify which
 	# scopes you want. When we stored the token, we asked for the list
@@ -1149,73 +1258,144 @@ sub single_resource ( $self, $verb, %args  ) {
 	#
 	# There are also scopes for teams and orgs
 	# this isn't implemented yet
-	unless( $self->has_scopes( $args{required_scopes} ) ) {
-		$self->logger->error( "This operation does not have the required scopes []" );
-		return Ghojo::Result->error;
+	$self->entered_sub;
+	return Ghojo::Result->success unless exists $stash->{args}{required_scopes};
+
+	unless( $self->scopes->satisfies( $stash->{args}{required_scopes}->@* ) ) {
+		$self->logger->error(
+			sprintf "This operation does not have the required scopes [%s]",
+				$stash->{args}{required_scopes}->@*
+			);
+		$stash->{scopes}{has}      = [ $self->scopes->as_list ];
+		$stash->{scopes}{required} = $stash->{args}{required_scopes};
+		return Ghojo::Result->error({
+			description => 'Fetching a single resource',
+			message     => "Operation does not have required scopes",
+			extras      => $stash,
+			});
 		}
 
-	# XXX: Check rate status before we try this?
-	my @args = ( $url );
+	return Ghojo::Result->success;
+	}
+
+sub _setup_request_headers ( $self, $stash ) {
+	$self->entered_sub;
 	my %headers;
 
 	$headers{'Authorization'} = $self->auth_string if $self->auth_string;
 
 	# this is the base content-type for the API
-	$headers{'Accept'} = $args{accepts} // 'application/vnd.github.v3+json';
+	$headers{'Accept'} = $stash->{args}{accepts} // 'application/vnd.github.v3+json';
 	$self->logger->debug( "Accept header is: $headers{'Accept'}" );
 
 	# XXX maybe check that this makes sense
-	$headers{'Content-type'}  = $args{content_type} if $args{content_type};
+	$headers{'Content-type'}  = $stash->{args}{content_type}
+		if $stash->{args}{content_type};
 
-	push @args, \%headers;
+	$stash->{headers} = \%headers;
 
-	foreach my $key ( qw(json form body) ) {
-		push @args, $key => $args{$key} if exists $args{$key};
-		}
+	return Ghojo::Result->success;
+	}
+
+sub _check_rate_limiting ( $self, $stash ) {
+	$self->entered_sub;
+	# Not yet implemented
+	return Ghojo::Result->success;
+	}
+
+sub _make_request ( $self, $stash ) {
+	$self->entered_sub;
+	my @args = (
+		$stash->{url},
+		$stash->{headers},
+		map {
+			exists $stash->{args}{$_}        ?
+				($_ => $stash->{args}{$_}) :
+				()
+			} qw(json form body)
+		);
 
 	$self->logger->debug( sub { "Args to ua are:\n" . dumper( \@args ) } );
 
 	# XXX: also look in %args for 'json' and 'form'
-	my $tx = $self->ua->$verb( @args );
-	$self->logger->debug( "Request was:\n" . $tx->req->to_string );
-	$self->increment_query_count;
+	my $verb = $stash->{verb};
+	$stash->{tx} = $self->ua->$verb( @args );
 
+	return Ghojo::Result->success;
+	}
+
+sub _pre_process_response ( $self, $stash ) {
+	$self->entered_sub;
+	$self->logger->debug( sub { "Request was:\n" . $stash->{tx}->req->to_string } );
+	$stash->{query_count} = $self->increment_query_count;
+	$self->_update_rate_limit( $stash );
+	$self->_process_scopes( $stash );
+	return Ghojo::Result->success;
+	}
+
+sub _update_rate_limit( $self, $stash ) { Ghojo::Result->success }
+
+sub _process_scopes ( $self, $stash ) {
+	$self->entered_sub;
+	my $scopes = Ghojo::Scopes->extract_scopes_from( $stash->{tx} );
+
+	# reset the scope we are tracking. Maybe they changed?
+	$self->init_scopes->add_scopes( $scopes->{has}->as_list );
+	$stash->{has_scopes}      = [ $scopes->{has}->as_list ];
+	$stash->{required_scopes} = [ eval{ $scopes->{required}->as_list } ];
+	}
+
+sub _process_response ( $self, $stash ) {
+	$self->entered_sub;
+	my $tx = $stash->{tx};
 	# check that status is one of the expected statuses
 	my $status = $tx->res->code;
-	my $scopes_hash = Ghojo::Scopes->extract_scopes_from( $tx );
-	my @scopes = $tx->res->headers->header( 'X-OAuth-Scopes' );
 
-	$self->logger->debug( "X-OAuth-Scopes header is " . ($tx->res->headers->header( 'X-OAuth-Scopes' ) // '(empty)') );
-	$self->logger->debug( sprintf "scopes has are [%s]", join ', ', $scopes_hash->{has}->scopes );
-	$self->logger->debug( sprintf "scopes requires are [%s]", join ', ', $scopes_hash->{requires}->scopes );
-	$self->logger->debug( "HTTP status was [$status]" );
+	if( grep { $_ == $status } $stash->{args}{expected_http_status}->@* ) {
+		my $data = $stash->{args}{raw_content} ? $tx->res->body : $tx->res->json;
 
-	# if it was the expected status, take the JSON in the
-	# message body and bless it into the right class
+		# Can't have raw_content and bless_into at the same time?
+		# message body and bless it into the right class
+		my $result = $self->_bless_into( $data, $stash );
+		return $result if $result->is_error;
 
-	# Can't have raw_content and bless_into at the same time?
-	if( grep { $_ == $status } $args{expected_http_status}->@* ) {
-		my $data = $args{raw_content} ? $tx->res->body : $tx->res->json;
-		my $result = $self->bless_into( $data, \%args );
-		return $result if eval { $result->is_error };
-		my %extras;
-		$extras{tx} = $tx if 0; # XXX
 		return Ghojo::Result->success( {
 			values => [ $data ],
-			extras => \%extras,
+			extras => $stash,
 			} )
 		}
 
 	$self->logger->debug( sub {
 		"Got HTTP status $status while expecting one of "
-		. join ', ', $args{expected_http_status}->@*
+		. join ', ', $stash->{args}{expected_http_status}->@*
 		} );
 
 	# by this time an error has definitely occurred, so figure out
 	# what it is
-	$self->classify_error( $url, $tx );
+	$self->_classify_error( $stash );
 	}
 
+sub _default_data_class ( $self ) { 'Ghojo::Data' }
+sub _bless_into ( $self, $ref, $stash ) {
+	$self->entered_sub;
+	unless( exists $stash->{args}{bless_into} and defined $stash->{args}{bless_into} ) {
+		$self->logger->warn( "Missing bless_into value. Using the default" );
+		$stash->{args}{bless_into} = $self->_default_data_class;
+		}
+
+	my $package = $stash->{args}{bless_into};
+	unless( $package =~ m/\A [A-Za-z][A-Za-z0..9_]* (::[A-Za-z][A-Za-z0..9_]*)* \z/x ) {
+		return Ghojo::Result->error( {
+			description => "Fetching single resource",
+			message     => "Bad package name for bless_into: $package",
+			error_code  => BAD_PACKAGE_NAME,
+			extras      => $stash,
+			} );
+		}
+
+	eval "require $package";
+	bless $ref, $package;
+	}
 
 =pod
 
@@ -1231,15 +1411,9 @@ sub single_resource ( $self, $verb, %args  ) {
 
 =cut
 
-sub classify_error ( $self, $url, $tx ) {
+sub _classify_error ( $self, $stash ) {
+	my $tx = $stash->{tx};
 	my $status = $tx->res->code;
-	my $verb   = lc $tx->req->method;
-
-	my %extras;
-	$extras{tx}        = $tx;
-	$extras{url}       = "$url";
-	$extras{response}  = eval { $tx->result->body };
-	$extras{http_code} = $tx->result->code;
 
 	my $json = eval { $tx->res->json } // {
 		message => "Internal JSON because there was an error: $@",
@@ -1252,12 +1426,12 @@ sub classify_error ( $self, $url, $tx ) {
 		map { state $n = 0; $_->{message} // '' }
 		$json->{errors}->@*;
 
-	if( $status == 404 and $verb eq 'get' ) {
+	if( $status == 404 and $stash->{verb} eq 'get' ) {
 		return Ghojo::Result->error( {
 			description  => 'Fetching a single resource',
 			message      => 'Got a 404 response. Object not found!',
 			error_code   => RESOURCE_NOT_FOUND,
-			extras       => \%extras,
+			extras       => $stash,
 			} )
 		}
 
@@ -1268,7 +1442,7 @@ sub classify_error ( $self, $url, $tx ) {
 		$self->logger->debug( "The request requires authentication!" );
 		return Ghojo::Result->error({
 			message => "The request requires authentication!",
-			extras  => \%extras,
+			extras  => $stash,
 			});
 		}
 
@@ -1289,7 +1463,7 @@ sub classify_error ( $self, $url, $tx ) {
 
 		return Ghojo::Result->error({
 			message => $message // "The request was forbidden!",
-			extras  => \%extras,
+			extras  => $stash,
 			});
 		}
 
@@ -1297,7 +1471,7 @@ sub classify_error ( $self, $url, $tx ) {
 		$self->logger->debug( "The request requires additional media types in Accept" );
 		return Ghojo::Result->error({
 			message => "The request requires additional media types in Accept!",
-			extras  => \%extras,
+			extras  => $stash,
 			});
 		}
 
@@ -1305,7 +1479,7 @@ sub classify_error ( $self, $url, $tx ) {
 		$self->logger->debug( "The request could not be accomodated" );
 		return Ghojo::Result->error({
 			message => $message // "The request was invalid",
-			extras  => \%extras,
+			extras  => $stash,
 			});
 		}
 
@@ -1313,13 +1487,13 @@ sub classify_error ( $self, $url, $tx ) {
 		$self->logger->debug( "Unhandled 4xx request" );
 		return Ghojo::Result->error({
 			message => $message // "Unhandled 4xx request",
-			extras  => \%extras,
+			extras  => $stash,
 			});
 		}
 
 	return Ghojo::Result->error({
 		message => $message // "Unhandled error",
-		extras  => \%extras,
+		extras  => $stash,
 		});
 	}
 
@@ -1348,22 +1522,6 @@ sub delete_single_resource ( $self, %args ) {
 	$self->single_resource( DELETE => %args );
 	}
 
-sub bless_into ( $self, $ref, $args ) {
-	return unless $args->{bless_into};
-	unless( $args->{bless_into} =~ m/\A [A-Za-z][A-Za-z0..9_]* (::[A-Za-z][A-Za-z0..9_]*)* \z/x ) {
-		return Ghojo::Result->error( {
-			description => "Fetching single resource",
-			message     => "Bad package name for bless_into: $args->{bless_into}",
-			error_code  => BAD_PACKAGE_NAME,
-			extras      => {
-				args => $args,
-				},
-			} );
-		}
-
-	eval "require $args->{bless_into}";
-	bless $ref, $args->{bless_into};
-	}
 
 # this is blocking, but there's not another way around it
 # you don't know the next one until you see the response
@@ -1513,6 +1671,7 @@ sub Ghojo::check_repo ( $self, $owner, $repo ) {
 
 =head2 Content types
 
+Github uses Content-Type values to do or enable various things.
 
 =over 4
 
