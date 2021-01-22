@@ -1162,7 +1162,6 @@ sub single_resource ( $self, $verb, %args  ) {
 	$self->logger->debug( sub { "Args are " . dumper( \%args ) } );
 
 	my $stash = {
-		original_args => dclone( \%args ),
 		args          => \%args,
         extras        => {},
         verb          => $verb,
@@ -1172,10 +1171,10 @@ sub single_resource ( $self, $verb, %args  ) {
 	my $result;
 	foreach my $step ( $self->single_resource_steps ) {
 		$result = $self->$step( $stash );
-		return $result if $result->is_error;
+		last if $result->is_error;
 		}
 
-	# the last result
+	$result->extras( $stash );
 	return $result;
 	}
 
@@ -1232,7 +1231,6 @@ sub _check_http_verb ( $self, $stash ) {
 		description => 'Fetching a single resource',
 		message     => "Unknown HTTP verb $stash->{verb}",
 		error_code  => UNKNOWN_HTTP_VERB,
-		extras      => $stash,
 		} ) unless exists $allowed_verbs->{ $stash->{verb} };
 
 	# turn every value for expected_http_status into an array. There
@@ -1267,7 +1265,6 @@ sub _check_scopes( $self, $stash ) {
 		return Ghojo::Result->error({
 			description => 'Fetching a single resource',
 			message     => "Operation does not have required scopes",
-			extras      => $stash,
 			});
 		}
 
@@ -1357,7 +1354,6 @@ sub _process_response ( $self, $stash ) {
 
 		return Ghojo::Result->success( {
 			values => [ $data ],
-			extras => $stash,
 			} )
 		}
 
@@ -1385,7 +1381,6 @@ sub _bless_into ( $self, $ref, $stash ) {
 			description => "Fetching single resource",
 			message     => "Bad package name for bless_into: $package",
 			error_code  => BAD_PACKAGE_NAME,
-			extras      => $stash,
 			} );
 		}
 
@@ -1427,7 +1422,6 @@ sub _classify_error ( $self, $stash ) {
 			description  => 'Fetching a single resource',
 			message      => 'Got a 404 response. Object not found!',
 			error_code   => RESOURCE_NOT_FOUND,
-			extras       => $stash,
 			} )
 		}
 
@@ -1438,7 +1432,6 @@ sub _classify_error ( $self, $stash ) {
 		$self->logger->debug( "The request requires authentication!" );
 		return Ghojo::Result->error({
 			message => "The request requires authentication!",
-			extras  => $stash,
 			});
 		}
 
@@ -1459,7 +1452,6 @@ sub _classify_error ( $self, $stash ) {
 
 		return Ghojo::Result->error({
 			message => $message // "The request was forbidden!",
-			extras  => $stash,
 			});
 		}
 
@@ -1467,7 +1459,6 @@ sub _classify_error ( $self, $stash ) {
 		$self->logger->debug( "The request requires additional media types in Accept" );
 		return Ghojo::Result->error({
 			message => "The request requires additional media types in Accept!",
-			extras  => $stash,
 			});
 		}
 
@@ -1475,7 +1466,6 @@ sub _classify_error ( $self, $stash ) {
 		$self->logger->debug( "The request could not be accomodated" );
 		return Ghojo::Result->error({
 			message => $message // "The request was invalid",
-			extras  => $stash,
 			});
 		}
 
@@ -1483,13 +1473,11 @@ sub _classify_error ( $self, $stash ) {
 		$self->logger->debug( "Unhandled 4xx request" );
 		return Ghojo::Result->error({
 			message => $message // "Unhandled 4xx request",
-			extras  => $stash,
 			});
 		}
 
 	return Ghojo::Result->error({
 		message => $message // "Unhandled error",
-		extras  => $stash,
 		});
 	}
 
