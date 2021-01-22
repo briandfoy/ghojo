@@ -3,9 +3,6 @@ use experimental qw(signatures);
 
 package Ghojo;
 
-use Mojo::Util qw(b64_encode dumper);
-use Mojo::JSON qw(decode_json);
-use Storable   qw(dclone);
 
 # The endpoints are divided into public and authenticated parts
 # We'll use this inheritance chain to divide them. The public
@@ -23,6 +20,7 @@ use Ghojo::Endpoints;
 use Ghojo::Mixins::SuccessError;
 use Ghojo::Result;
 use Ghojo::Scopes;
+use Ghojo::Utils qw(b64_encode dumper decode_json dclone dump_request dump_response);
 
 sub DESTROY {}
 
