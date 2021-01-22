@@ -193,7 +193,10 @@ the particular result.
 
 =cut
 
-sub description ( $self ) { $self->{description} // 'No one has described this operation' }
+sub description ( $self, $description = undef ) {
+	$self->{description} = $description if defined $description;
+	$self->{description} // 'No one added a reason for this result'
+	}
 
 =item * message
 
@@ -271,8 +274,9 @@ These are suggestions for extras:
 
 =cut
 
-sub extras ( $self ) {
+sub extras ( $self, $extras = undef ) {
 	$self->{extras} = {} unless exists $self->{extras};
+	$self->{extras} = $extras if defined $extras;
 	$self->{extras};
 	}
 
