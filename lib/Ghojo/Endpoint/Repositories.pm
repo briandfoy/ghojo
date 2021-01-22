@@ -410,8 +410,6 @@ sub Ghojo::PublicUser::get_repo_tags ( $self, $owner, $repo ) {
 
 =item * delete_repo
 
-UNIMPLEMETED
-
 DELETE /repos/:owner/:repo
 
 Deleting a repository requires admin access. If OAuth is used, the delete_repo scope is required.
