@@ -306,33 +306,46 @@ sub new ( $class, $args = {} ) {
 		( $args->{logging_conf} ? $args->{logging_conf} : $class->logging_conf($level) )
 		);
 
-	if( exists $args->{token} ) {
-		$self->logger->trace( 'Authenticating with token' );
-		$self->add_token( $args->{token} );
-		my $result = $self->get_authenticated_user;
-		return $result if $result->is_error;
-		}
-	elsif( exists $args->{token_file} ) {
-		$self->logger->trace( 'Authenticating with saved token in named file' );
-		$self->read_token( $args->{token_file} );
-		}
-	elsif( exists $args->{username} and exists $args->{password} ) {
-		$self->logger->trace( 'Authenticating with username and password' );
-		$args->{authenticate} //= 0;
-		my $result = $self->login( $args );
-		if( $result->is_error ) {
-			$self->logger->error( "Could not log in" );
-			return $result;
+	my( $trace, $result ) = do {
+		if( exists $args->{token} ) {
+			( 'token', $self->add_token( $args->{token} ) );
 			}
-		$self->logger->debug( "Login was a success" );
-		$self->logger->debug( "Class is " . $self->class_name );
+		elsif( exists $args->{token_file} ) {
+			( 'saved token in named file <$args->{token_file}>', $self->read_token( $args->{token_file} ) );
+			}
+		elsif( exists $args->{username} and exists $args->{password} ) {
+			my $result = $self->login( $args );
+			$self->logger->debug( "Login was a " . $result->is_success ? 'success' : 'failure' );
+			( 'username and password', $result );
+			}
+		elsif( 0 && -e $self->token_file ) { # still not sure I like this.
+			my $message = 'Authenticating with token in default file';
+			my $token = $self->read_token( $args->{token_file} );
+			my $result = $self->add_token( $token );
+			( 'token in default file', $result );
+			}
+		else { # not authenticating
+			( '<not logging in>', Ghojo::Result->success )
+			}
+		};
+
+	$trace = 'Authenticating with ' . $trace;
+	$self->logger->trace( $trace );
+
+	return $result if $result->is_error;
+
+	# If we are auth-ed, we should be able to get the and auth resource
+	# This will get us the token scopes too
+	# XXX this counts against the rate limit, so maybe just check the
+	# rate limit endpoint?
+	if( $self->has_auth ) {
+		$result = $self->get_authenticated_user;
 		}
-	elsif( 0 && -e $self->token_file ) { # still not sure I like this.
-		$self->logger->trace( 'Authenticating with saved token in default file' );
-		$self->logger->trace( 'Reading token from file' );
-		my $token = do { local( @ARGV, $/ ) = $self->token_file; <> };
-		$self->logger->trace( "Token from default token_file is <$token>" );
-		$self->add_token( $token );
+
+	if( $result->is_error ) {
+		my $message = $result->message;
+		$result->message( $trace . ": Authentication failed" );
+		return $result;
 		}
 
 	$self;
@@ -415,10 +428,10 @@ sub login ( $self, $args = {} ) {
 			=> { 'Authorization' => $self->basic_auth_string }
 		);
 
-	unless( $tx->success ) {
+	unless( $tx->res->is_success ) {
 		$self->logger->debug( "Login failed" );
 
-		$self->logger->debug( $tx->res->to_string );
+		$self->logger->debug( sub { dump_request( $tx ) } );
 		my $err = $tx->error;
 
 		my @methods = qw( requires_one_time_password requires_authentication is_bad_credentials too_many_login_attempts );
@@ -541,6 +554,9 @@ Read token from a file and save it in memory.
 =cut
 
 sub read_token ( $self, $token_file ) {
+	$self->entered_sub;
+	$self->debug( "Reading token from <$token_file>" );
+
 	open my $fh, '<:utf8', $token_file or do {
 		$self->logger->error( "Could not read token file $token_file" );
 		return Ghojo::Result->error(
@@ -548,7 +564,7 @@ sub read_token ( $self, $token_file ) {
 			message      =>  "Could not read token file $token_file",
 			error_code   =>  COULD_NOT_READ_TOKEN_FILE,
 			extras       =>  {
-				args => [@_],
+				token_file => $token_file,
 				}
 			);
 		};
@@ -557,9 +573,7 @@ sub read_token ( $self, $token_file ) {
 	# XXX: There should be something here to check that the string looks like a token
 	$self->logger->debug( "Token from token_file is <$token>" );
 
-	$self->add_token($token);
-
-	$self;
+	return Ghojo::Result->success;
 	}
 
 =item * get_repo_object
@@ -737,15 +751,18 @@ log these! The program needs to keep the value around!
 
 =cut
 
-sub authenticated_user  ( $self ) { $self->username }
-sub username            ( $self ) { $self->{username} }
+sub authenticated_user  ( $self ) {            $self->username   }
+sub username            ( $self ) {            $self->{username} }
 sub has_username        ( $self ) { !! defined $self->{username} }
 
-sub password            ( $self ) { $self->{password} }
+sub password            ( $self ) {            $self->{password} }
 sub has_password        ( $self ) { !! defined $self->{password} }
 
-sub token               ( $self ) { $self->{token} }
-sub has_token           ( $self ) { !! defined $self->{token} }
+sub has_basic           ( $self ) { $self->has_username && $self->has_password }
+sub token               ( $self ) {            $self->{token}    }
+sub has_token           ( $self ) { !! defined $self->{token}    }
+
+sub has_auth            ( $self ) { $self->has_token or $self->has_basic }
 
 =item * auth_string
 
@@ -835,7 +852,10 @@ sub add_token ( $self, $token ) {
 	chomp $token;
 	unless( $token ) {
 		$self->logger->error( "There's no token!" );
-		return Ghojo::Result->error;
+		return Ghojo::Result->error({
+			message     => 'Missing token',
+			description => 'Did you forget the argument to new()?',
+			});
 		}
 
 	$self->{token} = $token;
@@ -843,7 +863,7 @@ sub add_token ( $self, $token ) {
 	$self->add_token_auth_to_all_requests;
 	bless $self, $self->authenticated_user_class;
 
-	return $token;
+	return $self;
 	}
 
 =item * add_token_auth_to_all_requests( TOKEN )
@@ -855,8 +875,11 @@ header. You don't need to do this yourself.
 
 sub add_token_auth_to_all_requests ( $self ) {
 	unless( $self->has_token ) {
-		$self->logger->logdie( "There is no auth token, so I can't add it to every request!" );
-		return Ghojo::Result->error;
+		my $message = "There is no auth token, so I can't add it to every request!";
+		$self->logger->error( $message );
+		return Ghojo::Result->error({
+			message => $message
+			});
 		}
 
 	$self->ua->on( start => sub {
@@ -874,8 +897,11 @@ this yourself.
 
 sub remember_token ( $self ) {
 	unless( $self->token ) {
-		$self->logger->warn( "There is no token to remember!" );
-		return Ghojo::Result->error;
+		my $message = "There is no token to remember!";
+		$self->logger->warn( $message );
+		return Ghojo::Result->error({
+			message => $message
+			});
 		}
 
 	if( open my $fh, '>:utf8', $self->token_file ) {
@@ -1306,8 +1332,6 @@ sub _make_request ( $self, $stash ) {
 			} qw(json form body)
 		);
 
-	$self->logger->debug( sub { "Args to ua are:\n" . dumper( \@args ) } );
-
 	# XXX: also look in %args for 'json' and 'form'
 	my $verb = $stash->{verb};
 	$stash->{tx} = $self->ua->$verb( @args );
@@ -1317,7 +1341,7 @@ sub _make_request ( $self, $stash ) {
 
 sub _pre_process_response ( $self, $stash ) {
 	$self->entered_sub;
-	$self->logger->debug( sub { "Request was:\n" . $stash->{tx}->req->to_string } );
+	$self->logger->debug( sub { "Request was:\n" . dump_request( $stash->{tx} ) } );
 	$stash->{query_count} = $self->increment_query_count;
 	$self->_update_rate_limit( $stash );
 	$self->_process_scopes( $stash );
