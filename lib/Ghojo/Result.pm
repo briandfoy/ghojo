@@ -4,7 +4,7 @@ package Ghojo::Result;
 use experimental qw(signatures);
 
 use Ghojo;
-use Mojo::Util qw(dumper);
+use Ghojo::Utils qw(dclone dumper dump_request);
 
 =encoding utf8
 
@@ -144,6 +144,84 @@ sub success ( $class, $hash = {} ) {
 	}
 
 =back
+
+=head3 Make some summaries
+
+These probably only make sense for errors or failures.
+
+=over 4
+
+=item * short_summary
+
+Show a short summary of the error.
+
+=item * long_summary
+
+Still a summary, but with a bit more info.
+
+=item * short_dump
+
+Dump most of the stuff in the object, but leave out the really big
+objects (such as the Mojo::Transaction object).
+
+=item * dump
+
+Dump everything.
+
+=back
+
+=cut
+
+sub short_summary ( $self ) {
+	my @v = (
+		$self->{extras}{args}{endpoint},
+		$self->{extras}{verb},
+		$self->{message},
+		$self->{description},
+		);
+
+	return sprintf <<~'HERE', @v;
+	Endpoint: %s
+	Verb: %s
+	Message: %s
+	Description: %s
+	HERE
+	}
+
+sub long_summary ( $self ) {
+	my @v = (
+		$self->{extras}{args}{endpoint},
+		$self->{extras}{verb},
+		$self->{message},
+		$self->{description},
+		);
+
+	my $request = dump_request( $self->{extras}{tx} );
+
+	return sprintf <<~"HERE", @v;
+	Endpoint: %s
+	Verb: %s
+	Message: %s
+	Description: %s
+
+	REQUEST --------------------
+	$request
+
+	RESPONSE HEADERS-------------------
+	@{[ $self->{extras}{tx}->result->headers->to_string ]}
+
+	HERE
+	}
+
+sub short_dump ( $self ) {
+	my %clone = %$self;
+	delete $clone{extras}{tx};
+	$clone{extras}{headers}{Authorization} = '*****';
+	$clone{extras}{url} = "$clone{url}";
+	dumper( \%clone )
+	}
+
+sub dump ( $self ) { dumper( $self ) }
 
 =head3 Inspect the object
 
