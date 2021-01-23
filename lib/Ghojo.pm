@@ -20,12 +20,13 @@ use Ghojo::Endpoints;
 use Ghojo::Mixins::SuccessError;
 use Ghojo::Result;
 use Ghojo::Scopes;
-use Ghojo::Utils qw(b64_encode dumper decode_json dclone dump_request dump_response);
+use Ghojo::Utils qw(:all);
 
 sub DESTROY {}
 
-sub AUTOLOAD ( $self, @ ) {
+sub AUTOLOAD ( $self, @args ) {
 	our $AUTOLOAD;
+
 	$self->entered_sub;
 	my @caller = caller(0);
 	$self->logger->trace( "AUTOLOADing $AUTOLOAD from @caller[1,2]" );
@@ -40,6 +41,11 @@ sub AUTOLOAD ( $self, @ ) {
 		};
 
 	# What about the case where the method hasn't been loaded?
+
+	state %Verbs = map { $_ => 1 } qw(get post put patch delete);
+	if( $method =~ /([a-z]+)_single_resource/ and exists $Verbs{$1} ) {
+		return $self->single_resource( uc($1) => @args );
+		}
 
 	if( $self->authenticated_user_class->can( $method ) and not $self->handles_authenticated_api ) {
 		my $message = "Method [$method] is part of the authenticated user API, but this object only handles the public API";
@@ -78,7 +84,6 @@ our $VERSION = '1.001001';
 
 use Mojo::Collection;
 use Mojo::URL;
-use Mojo::Util qw(dumper);
 
 =encoding utf8
 
@@ -338,9 +343,7 @@ sub new ( $class, $args = {} ) {
 	# This will get us the token scopes too
 	# XXX this counts against the rate limit, so maybe just check the
 	# rate limit endpoint?
-	if( $self->has_auth ) {
-		$result = $self->get_authenticated_user;
-		}
+	$result = $self->get_authenticated_user if $self->has_auth;
 
 	if( $result->is_error ) {
 		my $message = $result->message;
@@ -1231,6 +1234,7 @@ sub _preprocess_request ( $self, $stash ) {
 	return $url_result if $url_result->is_error;
 
 	$stash->{url} = $url_result->values->first;
+
 	$self->logger->debug( "URL to single resource is <$stash->{url}>" );
 
 	return Ghojo::Result->success;
@@ -1298,8 +1302,6 @@ sub _check_scopes( $self, $stash ) {
 sub _setup_request_headers ( $self, $stash ) {
 	$self->entered_sub;
 	my %headers;
-
-	$headers{'Authorization'} = $self->auth_string if $self->auth_string;
 
 	# this is the base content-type for the API
 	$headers{'Accept'} = $stash->{args}{accepts} // 'application/vnd.github.v3+json';
@@ -1390,15 +1392,17 @@ sub _process_response ( $self, $stash ) {
 	}
 
 sub _default_data_class ( $self ) { 'Ghojo::Data' }
+
 sub _bless_into ( $self, $ref, $stash ) {
 	$self->entered_sub;
+
 	unless( exists $stash->{args}{bless_into} and defined $stash->{args}{bless_into} ) {
 		$self->logger->warn( "Missing bless_into value. Using the default" );
 		$stash->{args}{bless_into} = $self->_default_data_class;
 		}
 
 	my $package = $stash->{args}{bless_into};
-	unless( $package =~ m/\A [A-Za-z][A-Za-z0..9_]* (::[A-Za-z][A-Za-z0..9_]*)* \z/x ) {
+	unless( validate_package( $package ) ) {
 		return Ghojo::Result->error( {
 			description => "Fetching single resource",
 			message     => "Bad package name for bless_into: $package",
@@ -1408,6 +1412,8 @@ sub _bless_into ( $self, $ref, $stash ) {
 
 	eval "require $package";
 	bless $ref, $package;
+
+	return Ghojo::Result->success;
 	}
 
 =pod
@@ -1503,120 +1509,185 @@ sub _classify_error ( $self, $stash ) {
 		});
 	}
 
-sub get_single_resource ( $self, %args ) {
-	$self->entered_sub;
-	$self->single_resource( GET => %args );
+sub paged_resource_steps ( $self ) {
+	qw(
+		_check_paged_args
+		_preprocess_request
+		_check_http_verb _check_scopes
+		_setup_request_headers
+		_make_paged_request
+		);
 	}
 
-sub post_single_resource ( $self, %args ) {
+sub _check_paged_args ( $self, $stash ) {
+	state @args = (
+        limit         => 1000,
+        'sleep'       => 3,
+        callback      => sub { $_[0] },
+		);
+
+	state @stash = (
+        extras        => {},
+        verb          => 'get',
+        results       => [],
+        prev          => undef,
+        next          => undef,
+        error_count   => 0,
+		);
+
 	$self->entered_sub;
-	$self->single_resource( POST => %args );
+
+	my @table = (
+		[ $stash->{args}, \@args  ],
+		[ $stash,         \@stash ],
+		);
+
+	foreach my $row ( @table ) {
+		while( my( $k, $v ) = splice $row->[1]->@*, 0, 2 ) {
+			next if exists $row->[0]{$k};
+			$row->[0]{$k} = $v;
+			}
+		}
+
+	unless( ref $stash->{args}{callback} eq ref sub {} ) {
+		$self->logger->error( "Callback argument is not a subroutine reference!" );
+		return Ghojo::Result->error({
+			message => "The callback entry was not a coderef",
+			});
+		}
+
+	return Ghojo::Result->success;
 	}
 
-sub put_single_resource ( $self, %args ) {
+sub _make_paged_request ( $self, $stash ) {
+	state $success = Ghojo::Result->success;
 	$self->entered_sub;
-	$self->single_resource( PUT => %args );
+
+	# We've either reached our limit or exhausted the results
+	if( $stash->{results}->@* >= $stash->{args}{limit} ) {
+		$self->_turn_off_paging( $stash );
+		return $success;
+		}
+
+	$stash->{url} = $stash->{next} if $stash->{next};
+	$self->logger->trace( "Fetching URL $stash->{url}" );
+	$stash->{prev} = $stash->{next} = undef;
+
+	$self->_make_request( $stash );
+	$self->_pre_process_paged_response( $stash );
+	$self->_process_paged_response( $stash );
+
+	unless( $stash->{tx}->res->is_success ) {
+		$self->_turn_off_paging( $stash );
+		return $self->_classify_error( $stash );
+		}
+
+	$self->_process_paged_response( $stash );
 	}
 
-sub patch_single_resource ( $self, %args ) {
+sub _turn_off_paging ( $self, $stash ) {
 	$self->entered_sub;
-	$self->single_resource( PATCH => %args );
+	$stash->{redo} = 0;
+	return Ghojo::Result->success;
 	}
 
-sub delete_single_resource ( $self, %args ) {
+sub _pre_process_paged_response ( $self, $stash ) {
 	$self->entered_sub;
-	$self->single_resource( DELETE => %args );
+	$self->logger->debug( sub { "Request was:\n" . dump_request( $stash->{tx} ) } );
+
+	$stash->{query_count} = $self->increment_query_count;
+	$self->_update_rate_limit( $stash );
+	$self->_process_scopes( $stash );
+
+	my $result = $self->_check_http_status( $stash );
+	return $result if $result->is_error;
+
+	my $link_header = $self->parse_link_header( $stash->{tx} );
+	$stash->{next} = $link_header->{'next'} // '';
+	$stash->{last} = $link_header->{'last'} // '';
+
+	return Ghojo::Result->success;
 	}
 
+sub _check_http_status ( $self, $stash ) {
+	$self->entered_sub;
+	my $status   = $stash->{tx}->res->code;
+	my $expected = $stash->{args}{expected_http_status};
+
+	my $good_status = grep { $_ == $status } $expected->@*;
+	return $self->_classify_error( $stash ) unless $good_status;
+
+	return Ghojo::Result->success;
+	}
+
+sub _process_paged_response ( $self, $stash ) {
+	$self->entered_sub;
+	my $tx   = $stash->{tx};
+	my $args = $stash->{args};
+
+	my $result = $self->_check_paged_body( $stash );
+	return $result if $result->is_error;
+
+	while ( my $item = shift $stash->{unprocessed_results}->@* ) {
+		push $stash->{results}->@*, $stash->{args}{callback}->($item);
+		$self->_bless_into( $stash->{results}->@[-1], $stash );
+		}
+
+	return Ghojo::Result->success;
+	}
+
+# We're expecting JSON, and if we don't get it that's a problem. And
+# it can be either an object or array.
+sub _check_paged_body ( $self, $stash ) {
+	state $success = Ghojo::Result->success;
+
+	$self->entered_sub;
+
+	my $json = eval { $stash->{tx}->res->json };
+	$self->logger->debug( sprintf "Result JSON ref type is <%s>" , ref($json) );
+	$self->logger->debug( sprintf "result_key is <%s>", $stash->{args}{result_key} // '' );
+	if( ! $json ) {
+		my $message = "Did not get JSON back";
+		$self->logger->error( $message );
+		return Ghojo::Result->error({
+			message     => $message,
+			description => $message
+			});
+		}
+	elsif( ref $json eq ref [] ) {
+		$stash->{unprocessed_results} = $json;
+		}
+	elsif( ref($json) eq ref({}) and exists $stash->{args}{result_key} ) {
+		return Ghojo::Result->error({
+			description => "Error fetching paged resource",
+			message     => "The paged response is a hash but result_key is not set",
+			}) unless exists $json->{ $stash->{args}{result_key} };
+
+		$stash->{unprocessed_results} = $json->{ $stash->{args}{result_key} };
+		}
+
+	return $success;
+	}
 
 # this is blocking, but there's not another way around it
 # you don't know the next one until you see the response
 sub get_paged_resources ( $self, %args ) {
 	$self->entered_sub;
+	$self->logger->debug( sub { "Args are " . dumper( \%args ) } );
 
-	my $url_result = $self->_validate( \%args );
-	return $url_result if $url_result->is_error;
+	my $stash = { args => \%args };
 
-	my $url = $url_result->values->first;
-	$self->logger->debug( "URL to single resource is <$url>" );
-
-	my @results;
-
-	$args{callback} //= sub { 1 };
-	unless( ref $args{callback} eq ref sub {} ) {
-		$self->logger->error( "Callback argument is not a subroutine reference!" );
-		return Ghojo::Result->error({
-			message     => "The callback entry was not a coderef",
-			});
-		}
-
-	$args{limit}   //= 1000;
-	$args{'sleep'} //=    3;
-
-	my @queue = ( $url );
-	$self->logger->debug( "Queue is @queue" );
-	LOOP: while( @results < $args{limit} and my $url = shift @queue ) {
-		state $error_count = 0;
-		$self->logger->trace( "Fetching URL $url" );
-		my $tx = $self->ua->get( $url );
-
-		unless( $tx->res->is_success ) {
-			return $self->classify_error( $url, $tx );
-			}
-		my $link_header = $self->parse_link_header( $tx );
-		$self->logger->trace( sprintf "next is <%s>", $link_header->{'next'} // '' );
-		push @queue, $link_header->{'next'} if exists $link_header->{'next'};
-
-		# The workflow API really screwed the pooch by returning a
-		# hash with a count and then a key that has the array. It's
-		# unlike the rest of the API. Hence, result_key.
-		my $json = eval { $tx->res->json };
-		$self->logger->debug( "Result JSON ref type is " . ref($json) );
-		$self->logger->debug( sprintf "result_key is <%s>", $args{result_key} // '' );
-
-		if( ref($json) eq ref({}) and ! exists $args{result_key} ) {
-			$self->logger->debug( "JSON is a hash, should be an error" );
-			return Ghojo::Result->error({
-				description => "Error fetching paged resource",
-				message     => "The paged response is a hash and result key is not set",
-				});
-			}
-
-		my $array = do {
-			if( exists $args{result_key} ) { $json->{$args{result_key}} }
-			else                           { $json }
-			};
-
-		foreach my $item ( $array->@* ) {
-			$self->logger->trace( "get_paged_resources processing item ", @results + 1 );
-			my $result = $self->bless_into( $item, \%args );
-			return $result if eval { $result->is_error };
-			$result = $args{callback}->( $item, $tx );
-			last LOOP unless defined $result;
-			push @results, $result;
-			}
-
-		$error_count = 0;
-		sleep $args{'sleep'} unless @queue == 0;
+	# each step can modify the stash for the next step
+	my $result;
+	foreach my $step ( $self->paged_resource_steps ) {
+		$result = $self->$step( $stash );
+		return $result if $result->is_error;
+		redo if $stash->{redo}
 		}
 
 	Ghojo::Result->success({
-		values => \@results,
+		values => $stash->{results},
 		});
-	}
-
-sub set_paged_get_sleep_time ( $self, $seconds = 3 ) {
-	$self->logdie( "paged_get is deprecated" );
-	}
-sub paged_get_sleep_time ( $self ) { $self->logdie( "paged_get is deprecated" ); }
-
-sub set_paged_get_results_limit ( $self, $count = 10_000 ) {
-	$self->logdie( "paged_get is deprecated" );
-	}
-sub paged_get_results_limit ( $self ) { $self->logdie( "paged_get is deprecated" ); }
-
-sub paged_get ( $self, $path, $params = [], $callback=sub{ $_[0] }, $query = {} ) {
-	$self->logdie( "paged_get is deprecated" );
 	}
 
 # <https://api.github.com/repositories?since=367>; rel="next", <https://api.github.com/repositories{?since}>; rel="first"';
@@ -1704,6 +1775,34 @@ sub version_html { 'application/vnd.github.VERSION.html' }
 =cut
 
 sub version_object { 'application/vnd.github.VERSION.object' }
+
+=back
+
+=head2 Deprecated stuff
+
+=over 4
+
+=item * set_paged_get_sleep_time
+
+=item * paged_get_sleep_time
+
+=item * set_paged_get_results_limit
+
+=item * paged_get_results_limit
+
+=item * paged_get
+
+=cut
+
+sub set_paged_get_sleep_time   ( $self, @ )  { $self->logdie( "paged_get is deprecated" ) }
+
+sub paged_get_sleep_time        ( $self )    { $self->logdie( "paged_get is deprecated" ) }
+
+sub set_paged_get_results_limit ( $self, $ ) { $self->logdie( "paged_get is deprecated" ) }
+
+sub paged_get_results_limit     ( $self )    { $self->logdie( "paged_get is deprecated" ) }
+
+sub paged_get                   ( $self, @ ) { $self->logdie( "paged_get is deprecated" ) }
 
 =back
 
