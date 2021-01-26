@@ -1696,7 +1696,7 @@ sub get_paged_resources ( $self, %args ) {
 sub parse_link_header ( $self, $tx ) {
 	$self->entered_sub;
 	my $link_header = $tx->res->headers->header( 'Link' );
-	$self->logger->trace( sprintf "next is <%s>", $link_header->{'next'} // '' );
+
 	return {} unless $link_header;
 
 	my @parts = $link_header =~ m{
@@ -1704,6 +1704,7 @@ sub parse_link_header ( $self, $tx ) {
 		}xg;
 
 	my %hash = reverse @parts;
+	$self->logger->trace( sprintf "next is <%s>", $hash{'next'} // '' );
 	return \%hash;
 	}
 
