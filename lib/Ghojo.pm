@@ -862,7 +862,7 @@ sub add_token ( $self, $token ) {
 		}
 
 	$self->{token} = $token;
-	$self->remember_token;
+	# $self->remember_token;  # not sure I want this yet, and not in repo dir
 	$self->add_token_auth_to_all_requests;
 	bless $self, $self->authenticated_user_class;
 
