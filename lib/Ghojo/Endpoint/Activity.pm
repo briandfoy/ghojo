@@ -3,7 +3,7 @@ use v5.26;
 package Ghojo::Endpoint::Activity;
 use experimental qw(signatures);
 
-our $VERSION = '1.001001';
+our $VERSION = '1.001002';
 
 use Mojo::Collection;
 use Mojo::URL;

@@ -3,7 +3,7 @@ use v5.26;
 package Ghojo::Endpoint::Users;
 use experimental qw(signatures);
 
-our $VERSION = '1.001001';
+our $VERSION = '1.001002';
 
 use Ghojo::Constants;
 use Mojo::Collection;

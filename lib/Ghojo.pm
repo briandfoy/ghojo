@@ -80,7 +80,7 @@ sub stacktrace ( $self, $level = 1 ) {
 	return $string;
 	}
 
-our $VERSION = '1.001001';
+our $VERSION = '1.001002';
 
 use Mojo::Collection;
 use Mojo::URL;
