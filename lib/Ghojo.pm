@@ -1431,6 +1431,8 @@ sub _bless_into ( $self, $ref, $stash ) {
 =cut
 
 sub _classify_error ( $self, $stash ) {
+	$self->entered_sub;
+
 	my $tx = $stash->{tx};
 	my $status = $tx->res->code;
 
@@ -1692,6 +1694,7 @@ sub get_paged_resources ( $self, %args ) {
 
 # <https://api.github.com/repositories?since=367>; rel="next", <https://api.github.com/repositories{?since}>; rel="first"';
 sub parse_link_header ( $self, $tx ) {
+	$self->entered_sub;
 	my $link_header = $tx->res->headers->header( 'Link' );
 	$self->logger->trace( sprintf "next is <%s>", $link_header->{'next'} // '' );
 	return {} unless $link_header;
