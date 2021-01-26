@@ -1613,6 +1613,7 @@ sub _pre_process_paged_response ( $self, $stash ) {
 
 sub _check_http_status ( $self, $stash ) {
 	$self->entered_sub;
+
 	my $status   = $stash->{tx}->res->code;
 	my $expected = $stash->{args}{expected_http_status};
 
@@ -1682,6 +1683,7 @@ sub get_paged_resources ( $self, %args ) {
 	# each step can modify the stash for the next step
 	my $result;
 	foreach my $step ( $self->paged_resource_steps ) {
+		$self->logger->trace( "Processing step <$step>" );
 		$result = $self->$step( $stash );
 		return $result if $result->is_error;
 		redo if $stash->{redo}
