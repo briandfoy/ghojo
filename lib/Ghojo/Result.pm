@@ -189,28 +189,39 @@ sub short_summary ( $self ) {
 	}
 
 sub long_summary ( $self ) {
+	my $extras = $self->extras;
+
 	my @v = (
-		$self->{extras}{args}{endpoint},
-		$self->{extras}{verb},
-		$self->{message},
-		$self->{description},
+		$extras->{args}{endpoint},
+		$extras->{verb},
+		$self->message,
+		$self->description,
 		);
 
-	my $request = dump_request( $self->{extras}{tx} );
+	my $request = do {
+		if( ! $extras ) { '<something seriously wrong>' }
+		elsif( exists $extras->{tx} ) { dump_request( $extras->{tx} ) }
+		else                   { '<No request>' }
+		};
+	my $headers = do {
+		if( ! $extras ) { '<something seriously wrong>' }
+		elsif( exists $extras->{tx} ) { $extras->{tx}->result->headers->to_string }
+		else                   { '<No response>' }
+		};
 
-	return sprintf <<~"HERE", @v;
-	Endpoint: %s
-	Verb: %s
-	Message: %s
-	Description: %s
+	return sprintf <<~'HERE', @v, $request, $headers;
+		Endpoint: %s
+		Verb: %s
+		Message: %s
+		Description: %s
 
-	REQUEST --------------------
-	$request
+		REQUEST --------------------
+		%s
 
-	RESPONSE HEADERS-------------------
-	@{[ $self->{extras}{tx}->result->headers->to_string ]}
+		RESPONSE HEADERS-------------------
+		%s
 
-	HERE
+		HERE
 	}
 
 sub short_dump ( $self ) {
