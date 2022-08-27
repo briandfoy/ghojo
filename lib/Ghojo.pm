@@ -599,7 +599,7 @@ sub get_repo_object ( $self, $owner, $repo ) {
 			message     => "Could not find the $owner/$repo repo",
 			error_code  => NO_OWNER_REPO_PAIR,
 			extras      => {
-				args => [ @_ ]
+				args => [ $self, $owner, $repo ]
 				},
 			propogated => [ $result ],
 			} );

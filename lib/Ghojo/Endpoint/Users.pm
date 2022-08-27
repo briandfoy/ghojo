@@ -134,7 +134,7 @@ sub Ghojo::AuthenticatedUser::update_user ( $self, $args = {} ) {
 		message     => 'Argument should have been a hash reference, but was not',
 		error_code  => ARGS_MUST_BE_HASH_REF,
 		extras      => {
-			args => [ @_ ]
+			args => [ $self, $args ]
 			},
 		} ) unless ref $args eq ref {};
 
