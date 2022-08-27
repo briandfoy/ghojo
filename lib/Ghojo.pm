@@ -649,7 +649,7 @@ in a subclass (or redefine it).
 
 =cut
 
-sub logging_conf ( $class, $level = $ENV{GHOJO_LOG_LEVEL} // 'OFF' ) {
+sub logging_conf ( $class, $level = uc($ENV{GHOJO_LOG_LEVEL}) // 'OFF' ) {
 	my $conf = qq(
 		log4perl.rootLogger          = $level, Screen
 
