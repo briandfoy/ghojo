@@ -29,7 +29,7 @@ install:
   - sh: export PATH=/home/appveyor/perl5/bin:$PATH
   - perl -v
   - cpan -M https://www.cpan.org -T App::cpanminus ExtUtils::MakeMaker
-  - cpanm --notest --installdeps .
+  - cpanm --local-lib=~/perl5 --notest --installdeps .
 
 build_script:
   - perl Makefile.PL
