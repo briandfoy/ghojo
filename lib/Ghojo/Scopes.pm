@@ -1,4 +1,4 @@
-use v5.26;
+use v5.28;
 package Ghojo::Scopes;
 use experimental qw(signatures);
 
@@ -126,12 +126,12 @@ my sub _extract ( $tx, $header ) {
 =cut
 
 sub extract_scopes_from ( $class, $tx ) {
-	state $h = {
+	state %h = (
 		has      => 'x-oauth-scopes',
 		requires => 'x-accepted-oauth-scopes',
-		};
+		);
 
-	my %hash = map { $_, $class->new( _extract($tx, $h->{$_}) ) } keys %$h;
+	my %hash = map { $_, $class->new( _extract($tx, $h{$_}) ) } keys %h;
 	return \%hash;
 	}
 

@@ -1,4 +1,4 @@
-use v5.26;
+use v5.28;
 use experimental qw(signatures);
 
 package Ghojo;
