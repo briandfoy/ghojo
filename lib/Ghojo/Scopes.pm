@@ -131,7 +131,7 @@ sub extract_scopes_from ( $class, $tx ) {
 		requires => 'x-accepted-oauth-scopes',
 		};
 
-	my %hash = map { $_, $class->new( _extract($tx, $h->{$_}) ) } keys %h;
+	my %hash = map { $_, $class->new( _extract($tx, $h->{$_}) ) } keys %$h;
 	return \%hash;
 	}
 
