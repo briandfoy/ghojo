@@ -1,4 +1,5 @@
 requires 'Carp';
+requires 'Hash::Object';
 requires 'IO::Socket::SSL';
 requires 'Mojolicious';
 requires 'Mojo::URL';
