@@ -86,19 +86,22 @@ my( $raw, $scopes );
 BEGIN {
 	$raw = {
 		'repo'             => [ qw( repo:status repo_deployment public_repo repo:invite security_events ) ],
-		'admin:repo_hook'  => [ qw( write:repo_hook read:repo_hook ) ],
+		'workflow'         => [ ],
+		'write:packages'   => [ qw( read:packages ) ],
+		'delete:packages'  => [ ],
+		'admin:org_hook'   => [ qw( write:org read:org manage_runners:org ) ],
 		'admin:public_key' => [ qw( write:public_key read:public_key ) ],
+		'admin:repo_hook'  => [ qw( write:repo_hook read:repo_hook ) ],
 		'admin:org_hook'   => [ ],
 		'gist'             => [ ],
 		'notifications'    => [ ],
 		'user'             => [ qw( read:user user:email user:follow) ],
-		'delete_repo'      => [ qw() ],
+		'delete_repo'      => [ ],
 		'write:discussion' => [ qw( read:discussion ) ],
-		'write:packages'   => [ ],
-		'read:packages'    => [ ],
-		'delete:packages'  => [ ],
+		'admin:enterprise' => [ qw( manage_runners:enterprise manage_billing:enterprise read:enterprise ) ],
+		'project'          => [ qw( read:project ) ],
 		'admin:gpg_key'    => [ qw( write:gpg_key read:gpg_key ) ],
-		'workflow'         => [ ],
+		'admin:ssh_signing_key' => [ qw( write:ssh_signing_key read:ssh_signing_key ) ],
 		};
 
 	foreach my $parent ( keys $raw->%* ) {
