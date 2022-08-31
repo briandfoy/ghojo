@@ -84,3 +84,4 @@ t/log4perl.conf
 \.icloud$
 \A\.github\b
 
+\.gitattributes\b
