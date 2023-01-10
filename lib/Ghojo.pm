@@ -305,7 +305,7 @@ sub new ( $class, $args = {} ) {
 	# it will rebless the object for the authenticated class name.
 	my $self = bless {}, $class->public_user_class;
 
-	my $level = $args->{log_level} // $ENV{GHOJO_LOG_LEVEL} // 'OFF';
+	my $level = $args->{log_level} // uc($ENV{GHOJO_LOG_LEVEL}) // 'OFF';
 
 	$self->setup_logging(
 		( $args->{logging_conf} ? $args->{logging_conf} : $class->logging_conf($level) )
