@@ -82,7 +82,7 @@ sub Ghojo::PublicUser::get_label ( $self, $owner, $repo, $name ) {
 		);
 	}
 
-=item * create_label( OWNER, REPO, LABEL_NAME [, COLOR] )
+=item * create_label( OWNER, REPO, ARGS )
 
 Create a new label. The LABEL_NAME is a string and the COLOR is
 a six digit hexadecimal RGB color specification (without the #).
@@ -92,16 +92,15 @@ This is an authenticated endpoint.
 
 =cut
 
-sub Ghojo::AuthenticatedUser::create_label ( $self, $owner, $repo, $name, $color = 'FF0000' ) {
-	$color =~ s/\A#//;
+sub Ghojo::AuthenticatedUser::create_label ( $self, $owner, $repo, $args ) {
+	state %allowed = map { $_, 1 } qw(name color description);
+	$args->{color} =~ s/\A#//;
+	%$args = $args->%{qw(color description name)};
 
 	$self->post_single_resource(
 		endpoint        => '/repos/:owner/:repo/labels',
 		endpoint_params => { owner => $owner, repo => $repo },
-		json    => {
-			name  => $name,
-			color => $color,
-			},
+		json            => $args,
 		);
 	}
 
