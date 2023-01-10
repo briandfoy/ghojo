@@ -19,13 +19,15 @@ Ghojo::Data::Label - Do the things a label can do
 This module mostly wraps the actions in L<Ghojo::Endpoint::Labels>
 to apply them to specific label objects.
 
-A label has three parts:
+A label has four parts:
 
 =over 4
 
-=item * name
-
 =item * color
+
+=item * description
+
+=item * name
 
 =item * url
 
@@ -122,7 +124,7 @@ sub remove_from_issue( $self, $ghojo, $issue_id ) {
 
 =item * delete( GHOJO )
 
-Delete's the label.
+Deletes the label.
 
 =cut
 
