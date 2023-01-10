@@ -133,6 +133,7 @@ sub Ghojo::AuthenticatedUser::update_label ( $self, $owner, $repo, $name, $args 
 			params => {
 				name  => qr/\S/,
 				color => qr/\A[0-9a-f]{6}\z/i,
+				description => qr/\S/,
 				},
 			},
 		);
