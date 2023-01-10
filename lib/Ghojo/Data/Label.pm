@@ -12,7 +12,7 @@ Ghojo::Data::Label - Do the things a label can do
 
 =head1 SYNOPSIS
 
-	use Ghojo::Data;
+	use Ghojo::Label;
 
 =head1 DESCRIPTION
 
