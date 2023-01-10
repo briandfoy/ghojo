@@ -1184,7 +1184,7 @@ sub single_resource_steps ( $self ) {
 		);
 	}
 
-sub single_resource ( $self, $verb, %args  ) {
+sub single_resource ( $self, $verb, %args ) {
 	$self->entered_sub;
 	$self->logger->debug( sub { "Args are " . dumper( \%args ) } );
 
