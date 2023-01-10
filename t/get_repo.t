@@ -21,7 +21,10 @@ subtest good_repo => sub {
 	isa_ok $ghojo, $class;
 
 	my $repo  = $ghojo->$method( $user, $repo );
-	isa_ok( $repo, $repo_class ) or diag( dumper( $repo ) );
+	unless( isa_ok( $repo, $repo_class ) ) {
+		diag( dumper( $repo ) );
+		return 0;
+		}
 	can_ok( $repo, 'data' );
 	ok( exists $repo->data->{full_name}, "full_name key exists" );
 	diag( "Repo name is " . $repo->data->{full_name} );
