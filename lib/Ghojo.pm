@@ -1522,13 +1522,12 @@ sub paged_resource_steps ( $self ) {
 	}
 
 sub _check_paged_args ( $self, $stash ) {
-	state @args = (
-        limit         => 1000,
-        'sleep'       => 3,
-        callback      => sub { $_[0] },
-		);
-
-	state @stash = (
+	state %defaults = (
+	    args => {
+        	limit         => 1000,
+        	'sleep'       => 3,
+        	callback      => sub { $_[0] },
+        	},
         extras        => {},
         verb          => 'get',
         results       => [],
@@ -1539,24 +1538,34 @@ sub _check_paged_args ( $self, $stash ) {
 
 	$self->entered_sub;
 
-	my @table = (
-		[ $stash->{args}, \@args  ],
-		[ $stash,         \@stash ],
-		);
+	$self->logger->debug( "_check_paged_args: stash before: " . dumper($stash) );
+	$self->logger->debug( "_check_paged_args: args before: " . dumper(\%defaults) );
 
-	foreach my $row ( @table ) {
-		while( my( $k, $v ) = splice $row->[1]->@*, 0, 2 ) {
-			next if exists $row->[0]{$k};
-			$row->[0]{$k} = $v;
+	my @queue = [ $stash, \%defaults ];
+	HASH: while( my $tuple = shift @queue ) {
+		my( $sub_stash, $hash ) = $tuple->@*;
+		VALUE: foreach my $key ( sort keys $hash->%* ) {
+			$self->logger->debug( "_check_paged_args: checking key $key" );
+			if( ref $hash->{$key} eq ref {} ) {
+				$self->logger->debug( "_check_paged_args: key $key has hash ref value, so queueing" );
+				push @queue, [ $sub_stash->{$key}, $hash->{$key} ];
+				next VALUE;
+				}
+			$self->logger->debug( "_check_paged_args: key $key is in the stash: <" . (exists($sub_stash->{$key}) ? 'yes' : 'no') . ">" );
+			$self->logger->debug( "_check_paged_args: key $key has stash value <$sub_stash->{$key}>" ) if exists $sub_stash->{$key};
+			next if exists $sub_stash->{$key};
+			$sub_stash->{$key} = $hash->{$key};
 			}
 		}
 
 	unless( ref $stash->{args}{callback} eq ref sub {} ) {
-		$self->logger->error( "Callback argument is not a subroutine reference!" );
+		$self->logger->error( "_check_paged_args: Callback argument is not a subroutine reference!" );
 		return Ghojo::Result->error({
 			message => "The callback entry was not a coderef",
 			});
 		}
+
+	$self->logger->debug( "_check_paged_args: stash after: " . dumper($stash) );
 
 	return Ghojo::Result->success;
 	}
