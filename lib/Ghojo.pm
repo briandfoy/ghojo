@@ -84,6 +84,7 @@ our $VERSION = '1.001002';
 
 use Mojo::Collection;
 use Mojo::URL;
+use Storable qw(dclone);
 
 =encoding utf8
 
@@ -1194,9 +1195,12 @@ sub single_resource ( $self, $verb, %args ) {
         verb          => $verb,
 		};
 
+	$self->logger->debug( "About to it foreach" );
+
 	# each step can modify the stash for the next step
 	my $result;
 	foreach my $step ( $self->single_resource_steps ) {
+		$self->logger->debug( "Processing single_resource step $step" );
 		$result = $self->$step( $stash );
 		last if $result->is_error;
 		}
@@ -1251,13 +1255,14 @@ sub _check_http_verb ( $self, $stash ) {
 		};
 
 	$stash->{verb} = lc $stash->{verb};
+	$self->logger->debug( "_check_http_verb: verb is <$stash->{verb}>" );
 
 	# Check that we have an allowed verb. You shouldn't call this
 	# directly in application code, but this check ensures that
 	# $verb is something we can handle.
 	return Ghojo::Result->error( {
 		description => 'Fetching a single resource',
-		message     => "Unknown HTTP verb $stash->{verb}",
+		message     => "Unknown HTTP verb <$stash->{verb}>",
 		error_code  => UNKNOWN_HTTP_VERB,
 		} ) unless exists $allowed_verbs->{ $stash->{verb} };
 
@@ -1574,6 +1579,8 @@ sub _make_paged_request ( $self, $stash ) {
 	state $success = Ghojo::Result->success;
 	$self->entered_sub;
 
+	$self->logger->debug( "_make_paged_request: stash " . dumper($stash) );
+
 	# We've either reached our limit or exhausted the results
 	if( $stash->{results}->@* >= $stash->{args}{limit} ) {
 		$self->_turn_off_paging( $stash );
@@ -1685,9 +1692,10 @@ sub _check_paged_body ( $self, $stash ) {
 # you don't know the next one until you see the response
 sub get_paged_resources ( $self, %args ) {
 	$self->entered_sub;
-	$self->logger->debug( sub { "Args are " . dumper( \%args ) } );
+	$self->logger->debug( sub { "get_paged_resources args are " . dumper( \%args ) } );
 
 	my $stash = { args => \%args };
+	$self->logger->trace( sub { "get_paged_resources stash: " . dumper($stash) } );
 
 	# each step can modify the stash for the next step
 	my $result;
