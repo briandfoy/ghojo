@@ -68,6 +68,14 @@ Returns true if the input is either one or zero.
 
 sub boolean { return unless $_[0] =~ m/\A[01]\z/ }
 
+=item * counting_number
+
+Returns true if the input only has the ASCII digits 0 to 9.
+
+=cut
+
+sub counting_number { return unless $_[0] =~ m/\A\d+\z/a }
+
 =item * github_name( STRING )
 
 Returns true if the argument is a valid Github account name.
@@ -75,6 +83,28 @@ Returns true if the argument is a valid Github account name.
 =cut
 
 sub github_name { $_[0] =~ m/\A\S+\z/ }
+
+=item * page_number
+
+Returns true if the argument can represent a page number. This
+is a counting number 1 or greater. This does not validate that
+the query can return that page number, just that the form looks
+like a page number.
+
+=cut
+
+sub page_number { return unless $_[0] =~ m/\A\d+\z/a and $_[0] >= 1 }
+
+=item * per_page_number
+
+Returns true if the argument can represent a per page number (results
+per page of response). This is a counting number 1 or greater. This
+does not validate that the query can return that many results per
+page, just that the form looks like a per page number.
+
+=cut
+
+sub per_page_number { return unless $_[0] =~ m/\A\d+\z/a and $_[0] >= 1 }
 
 =item * repo_name( STRING )
 
@@ -93,6 +123,29 @@ Returns true if the input looks like a URL
 sub url   { 0 }
 
 =back
+
+=head2 Generators
+
+These validators create anonymous subroutines based on the input.
+These are methods rather than regular subroutines.
+
+=over 4
+
+=item * counting_number_between( $min, $max, $opts )
+
+
+=cut
+
+sub counting_number_between ( $self, $min, $max, $opts ) {
+	sub { $_[0] >= $min and $_[0] <= $max }
+	}
+
+sub counting_number_up_to ( $self, $max, $opts ) {
+	$self->counting_number_between( 0, $max )
+	}
+
+=back
+
 
 =head1 SOURCE AVAILABILITY
 
