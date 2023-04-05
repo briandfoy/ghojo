@@ -2,6 +2,7 @@ use v5.26;
 
 # This module loads all of the endpoint modules.
 
+
 use Ghojo::Endpoint::Actions;
 use Ghojo::Endpoint::Activity;
 use Ghojo::Endpoint::Authorizations;
@@ -18,6 +19,7 @@ use Ghojo::Endpoint::PullRequests;
 use Ghojo::Endpoint::Reactions;
 use Ghojo::Endpoint::Repositories;
 use Ghojo::Endpoint::Search;
+use Ghojo::EndPoint::Actions::Secrets::Repository;
 use Ghojo::Endpoint::Users;
 
 =encoding utf8
