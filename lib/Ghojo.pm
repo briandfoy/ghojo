@@ -140,7 +140,7 @@ If you would like to play with this to change things on GitHub, I
 suggest setting up a new user and some repos you don't care about
 (perhaps forked from interesting ones). Play with those until you are
 satisfied that this code isn't going to delete your life. I also keep
-backup clones at Bitbucket just in case.
+backup clones at Bitbucket and Gitlab just in case.
 
 =cut
 
