@@ -11,7 +11,7 @@ use Ghojo::Mixins::SuccessError;
 my @classes = qw(
 	SSHKey GPGKey UserRecord Email Grant Repo
 	Emojis License Gitignore Content RawContent LicenseContent
-	Issue Reaction Label HTMLContent
+	Issue Reaction Label HTMLContent Secret
 	);
 
 foreach my $class ( @classes ) {
@@ -52,6 +52,7 @@ package Ghojo::Data::Content {
 	sub is_submodule ( $self ) { 0 }
 	sub is_unknown   ( $self ) { 1 }
 	sub is_known     ( $self ) { ! $self->is_unknown }
+	sub is_secret    ( $self ) { 0 }
 
 	sub DESTROY ( $self ) { 1 }
 	}
@@ -113,6 +114,11 @@ package Ghojo::Data::Content::DirectoryListing {
 	our @ISA = qw(Ghojo::Data::Content::KnownType);
 	sub is_diretory_listing ( $self ) { 1 }
 	sub files ( $self ) { $self->@* }
+	}
+
+package Ghojo::Data::Secret {
+	our @ISA = qw(Ghojo::Data::Content::KnownType);
+	sub is_secret ( $self ) { 1 }
 	}
 
 package Ghojo::Data::Workflow {
