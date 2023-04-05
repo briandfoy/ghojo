@@ -340,6 +340,9 @@ returned by C<token_file>.
 
 =cut
 
+# https://docs.github.com/en/rest/overview/api-versions?apiVersion=2022-11-28
+sub api_version ( $either ) { '2022-11-28' }
+
 sub new ( $class, $args = {} ) {
 	# We start off with the public interface. If an authorization works
 	# it will rebless the object for the authenticated class name.
@@ -1186,6 +1189,8 @@ sub _setup_request_headers ( $self, $stash ) {
 	# XXX maybe check that this makes sense
 	$headers{'Content-type'}  = $stash->{args}{content_type}
 		if $stash->{args}{content_type};
+
+	$headers{'X-GitHub-Api-Version'} = $self->api_version;
 
 	$stash->{headers} = \%headers;
 
