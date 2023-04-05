@@ -11,7 +11,7 @@ use Mojo::Collection;
 
 =head1 NAME
 
-Ghojo::Endpoint::Secrets::Repository - The endpoints that deal with repository secrets
+Ghojo::Endpoint::Actions::Secrets::Repository - The endpoints that deal with repository secrets
 
 =head1 SYNOPSIS
 
