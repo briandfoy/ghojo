@@ -153,10 +153,17 @@ Parts marked with an * are done.
 
 	Actions
 		Artifacts
+		Cache
+		OIDC
 		Permissions
+		Required Workflows
 		Secrets
+			Repository
+			Organization
+			Environment
 		Self-hosted runners
 		Self-hosted runner groups
+		Variables
 		Workflows
 		Workflow jobs
 		Workflow runs
@@ -168,6 +175,32 @@ Parts marked with an * are done.
 		Starring
 		Watching
 
+	Apps
+
+	Billing
+
+	Branches
+
+	Checks
+
+	Codes of conduct
+
+	Code scanning
+
+	Codespaces
+
+	Collaborators
+
+	Commits
+
+	Dependabot
+
+	Dependency Graph
+
+	Deployments
+
+	Emoji
+
 	Gists
 		Comments
 
@@ -177,6 +210,10 @@ Parts marked with an * are done.
 		References
 		Tags
 		Trees
+
+	Gitignore
+
+	Interactions
 
 	Integrations
 		Integrations
@@ -189,6 +226,10 @@ Parts marked with an * are done.
 		Labels
 		Milestones
 		Timeline
+
+	Licenses
+
+	Markdown
 
 	Migration
 		Migrations
@@ -207,14 +248,24 @@ Parts marked with an * are done.
 		Teams
 		Webhooks
 
+	Packages
+
+	Pages
+
+	Projects (classic)
+
 	Pull Requests
 		Review Comments
+
+	Rate limit
 
 	Reactions
 		Commit Comment
 		Issue
 		Issue Comment
 		Pull Request Review Comment
+
+	Releases
 
 	Repositories
 		Branches
@@ -243,6 +294,12 @@ Parts marked with an * are done.
 		Users
 		Legacy Search
 
+	Secret Scanning
+
+	Security advisories
+
+	Teams
+
 	Users  ( Ghojo/Users.pm )
 		* Emails
 		* Followers
@@ -250,15 +307,7 @@ Parts marked with an * are done.
 		* GPG Keys
 		Administration (Enterprise)
 
-	Enterprise
-		Admin Stats
-		LDAP
-		License
-		Management Console
-		Pre-receive Environments
-		Pre-receive Hooks
-		Search Indexing
-		Organization Administration
+	Repository webhooks
 
 
 =head2  General object thingys
