@@ -366,6 +366,25 @@ sub Ghojo::PublicUser::get_repo_contributors ( $self, $owner, $repo ) {
 	$self->unimplemented;
 	}
 
+=item * get_repo_id( OWNER, REPO )
+
+Returns the ID of the repo, which other parts of the API need.
+
+This is a public API endpoint.
+
+=cut
+
+sub Ghojo::PublicUser::get_repo_id ( $self, $owner, $repo ) {
+	state $Cache = {};
+	return $Cache->{"$owner/$repo"} if defined $Cache->{"$owner/$repo"};
+
+	my $result = $self->get_repo( $owner, $repo );
+	return if $result->is_error;
+
+	$Cache->{"$owner/$repo"} = $result->values->[0]{id};
+	}
+
+
 =item * get_repo_languages
 
 UNIMPLEMETED
