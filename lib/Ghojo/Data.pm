@@ -106,7 +106,7 @@ package Ghojo::Data::Content::Submodule {
 
 package Ghojo::Data::Content::Directory {
 	our @ISA = qw(Ghojo::Data::Content::KnownType);
-	sub is_diretory ( $self ) { 1 }
+	sub is_directory ( $self ) { 1 }
 	}
 
 package Ghojo::Data::Content::DirectoryListing {
