@@ -26,7 +26,10 @@ sub dump_request ( $tx ) {
 	$string =~ s/Authorization:\s+basic\s+\K.*/***/r;
 	}
 
-sub dump_response ( $tx ) { $tx->res->headers->to_string }
+sub dump_response ( $tx ) {
+	my $start_line = join ' ', $tx->res->code, 'HTTP/1.1';
+	$start_line . "\n" . $tx->res->headers->to_string
+	}
 
 sub validate_package ( $package ) {
 	$package =~ m/\A [A-Za-z][A-Za-z0..9_]* (::[A-Za-z][A-Za-z0..9_]*)* \z/x
