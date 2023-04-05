@@ -41,7 +41,7 @@ This is an authenticated endpoint.
 
 =cut
 
-sub Ghojo::AuthenticatedUser::list_secrets ( $self, $owner, $repo, $callback = sub { $_[0] }, $query = {} ) {
+sub Ghojo::AuthenticatedUser::list_repository_secrets ( $self, $owner, $repo, $callback = sub { $_[0] }, $query = {} ) {
 	$self->entered_sub;
 
 	$self->get_paged_resources(
@@ -58,7 +58,7 @@ sub Ghojo::AuthenticatedUser::list_secrets ( $self, $owner, $repo, $callback = s
 		);
 	}
 
-=item * get_public_key
+=item * get_repository_public_key
 
 Get the public key and key id for the repository. This is mostly used
 in C<create_secret>, so you typically don't need to use this
@@ -68,7 +68,7 @@ This is an authenticated endpoint.
 
 =cut
 
-sub Ghojo::AuthenticatedUser::get_public_key ( $self, $owner, $repo ) {
+sub Ghojo::AuthenticatedUser::get_repository_public_key ( $self, $owner, $repo ) {
 	$self->entered_sub;
 
 	$self->get_single_resource(
@@ -80,7 +80,7 @@ sub Ghojo::AuthenticatedUser::get_public_key ( $self, $owner, $repo ) {
 	}
 
 
-=item * get_secret( OWNER, REPO, SECRET_NAME )
+=item * get_repository_secret( OWNER, REPO, SECRET_NAME )
 
 Fetch a particular secret. The returned hash has the secret name,
 creation date, and update date. You do not get back the secret
@@ -90,7 +90,7 @@ This is an authenticated endpoint.
 
 =cut
 
-sub Ghojo::AuthenticatedUser::get_secret ( $self, $owner, $repo, $name ) {
+sub Ghojo::AuthenticatedUser::get_repository_secret ( $self, $owner, $repo, $name ) {
 	$self->entered_sub;
 
 	$self->get_single_resource(
@@ -100,9 +100,9 @@ sub Ghojo::AuthenticatedUser::get_secret ( $self, $owner, $repo, $name ) {
 		);
 	}
 
-=item * create_secret( OWNER, REPO, SECRET_NAME, SECRET_VALUE )
+=item * create_repository_secret( OWNER, REPO, SECRET_NAME, SECRET_VALUE )
 
-=item * update_secret( OWNER, REPO, SECRET_NAME, SECRET_VALUE )
+=item * update_repository_secret( OWNER, REPO, SECRET_NAME, SECRET_VALUE )
 
 Create or update the secret with name SECRET_NAME and value SECRET_VALUE.
 These are handled by the same function, and the API doesn't care if
@@ -112,13 +112,13 @@ This is an authenticated endpoint.
 
 =cut
 
-sub Ghojo::AuthenticatedUser::create_secret ( $self, $owner, $repo, $name, $value ) {
+sub Ghojo::AuthenticatedUser::create_repository_secret ( $self, $owner, $repo, $name, $value ) {
 	$self->entered_sub;
 
 	$self->logger->debug( "name is <$name>" );
 	$self->logger->debug( "value is <$value>" );
 
-	my $public_key = $self->get_public_key( $owner, $repo );
+	my $public_key = $self->get_repository_public_key( $owner, $repo );
 	my $public_key_base64 = $public_key->values->[0]{key};
 
 	my $encrypted = _nacl_encrypt($value, $public_key_base64);
@@ -138,7 +138,7 @@ sub Ghojo::AuthenticatedUser::create_secret ( $self, $owner, $repo, $name, $valu
 		);
 	}
 
-=item * delete_secret( OWNER, REPO, SECRET_NAME )
+=item * delete_repository_secret( OWNER, REPO, SECRET_NAME )
 
 Delete the secret.
 
@@ -146,7 +146,7 @@ This is an authenticated endpoint.
 
 =cut
 
-sub Ghojo::AuthenticatedUser::delete_secret ( $self, $owner, $repo, $name ) {
+sub Ghojo::AuthenticatedUser::delete_repository_secret ( $self, $owner, $repo, $name ) {
 	$self->entered_sub;
 
 	$self->delete_single_resource(
