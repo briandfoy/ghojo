@@ -324,7 +324,7 @@ sub Ghojo::AuthenticatedUser::replace_all_labels_for_issue ( $self, $owner, $rep
 
 This module is in Github:
 
-	https://github.com/briandfoy/ghojo.git
+	https://github.com/briandfoy/ghojo
 
 =head1 AUTHOR
 

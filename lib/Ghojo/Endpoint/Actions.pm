@@ -168,7 +168,7 @@ sub Ghojo::AuthenticatedUser::list_workflow_runs ( $self, $owner, $repo, $callba
 
 This module is in Github:
 
-	https://github.com/briandfoy/ghojo.git
+	https://github.com/briandfoy/ghojo
 
 =head1 AUTHOR
 

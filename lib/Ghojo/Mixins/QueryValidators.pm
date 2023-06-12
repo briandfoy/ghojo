@@ -151,7 +151,7 @@ sub counting_number_up_to ( $self, $max, $opts ) {
 
 This module is in Github:
 
-	https://github.com/briandfoy/ghojo.git
+	https://github.com/briandfoy/ghojo
 
 =head1 AUTHOR
 

@@ -267,7 +267,7 @@ sub Ghojo::AuthenticatedUser::get_archive_link ( $self ) {
 
 This module is in Github:
 
-	https://github.com/briandfoy/ghojo.git
+	https://github.com/briandfoy/ghojo
 
 =head1 AUTHOR
 

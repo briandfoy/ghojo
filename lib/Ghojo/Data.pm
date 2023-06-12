@@ -145,7 +145,7 @@ responses from the API. Now it's just all L<Hash::AsObject>.
 
 This module is in Github:
 
-	https://github.com/briandfoy/ghojo.git
+	https://github.com/briandfoy/ghojo
 
 =head1 AUTHOR
 

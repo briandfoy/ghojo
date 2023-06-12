@@ -816,7 +816,7 @@ sub Ghojo::PublicUser::seconds_until_search_rate_limit_reset ( $self ) {
 
 This module is in Github:
 
-	https://github.com/briandfoy/ghojo.git
+	https://github.com/briandfoy/ghojo
 
 =head1 AUTHOR
 

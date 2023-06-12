@@ -522,7 +522,7 @@ sub Ghojo::AuthenticatedUser::add_gpg_keys ( $self, @keys ) {
 
 This module is in Github:
 
-	https://github.com/briandfoy/ghojo.git
+	https://github.com/briandfoy/ghojo
 
 =head1 AUTHOR
 

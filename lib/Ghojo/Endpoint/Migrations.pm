@@ -43,7 +43,7 @@ Ghojo::Endpoint::Migrations - The endpoints that deal with migrations
 
 This module is in Github:
 
-	https://github.com/briandfoy/ghojo.git
+	https://github.com/briandfoy/ghojo
 
 =head1 AUTHOR
 

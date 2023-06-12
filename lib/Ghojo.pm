@@ -1718,7 +1718,7 @@ sub paged_get                   ( $self, @ ) { $self->logdie( "paged_get is depr
 
 This module is in Github:
 
-	https://github.com/briandfoy/ghojo.git
+	https://github.com/briandfoy/ghojo
 
 =head1 AUTHOR
 

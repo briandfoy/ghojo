@@ -420,7 +420,7 @@ sub subroutine ( $self ) { $self->{caller}{'sub'} }
 
 This module is in Github:
 
-	https://github.com/briandfoy/ghojo.git
+	https://github.com/briandfoy/ghojo
 
 =head1 AUTHOR
 
