@@ -30,7 +30,8 @@ package Ghojo::Data::LicenseContent {
 
 package Ghojo::Data::Content {
 	sub new ( $class, $content ) {
-		say "Creating $class with\n$content";
+		$class->entered_sub;
+		$class->logger->debug( "Creating $class with\n$content" );
 		bless { content => $content }, $class;
 		}
 
@@ -124,6 +125,16 @@ package Ghojo::Data::Secret {
 package Ghojo::Data::Workflow {
 	our @ISA = qw(Ghojo::Data::Content::KnownType);
 	sub files ( $self ) { $self->@* }
+	}
+
+package Ghojo::Data::String {
+	sub is_secret ( $self ) { 1 }
+	sub new ( $class, $string ) {
+		say STDERR __PACKAGE__ . " with <$string>";
+		bless \$string, $class;
+		}
+
+	sub string ( $self ) { $$self }
 	}
 
 =encoding utf8
