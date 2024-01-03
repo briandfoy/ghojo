@@ -143,6 +143,15 @@ sub success ( $class, $hash = {} ) {
 	$class->_new( $return_hash );
 	}
 
+sub bad_username ( $class, $username, $extras = {} ) {
+	$class->error({
+		message     => "Bad username <$username>",
+		description => "Bad username <$username>",
+		extras      => dclone($extras),
+		error_code  => 1,
+		});
+	}
+
 =back
 
 =head3 Make some summaries
