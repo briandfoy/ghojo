@@ -2,16 +2,17 @@ use v5.26;
 
 # This module loads all of the endpoint modules.
 
-
 use Ghojo::Endpoint::Actions;
 use Ghojo::Endpoint::Activity;
 use Ghojo::Endpoint::Authorizations;
 use Ghojo::Endpoint::Contents;
+use Ghojo::Endpoint::DeploymentEnvironments;
 use Ghojo::Endpoint::Gist;
 use Ghojo::Endpoint::GitData;
 use Ghojo::Endpoint::Integrations;
 use Ghojo::Endpoint::Issues;
 use Ghojo::Endpoint::Labels;
+use Ghojo::Endpoint::Meta;
 use Ghojo::Endpoint::Migrations;
 use Ghojo::Endpoint::Miscellaneous;
 use Ghojo::Endpoint::Organizations;
