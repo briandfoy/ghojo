@@ -159,14 +159,18 @@ L<https://developer.github.com/v3/repos/#list-user-repositories>
 
 =cut
 
-sub Ghojo::PublicUser::get_repos_for_username ( $self, $username, $callback = sub { $_[0] }, $query = {} ) {
+sub Ghojo::PublicUser::get_repos_for_username ( $self, $username, $callback = sub { $_[0] }, $query = {}, $args = {} ) {
 	$self->entered_sub;
+
+	return Ghojo::Result->bad_username( $username ) unless github_name( $username );
 
 	state $query_profile = {
 		params => {
 			type      => [ qw(all owner member) ],
 			'sort'    => [ qw(created updated pushed full_name) ],
 			direction => [ qw(asc desc) ],
+			per_page  => \&per_page_number,
+			page      => \&page_number,
 			},
 		};
 
@@ -177,6 +181,7 @@ sub Ghojo::PublicUser::get_repos_for_username ( $self, $username, $callback = su
 		query_profile   => $query_profile,
 		bless_into      => 'Ghojo::Data::Repo',
 		callback        => $callback,
+		%$args,
 		);
 	}
 
