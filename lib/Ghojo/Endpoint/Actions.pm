@@ -8,7 +8,7 @@ our $VERSION = '1.001002';
 use Mojo::Collection;
 use Mojo::URL;
 
-use Ghojo::Endpoint::Actions::Secrets::Environments;
+use Ghojo::Endpoint::Actions::Secrets::Environment;
 use Ghojo::Endpoint::Actions::Secrets::Organization;
 use Ghojo::Endpoint::Actions::Secrets::Repository;
 
