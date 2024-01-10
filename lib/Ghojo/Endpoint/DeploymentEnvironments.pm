@@ -45,12 +45,14 @@ sub Ghojo::PublicUser::list_environments ( $self, $owner, $repo ) {
 =cut
 
 sub Ghojo::PublicUser::update_environment ( $self, $owner, $repo, $environment_name ) {
+	$self->entered_sub;
+
 	$self->put_single_resource(
 		endpoint        => '/repos/:owner/:repo/environments/:environment_name',
 		endpoint_params => {
 			owner            => $owner,
 			repo             => $repo,
-			environment_name => $name,
+			environment_name => $environment_name,
 			},
 		);
 	}
@@ -76,7 +78,7 @@ sub Ghojo::AuthenticatedUser::update_environment ( $self, $owner, $repo, $enviro
 		endpoint_params => {
 			owner            => $owner,
 			repo             => $repo,
-			environment_name => $name,
+			environment_name => $environment_name,
 			},
 		json => {},
 		);
@@ -94,7 +96,7 @@ sub Ghojo::AuthenticatedUser::delete_environment ( $self, $owner, $repo, $enviro
 		endpoint_params => {
 			owner            => $owner,
 			repo             => $repo,
-			environment_name => $name,
+			environment_name => $environment_name,
 			},
 		);
 	}
