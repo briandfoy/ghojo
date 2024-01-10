@@ -1070,7 +1070,7 @@ sub single_resource_steps ( $self ) {
 
 sub single_resource ( $self, $verb, %args ) {
 	$self->entered_sub;
-	$self->logger->debug( sub { "Args are " . dumper( \%args ) } );
+	$self->logger->debug( sub { "single_resource: Args are " . dumper( \%args ) } );
 
 	my $stash = {
 		args          => \%args,
@@ -1078,12 +1078,12 @@ sub single_resource ( $self, $verb, %args ) {
         verb          => $verb,
 		};
 
-	$self->logger->debug( "About to it foreach" );
+	$self->logger->debug( "single_resource: About to enter foreach" );
 
 	# each step can modify the stash for the next step
 	my $result;
 	foreach my $step ( $self->single_resource_steps ) {
-		$self->logger->debug( "Processing single_resource step $step" );
+		$self->logger->debug( "single_resource: Processing single_resource step $step" );
 		$result = $self->$step( $stash );
 		last if $result->is_error;
 		}
@@ -1122,7 +1122,7 @@ sub _preprocess_request ( $self, $stash ) {
 
 	$stash->{url} = $url_result->values->first;
 
-	$self->logger->debug( "URL to single resource is <$stash->{url}>" );
+	$self->logger->debug( "_preprocess_request: URL to single resource is <$stash->{url}>" );
 
 	return Ghojo::Result->success;
 	}
@@ -1193,7 +1193,7 @@ sub _setup_request_headers ( $self, $stash ) {
 
 	# this is the base content-type for the API
 	$headers{'Accept'} = $stash->{args}{accepts} // 'application/vnd.github.v3+json';
-	$self->logger->debug( "Accept header is: $headers{'Accept'}" );
+	$self->logger->debug( "_setup_request_headers: Accept header is: $headers{'Accept'}" );
 
 	# XXX maybe check that this makes sense
 	$headers{'Content-type'}  = $stash->{args}{content_type}
@@ -1204,6 +1204,19 @@ sub _setup_request_headers ( $self, $stash ) {
 	$stash->{headers} = \%headers;
 
 	return Ghojo::Result->success;
+	}
+
+sub _dump_stash_without_keys ( $self, $stash, $keys = [qw(tx)] ) {
+	my %skip_keys = map { $_, 1 } $keys->@*;
+	my $caller = (caller(1))[3] =~ s/.*:://r;
+	my $dump_hash = ();
+
+	foreach my $key ( keys $stash->%* ) {
+		next if exists $skip_keys{$key};
+		$dump_hash->{$key} = $stash->{$key};
+		}
+
+	$self->logger->debug( sub { "$caller: stash is now:\n" . dumper( $dump_hash ) } );
 	}
 
 sub _check_rate_limiting ( $self, $stash ) {
@@ -1233,11 +1246,12 @@ sub _make_request ( $self, $stash ) {
 
 sub _pre_process_response ( $self, $stash ) {
 	$self->entered_sub;
-	$self->logger->debug( sub { "Request was:\n" . dump_request( $stash->{tx} ) } );
-	$self->logger->debug( sub { "Response was:\n" . dump_response( $stash->{tx} ) } );
+	$self->logger->debug( sub { "_pre_process_response: Request was:\n" . dump_request( $stash->{tx} ) } );
+	$self->logger->debug( sub { "_pre_process_response: Response was:\n" . dump_response( $stash->{tx} ) } );
 	$stash->{query_count} = $self->increment_query_count;
 	$self->_update_rate_limit( $stash );
 	$self->_process_scopes( $stash );
+	$self->_dump_stash_without_keys($stash);
 	return Ghojo::Result->success;
 	}
 
@@ -1291,8 +1305,10 @@ sub _process_response ( $self, $stash ) {
 
 sub _default_data_class ( $self ) { 'Ghojo::Data' }
 
-sub _bless_into ( $self, $ref, $stash ) {
+sub _bless_into ( $self, $data, $stash ) {
 	$self->entered_sub;
+
+	$self->_dump_stash_without_keys($stash);
 
 	unless( exists $stash->{args}{bless_into} and defined $stash->{args}{bless_into} ) {
 		$self->logger->warn( "_bless_into: Missing bless_into value. Using the default" );
@@ -1300,6 +1316,7 @@ sub _bless_into ( $self, $ref, $stash ) {
 		}
 
 	my $package = $stash->{args}{bless_into};
+	$self->logger->debug( "_bless_into: package is $package" );
 	unless( validate_package( $package ) ) {
 		return Ghojo::Result->error( {
 			description => "Fetching single resource",
@@ -1308,11 +1325,19 @@ sub _bless_into ( $self, $ref, $stash ) {
 			} );
 		}
 
-	$self->logger->debug( "_bless_into: ref is " . Mojo::Util::dumper($ref) );
+	$self->logger->debug( "_bless_into: data is " . Mojo::Util::dumper($data) );
 	eval "require $package";
-	bless $ref, $package;
 
-	return Ghojo::Result->success;
+	my $object = do {
+		if( $package->can('new') ) {
+			$package->new($data)
+			}
+		else {
+			bless $data, $package;
+			}
+		};
+
+	return Ghojo::Result->success( { values => [ $object ] } );
 	}
 
 =pod
@@ -1437,7 +1462,7 @@ sub _check_paged_args ( $self, $stash ) {
 
 	$self->entered_sub;
 
-	$self->logger->debug( "_check_paged_args: stash before: " . dumper($stash) );
+	$self->_dump_stash_without_keys($stash);
 	$self->logger->debug( "_check_paged_args: args before: " . dumper(\%defaults) );
 
 	my @queue = [ $stash, \%defaults ];
@@ -1464,7 +1489,7 @@ sub _check_paged_args ( $self, $stash ) {
 			});
 		}
 
-	$self->logger->debug( "_check_paged_args: stash after: " . dumper($stash) );
+	$self->_dump_stash_without_keys($stash);
 
 	return Ghojo::Result->success;
 	}
@@ -1473,17 +1498,28 @@ sub _make_paged_request ( $self, $stash ) {
 	state $success = Ghojo::Result->success;
 	$self->entered_sub;
 
-	$self->logger->debug( "_make_paged_request: stash " . dumper($stash) );
+	if( $stash->{first_time} ) {
+		$self->_turn_on_paging($stash);
+		$stash->{first_time} = 0;
+		}
+
+	$self->_dump_stash_without_keys($stash);
 
 	# We've either reached our limit or exhausted the results
-	if( $stash->{results}->@* >= $stash->{args}{limit} ) {
+	if( ! $self->_keep_paging($stash) or $stash->{results}->@* >= $stash->{args}{limit} ) {
 		$self->_turn_off_paging( $stash );
 		return $success;
 		}
 
-	$stash->{url} = $stash->{next} if $stash->{next};
-	$self->logger->trace( "Fetching URL $stash->{url}" );
-	$stash->{prev} = $stash->{next} = undef;
+	if( $stash->{next} ) {
+		$stash->{url} = $stash->{next};
+		$stash->{prev} = $stash->{next} = undef;
+		}
+	else {
+		$self->_turn_off_paging($stash);
+		}
+
+	$self->logger->trace( "_make_paged_request: Fetching URL $stash->{url}" );
 
 	$self->_make_request( $stash );
 	$self->_pre_process_paged_response( $stash );
@@ -1497,11 +1533,23 @@ sub _make_paged_request ( $self, $stash ) {
 	$self->_process_paged_response( $stash );
 	}
 
+{
+my $key = 'paging';
+
+sub _keep_paging ( $self, $stash ) { $stash->{$key} }
+
 sub _turn_off_paging ( $self, $stash ) {
 	$self->entered_sub;
-	$stash->{redo} = 0;
+	$stash->{$key} = 0;
 	return Ghojo::Result->success;
 	}
+
+sub _turn_on_paging ( $self, $stash ) {
+	$self->entered_sub;
+	$stash->{$key} = 1;
+	return Ghojo::Result->success;
+	}
+}
 
 sub _pre_process_paged_response ( $self, $stash ) {
 	$self->entered_sub;
@@ -1557,27 +1605,35 @@ sub _check_paged_body ( $self, $stash ) {
 	$self->entered_sub;
 
 	my $json = eval { $stash->{tx}->res->json };
-	$self->logger->debug( sprintf "Result JSON ref type is <%s>" , ref($json) );
-	$self->logger->debug( sprintf "result_key is <%s>", $stash->{args}{result_key} // '' );
+
+	$self->logger->debug( "_check_paged_body: res: " . $stash->{tx}->res->to_string );
+	$self->logger->debug( "_check_paged_body: JSON: " . dumper($json) );
+	$self->logger->debug( sprintf "_check_paged_body: Result JSON ref type is <%s>" , ref($json) );
+	$self->logger->debug( sprintf "_check_paged_body: result_key is <%s>", $stash->{args}{result_key} // '' );
 	if( ! $json ) {
-		my $message = "Did not get JSON back";
+		my $message = "_check_paged_body: Did not get JSON back";
 		$self->logger->error( $message );
 		return Ghojo::Result->error({
 			message     => $message,
 			description => $message
 			});
 		}
-	elsif( ref $json eq ref [] ) {
-		$stash->{unprocessed_results} = $json;
-		}
-	elsif( ref($json) eq ref({}) and exists $stash->{args}{result_key} ) {
+	elsif( ref $json eq ref {} and exists $stash->{args}{result_key} ) {
 		return Ghojo::Result->error({
-			description => "Error fetching paged resource",
-			message     => "The paged response is a hash but result_key is not set",
+			description => "_check_paged_body: Error fetching paged resource",
+			message     => "_check_paged_body: The paged response is a hash but result_key is not set",
 			}) unless exists $json->{ $stash->{args}{result_key} };
 
 		$stash->{unprocessed_results} = $json->{ $stash->{args}{result_key} };
 		}
+	elsif( ref $json eq ref {}  ) {
+		$stash->{unprocessed_results} = [ $json ];
+		}
+	elsif( ref $json ) {
+		$stash->{unprocessed_results} = $json;
+		}
+
+	$self->_dump_stash_without_keys($stash);
 
 	return $success;
 	}
@@ -1589,7 +1645,9 @@ sub get_paged_resources ( $self, %args ) {
 	$self->logger->debug( sub { "get_paged_resources args are " . dumper( \%args ) } );
 
 	my $stash = { args => \%args };
-	$self->logger->trace( sub { "get_paged_resources stash: " . dumper($stash) } );
+	$stash->{args}{sleep} //= 1;
+	$stash->{first_time} = 1;
+	$self->_dump_stash_without_keys($stash);
 
 	# each step can modify the stash for the next step
 	my $result;
