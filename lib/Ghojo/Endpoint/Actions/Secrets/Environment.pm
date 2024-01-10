@@ -41,10 +41,12 @@ This is an authenticated endpoint.
 
 =cut
 
+
 sub Ghojo::AuthenticatedUser::list_environment_secrets ( $self, $owner, $repo, $environment_name, $callback = sub { $_[0] }, $query = {} ) {
 	$self->entered_sub;
 
-	my $repository_id = $self->get_repository_id( $owner, $repo );
+	my $repository_id = $self->get_repo_id( $owner, $repo );
+say "owner: $owner repo: $repo repository_id: $repository_id";
 	return  Ghojo::Result->error( {
 		values       => [ ],
 		message      => "Could not get repository id for $owner/$repo",
@@ -76,14 +78,14 @@ This is an authenticated endpoint.
 
 =cut
 
-sub Ghojo::AuthenticatedUser::get_environemnt_public_key ( $self, $owner, $repo, environment_name ) {
+sub Ghojo::AuthenticatedUser::get_environment_public_key ( $self, $owner, $repo, $environment_name ) {
 	$self->entered_sub;
 
 	my $repository_id = $self->get_repository_id( $owner, $repo );
 	return  Ghojo::Result->error( {
 		values       => [ ],
 		message      => "Could not get repository id for $owner/$repo",
-		extras       => { owner => $owner, repo => $repo, environment_name => $environment_name, query => $query },
+		extras       => { owner => $owner, repo => $repo, environment_name => $environment_name },
 		} ) unless defined $repository_id;
 
 	$self->get_single_resource(
@@ -112,7 +114,7 @@ sub Ghojo::AuthenticatedUser::get_environment_secret ( $self, $owner, $repo, $en
 	return  Ghojo::Result->error( {
 		values       => [ ],
 		message      => "Could not get repository id for $owner/$repo",
-		extras       => { owner => $owner, repo => $repo, environment_name => $environment_name, query => $query },
+		extras       => { owner => $owner, repo => $repo, environment_name => $environment_name },
 		} ) unless defined $repository_id;
 
 	$self->get_single_resource(
@@ -134,14 +136,14 @@ This is an authenticated endpoint.
 
 =cut
 
-sub Ghojo::AuthenticatedUser::create_environment_secret ( $self, $owner, $repo, $environment_name, $name, $value ) {
+sub Ghojo::AuthenticatedUser::create_environment_secret ( $self, $owner, $repo, $environment_name, $secret_name, $value ) {
 	$self->entered_sub;
 
 	my $repository_id = $self->get_repository_id( $owner, $repo );
 	return  Ghojo::Result->error( {
 		values       => [ ],
 		message      => "Could not get repository id for $owner/$repo",
-		extras       => { owner => $owner, repo => $repo, environment_name => $environment_name, query => $query },
+		extras       => { owner => $owner, repo => $repo, environment_name => $environment_name },
 		} ) unless defined $repository_id;
 
 	my $public_key = $self->get_enviroment_public_key( $owner, $repo );
@@ -172,7 +174,7 @@ This is an authenticated endpoint.
 
 =cut
 
-sub Ghojo::AuthenticatedUser::delete_environment_secret ( $self, $owner, $repo, $environment_name, $name ) {
+sub Ghojo::AuthenticatedUser::delete_environment_secret ( $self, $owner, $repo, $environment_name, $secret_name ) {
 	$self->entered_sub;
 
 	my $repository_id = $self->get_repository_id( $owner, $repo );
