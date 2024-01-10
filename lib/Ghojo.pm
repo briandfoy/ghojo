@@ -3,7 +3,6 @@ use experimental qw(signatures);
 
 package Ghojo;
 
-
 # The endpoints are divided into public and authenticated parts
 # We'll use this inheritance chain to divide them. The public
 # class can't see the stuff in the authorized class, but the
@@ -1285,12 +1284,7 @@ sub _process_response ( $self, $stash ) {
 
 		# Can't have raw_content and bless_into at the same time?
 		# message body and bless it into the right class
-		my $result = $self->_bless_into( $data, $stash );
-		return $result if $result->is_error;
-
-		return Ghojo::Result->success( {
-			values => [ $data ],
-			} )
+		return $self->_bless_into( $data, $stash );
 		}
 
 	$self->logger->debug( sub {
@@ -1439,14 +1433,15 @@ sub paged_resource_steps ( $self ) {
 	qw(
 		_check_paged_args
 		_preprocess_request
-		_check_http_verb _check_scopes
+		_check_http_verb
+		_check_scopes
 		_setup_request_headers
 		_make_paged_request
 		);
 	}
 
 sub _check_paged_args ( $self, $stash ) {
-	state %defaults = (
+	my %defaults = (
 	    args => {
         	limit         => 1000,
         	'sleep'       => 3,
@@ -1655,7 +1650,7 @@ sub get_paged_resources ( $self, %args ) {
 		$self->logger->trace( "Processing step <$step>" );
 		$result = $self->$step( $stash );
 		return $result if $result->is_error;
-		redo if $stash->{redo}
+		redo if $self->_keep_paging($stash);
 		}
 
 	Ghojo::Result->success({
