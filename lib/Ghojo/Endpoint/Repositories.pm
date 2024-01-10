@@ -261,6 +261,7 @@ sub Ghojo::PublicUser::all_public_repos ( $self, $callback = sub {}, $query = {}
 		};
 
 	$self->get_paged_resources(
+		bless_into      => 'Ghojo::Data::Repo',
 		endpoint        => '/repositories',
 		callback        => $callback,
 		query_params    => $query,
