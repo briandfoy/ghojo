@@ -137,6 +137,16 @@ package Ghojo::Data::String {
 	sub string ( $self ) { $$self }
 	}
 
+package Ghojo::Data::Secret {
+	sub is_secret ( $self ) { 1 }
+	sub new ( $class, $string ) {
+		say STDERR __PACKAGE__ . " with <$string>";
+		bless \$string, $class;
+		}
+
+	sub string ( $self ) { $$self }
+	}
+
 =encoding utf8
 
 =head1 NAME

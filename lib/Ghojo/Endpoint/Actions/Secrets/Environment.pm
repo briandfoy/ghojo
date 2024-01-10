@@ -52,6 +52,7 @@ sub Ghojo::AuthenticatedUser::list_environment_secrets ( $self, $owner, $repo, $
 		} ) unless defined $repository_id;
 
 	$self->get_paged_resources(
+		bless_into      => 'Ghojo::Data::Secret',
 		endpoint        => '/repositories/:repository_id/environments/:environment_name/secrets',
 		endpoint_params => { repository_id => $repository_id, environment_name => $environment_name },
 		callback        => $callback,
