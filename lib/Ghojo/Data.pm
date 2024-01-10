@@ -11,7 +11,7 @@ use Ghojo::Mixins::SuccessError;
 my @classes = qw(
 	SSHKey GPGKey UserRecord Email Grant Repo
 	Emojis License Gitignore Content RawContent LicenseContent
-	Issue Reaction Label HTMLContent Secret
+	Issue Reaction Label HTMLContent Secret PublicKey
 	);
 
 foreach my $class ( @classes ) {
@@ -30,8 +30,6 @@ package Ghojo::Data::LicenseContent {
 
 package Ghojo::Data::Content {
 	sub new ( $class, $content ) {
-		$class->entered_sub;
-		$class->logger->debug( "Creating $class with\n$content" );
 		bless { content => $content }, $class;
 		}
 
@@ -117,28 +115,13 @@ package Ghojo::Data::Content::DirectoryListing {
 	sub files ( $self ) { $self->@* }
 	}
 
-package Ghojo::Data::Secret {
-	our @ISA = qw(Ghojo::Data::Content::KnownType);
-	sub is_secret ( $self ) { 1 }
-	}
-
 package Ghojo::Data::Workflow {
 	our @ISA = qw(Ghojo::Data::Content::KnownType);
 	sub files ( $self ) { $self->@* }
 	}
 
 package Ghojo::Data::String {
-	sub is_secret ( $self ) { 1 }
-	sub new ( $class, $string ) {
-		say STDERR __PACKAGE__ . " with <$string>";
-		bless \$string, $class;
-		}
-
-	sub string ( $self ) { $$self }
-	}
-
-package Ghojo::Data::Secret {
-	sub is_secret ( $self ) { 1 }
+	sub is_string ( $self ) { 1 }
 	sub new ( $class, $string ) {
 		say STDERR __PACKAGE__ . " with <$string>";
 		bless \$string, $class;

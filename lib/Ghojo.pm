@@ -1320,7 +1320,8 @@ sub _bless_into ( $self, $data, $stash ) {
 		}
 
 	$self->logger->debug( "_bless_into: data is " . Mojo::Util::dumper($data) );
-	eval "require $package";
+	my $rc = eval "require $package";
+	$self->logger->error( "Could not require $package" ) unless $rc;
 
 	my $object = do {
 		if( $package->can('new') ) {
@@ -1330,6 +1331,8 @@ sub _bless_into ( $self, $data, $stash ) {
 			bless $data, $package;
 			}
 		};
+
+	$self->logger->debug( "_bless_into: data is finally " . Mojo::Util::dumper($object) );
 
 	return Ghojo::Result->success( { values => [ $object ] } );
 	}
