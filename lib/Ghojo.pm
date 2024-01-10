@@ -56,6 +56,15 @@ sub AUTOLOAD ( $self, @args ) {
 			description => "Authenticate to use [$method]",
 			});
 		}
+	elsif( $self->public_user_class->can( $method ) ) {
+		my $message = "Method [$method] is unknown";
+		$self->logger->error( $message );
+		$self->logger->debug( sub { scalar $self->stacktrace(3) } );
+		return Ghojo::Result->error({
+			message     => $message,
+			description => "Authenticate to use [$method]",
+			});
+		}
 	}
 
 # ($package, $filename, $line, $subroutine,
