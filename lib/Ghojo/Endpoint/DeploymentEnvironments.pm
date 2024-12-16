@@ -74,10 +74,12 @@ sub Ghojo::AuthenticatedUser::update_environment ( $self, $owner, $repo, $enviro
 	$self->update_environment(  $owner, $repo, $environment_name );
 	}
 
-sub Ghojo::AuthenticatedUser::update_environment ( $self, $owner, $repo, $environment_name ) {
+sub Ghojo::AuthenticatedUser::create_environment ( $self, $owner, $repo, $environment_name ) {
 	$self->entered_sub;
+say STDERR "In create_environment";
 
-	$self->update_single_resource(
+	$environment_name =  $environment_name->name if ref $environment_name;
+	$self->put_single_resource(
 		endpoint        => '/repos/:owner/:repo/environments/:environment_name',
 		endpoint_params => {
 			owner            => $owner,
