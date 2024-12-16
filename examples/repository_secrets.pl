@@ -25,6 +25,12 @@ foreach my $environment ( $result->values->@* ) {
 	list_secrets($owner, $repo, $environment->name);
 	}
 
+say '----- CREATE AGAIN';
+
+my $env_result = $ghojo->create_environment( $owner, $repo, 'release' );
+say dumper( $env_result );
+exit;
+
 say "----- CREATE SECRET";
 my $name = "NEW_SECRET_$$";
 my $value = "foo bar";
