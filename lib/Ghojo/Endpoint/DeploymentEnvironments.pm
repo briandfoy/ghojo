@@ -30,13 +30,17 @@ Ghojo::Endpoint::DeploymentEnvironments - The endpoints that deal with environme
 
 =cut
 
-sub Ghojo::PublicUser::list_environments ( $self, $owner, $repo ) {
-	$self->update_single_resource(
+sub Ghojo::AuthenticatedUser::list_environments ( $self, $owner, $repo ) {
+	$self->entered_sub;
+
+	$self->get_paged_resources(
 		endpoint        => '/repos/:owner/:repo/environments',
 		endpoint_params => {
 			owner            => $owner,
 			repo             => $repo,
 			},
+		bless_into      => 'Ghojo::Data::Environment',
+		result_key      => 'environments',
 		);
 	}
 
@@ -44,7 +48,7 @@ sub Ghojo::PublicUser::list_environments ( $self, $owner, $repo ) {
 
 =cut
 
-sub Ghojo::PublicUser::update_environment ( $self, $owner, $repo, $environment_name ) {
+sub Ghojo::AuthenticatedUser::get_environment ( $self, $owner, $repo, $environment_name ) {
 	$self->entered_sub;
 
 	$self->put_single_resource(
