@@ -43,6 +43,21 @@ package Ghojo::NullLogger 0.001 {
 	sub new ( $class ) { bless { }, $class }
 	sub is_null_logger ( $self ) { 1 }
 	sub AUTOLOAD ( $self ) { $self }
+
+	sub trace {}
+	sub fatal {}
+	sub debug {}
+	sub error {}
+	sub warn  {}
+	sub info  {}
+
+	sub is_trace { 0 }
+	sub is_fatal { 0 }
+	sub is_debug { 0 }
+	sub is_error { 0 }
+	sub is_warn  { 0 }
+	sub is_info  { 0 }
 	}
+
 
 1;
