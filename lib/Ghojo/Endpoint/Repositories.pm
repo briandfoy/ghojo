@@ -159,14 +159,18 @@ L<https://developer.github.com/v3/repos/#list-user-repositories>
 
 =cut
 
-sub Ghojo::PublicUser::get_repos_for_username ( $self, $username, $callback = sub { $_[0] }, $query = {} ) {
+sub Ghojo::PublicUser::get_repos_for_username ( $self, $username, $callback = sub { $_[0] }, $query = {}, $args = {} ) {
 	$self->entered_sub;
+
+	return Ghojo::Result->bad_username( $username ) unless github_name( $username );
 
 	state $query_profile = {
 		params => {
 			type      => [ qw(all owner member) ],
 			'sort'    => [ qw(created updated pushed full_name) ],
 			direction => [ qw(asc desc) ],
+			per_page  => \&per_page_number,
+			page      => \&page_number,
 			},
 		};
 
@@ -177,6 +181,7 @@ sub Ghojo::PublicUser::get_repos_for_username ( $self, $username, $callback = su
 		query_profile   => $query_profile,
 		bless_into      => 'Ghojo::Data::Repo',
 		callback        => $callback,
+		%$args,
 		);
 	}
 
@@ -261,6 +266,7 @@ sub Ghojo::PublicUser::all_public_repos ( $self, $callback = sub {}, $query = {}
 		};
 
 	$self->get_paged_resources(
+		bless_into      => 'Ghojo::Data::Repo',
 		endpoint        => '/repositories',
 		callback        => $callback,
 		query_params    => $query,
@@ -366,6 +372,25 @@ sub Ghojo::PublicUser::get_repo_contributors ( $self, $owner, $repo ) {
 	$self->unimplemented;
 	}
 
+=item * get_repo_id( OWNER, REPO )
+
+Returns the ID of the repo, which other parts of the API need.
+
+This is a public API endpoint.
+
+=cut
+
+sub Ghojo::PublicUser::get_repo_id ( $self, $owner, $repo ) {
+	state $Cache = {};
+	return $Cache->{"$owner/$repo"} if defined $Cache->{"$owner/$repo"};
+
+	my $result = $self->get_repo( $owner, $repo );
+	return if $result->is_error;
+
+	$Cache->{"$owner/$repo"} = $result->values->[0]{id};
+	}
+
+
 =item * get_repo_languages
 
 UNIMPLEMETED
@@ -446,7 +471,7 @@ sub Ghojo::AuthenticatedUser::delete_repo ( $self, $owner, $repo ) {
 
 This module is in Github:
 
-	https://github.com/briandfoy/ghojo.git
+	https://github.com/briandfoy/ghojo
 
 =head1 AUTHOR
 
@@ -454,7 +479,7 @@ brian d foy, C<< <bdfoy@cpan.org> >>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2016-2021, brian d foy <bdfoy@cpan.org>. All rights reserved.
+Copyright © 2016-2024, brian d foy <bdfoy@cpan.org>. All rights reserved.
 
 This program is free software; you can redistribute it and/or modify
 it under the Artistic License 2. A LICENSE file should have accompanied

@@ -8,6 +8,10 @@ our $VERSION = '1.001002';
 use Mojo::Collection;
 use Mojo::URL;
 
+use Ghojo::Endpoint::Actions::Secrets::Environment;
+use Ghojo::Endpoint::Actions::Secrets::Organization;
+use Ghojo::Endpoint::Actions::Secrets::Repository;
+
 =encoding utf8
 
 =head1 NAME
@@ -168,7 +172,7 @@ sub Ghojo::AuthenticatedUser::list_workflow_runs ( $self, $owner, $repo, $callba
 
 This module is in Github:
 
-	https://github.com/briandfoy/ghojo.git
+	https://github.com/briandfoy/ghojo
 
 =head1 AUTHOR
 
@@ -176,7 +180,7 @@ brian d foy, C<< <bdfoy@cpan.org> >>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2016-2021, brian d foy <bdfoy@cpan.org>. All rights reserved.
+Copyright © 2016-2024, brian d foy <bdfoy@cpan.org>. All rights reserved.
 
 This program is free software; you can redistribute it and/or modify
 it under the Artistic License 2. A LICENSE file should have accompanied

@@ -1,42 +1,16 @@
 use v5.26;
 
-package Ghojo::Endpoint::PullRequests;
+package Ghojo::Data::Environment;
 use experimental qw(signatures);
-
-our $VERSION = '1.001002';
-
-use Mojo::Collection;
-use Mojo::URL;
+use parent qw(Ghojo::Data);
 
 =encoding utf8
 
 =head1 NAME
 
-Ghojo::Endpoint::PullRequests - The endpoints that deal with pull requests
+Ghojo::Data::Environment - Do the things a Environment can do
 
 =head1 SYNOPSIS
-
-
-=head1 DESCRIPTION
-
-	Pull Requests
-		Review Comments
-
-=head2  General object thingys
-
-=over 4
-
-=item *
-
-=back
-
-=head2  Review Comments
-
-=over 4
-
-=item *
-
-=back
 
 =head1 SOURCE AVAILABILITY
 

@@ -11,7 +11,7 @@ use Ghojo::Mixins::SuccessError;
 my @classes = qw(
 	SSHKey GPGKey UserRecord Email Grant Repo
 	Emojis License Gitignore Content RawContent LicenseContent
-	Issue Reaction Label HTMLContent
+	Issue Reaction Label HTMLContent Secret PublicKey
 	);
 
 foreach my $class ( @classes ) {
@@ -30,7 +30,6 @@ package Ghojo::Data::LicenseContent {
 
 package Ghojo::Data::Content {
 	sub new ( $class, $content ) {
-		say "Creating $class with\n$content";
 		bless { content => $content }, $class;
 		}
 
@@ -52,6 +51,7 @@ package Ghojo::Data::Content {
 	sub is_submodule ( $self ) { 0 }
 	sub is_unknown   ( $self ) { 1 }
 	sub is_known     ( $self ) { ! $self->is_unknown }
+	sub is_secret    ( $self ) { 0 }
 
 	sub DESTROY ( $self ) { 1 }
 	}
@@ -106,7 +106,7 @@ package Ghojo::Data::Content::Submodule {
 
 package Ghojo::Data::Content::Directory {
 	our @ISA = qw(Ghojo::Data::Content::KnownType);
-	sub is_diretory ( $self ) { 1 }
+	sub is_directory ( $self ) { 1 }
 	}
 
 package Ghojo::Data::Content::DirectoryListing {
@@ -118,6 +118,16 @@ package Ghojo::Data::Content::DirectoryListing {
 package Ghojo::Data::Workflow {
 	our @ISA = qw(Ghojo::Data::Content::KnownType);
 	sub files ( $self ) { $self->@* }
+	}
+
+package Ghojo::Data::String {
+	sub is_string ( $self ) { 1 }
+	sub new ( $class, $string ) {
+		say STDERR __PACKAGE__ . " with <$string>";
+		bless \$string, $class;
+		}
+
+	sub string ( $self ) { $$self }
 	}
 
 =encoding utf8
@@ -139,15 +149,15 @@ responses from the API. Now it's just all L<Hash::AsObject>.
 
 This module is in Github:
 
-	https://github.com/briandfoy/ghojo.git
+	https://github.com/briandfoy/ghojo
 
 =head1 AUTHOR
 
-brian d foy, C<< <bdfoy@cpan.org> >>
+brian d foy, C<< <briandfoy@pobox.com> >>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2016-2021, brian d foy <bdfoy@cpan.org>. All rights reserved.
+Copyright © 2016-2024, brian d foy <briandfoy@pobox.com>. All rights reserved.
 
 This program is free software; you can redistribute it and/or modify
 it under the Artistic License 2. A LICENSE file should have accompanied

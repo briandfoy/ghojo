@@ -44,7 +44,7 @@ sub is_error   { 0 }
 
 This module is in Github:
 
-	https://github.com/briandfoy/ghojo.git
+	https://github.com/briandfoy/ghojo
 
 =head1 AUTHOR
 
@@ -52,7 +52,7 @@ brian d foy, C<< <bdfoy@cpan.org> >>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2016-2021, brian d foy <bdfoy@cpan.org>. All rights reserved.
+Copyright © 2016-2024, brian d foy <bdfoy@cpan.org>. All rights reserved.
 
 This program is free software; you can redistribute it and/or modify
 it under the Artistic License 2. A LICENSE file should have accompanied

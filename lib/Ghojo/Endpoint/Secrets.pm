@@ -1,6 +1,6 @@
 use v5.26;
 
-package Ghojo::Endpoint::PullRequests;
+package Ghojo::Endpoint::Secrets;
 use experimental qw(signatures);
 
 our $VERSION = '1.001002';
@@ -12,29 +12,38 @@ use Mojo::URL;
 
 =head1 NAME
 
-Ghojo::Endpoint::PullRequests - The endpoints that deal with pull requests
+Ghojo::Endpoint::Secrets - The endpoints that deal with secrets
 
 =head1 SYNOPSIS
 
+	use Ghojo;
+
+	my $ghojo = Ghojo->new( ... );
+
+	my $result = $ghojo->labels( $owner, $repo );
+	if( $result->is_success ) {
+		my $labels = $result->values;  # A Mojo::Collection object
+		}
 
 =head1 DESCRIPTION
 
-	Pull Requests
-		Review Comments
+This section implements the endpoints that deal with secrets.
 
-=head2  General object thingys
+=head2 Repository Secrets
 
 =over 4
 
-=item *
 
 =back
 
-=head2  Review Comments
+=head2 Organization Secrets
 
 =over 4
 
 =item *
+
+=cut
+
 
 =back
 

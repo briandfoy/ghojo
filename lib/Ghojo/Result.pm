@@ -143,6 +143,15 @@ sub success ( $class, $hash = {} ) {
 	$class->_new( $return_hash );
 	}
 
+sub bad_username ( $class, $username, $extras = {} ) {
+	$class->error({
+		message     => "Bad username <$username>",
+		description => "Bad username <$username>",
+		extras      => dclone($extras),
+		error_code  => 1,
+		});
+	}
+
 =back
 
 =head3 Make some summaries
@@ -420,15 +429,15 @@ sub subroutine ( $self ) { $self->{caller}{'sub'} }
 
 This module is in Github:
 
-	https://github.com/briandfoy/ghojo.git
+	https://github.com/briandfoy/ghojo
 
 =head1 AUTHOR
 
-brian d foy, C<< <bdfoy@cpan.org> >>
+brian d foy, C<< <briandfoy@pobox.com> >>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2016-2021, brian d foy <bdfoy@cpan.org>. All rights reserved.
+Copyright © 2016-2024, brian d foy <briandfoy@pobox.com>. All rights reserved.
 
 This program is free software; you can redistribute it and/or modify
 it under the Artistic License 2. A LICENSE file should have accompanied

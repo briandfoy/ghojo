@@ -2,11 +2,6 @@
 use v5.24;
 use experimental qw(signatures);
 
-use lib qw(
-	/Users/brian/Dropbox/Dev/Ghojo/lib
-	/Users/brian/Dropbox/Dev/Ghojo/examples
-	);
-
 use Data::Dumper;
 use File::Basename        qw(basename);
 use File::Path            qw(make_path);

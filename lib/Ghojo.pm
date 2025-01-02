@@ -3,7 +3,6 @@ use experimental qw(signatures);
 
 package Ghojo;
 
-
 # The endpoints are divided into public and authenticated parts
 # We'll use this inheritance chain to divide them. The public
 # class can't see the stuff in the authorized class, but the
@@ -56,6 +55,15 @@ sub AUTOLOAD ( $self, @args ) {
 			description => "Authenticate to use [$method]",
 			});
 		}
+	elsif( $self->public_user_class->can( $method ) ) {
+		my $message = "Method [$method] is unknown";
+		$self->logger->error( $message );
+		$self->logger->debug( sub { scalar $self->stacktrace(3) } );
+		return Ghojo::Result->error({
+			message     => $message,
+			description => "Authenticate to use [$method]",
+			});
+		}
 	}
 
 # ($package, $filename, $line, $subroutine,
@@ -96,11 +104,8 @@ Ghojo - a Mojo-based interface to the GitHub Developer API
 
 	use Ghojo;
 
-	# authenticated
-	my $ghojo = Ghojo->new( {
-		username => ...,
-		password => ...,
-		});
+	# username and password were removed by GitHub. You must use
+	# a token.
 
 	# authenticated
 	my $ghojo = Ghojo->new( {
@@ -143,7 +148,7 @@ If you would like to play with this to change things on GitHub, I
 suggest setting up a new user and some repos you don't care about
 (perhaps forked from interesting ones). Play with those until you are
 satisfied that this code isn't going to delete your life. I also keep
-backup clones at Bitbucket just in case.
+backup clones at Bitbucket and Gitlab just in case.
 
 =cut
 
@@ -153,10 +158,17 @@ Parts marked with an * are done.
 
 	Actions
 		Artifacts
+		Cache
+		OIDC
 		Permissions
+		Required Workflows
 		Secrets
+			Repository
+			Organization
+			Environment
 		Self-hosted runners
 		Self-hosted runner groups
+		Variables
 		Workflows
 		Workflow jobs
 		Workflow runs
@@ -168,6 +180,32 @@ Parts marked with an * are done.
 		Starring
 		Watching
 
+	Apps
+
+	Billing
+
+	Branches
+
+	Checks
+
+	Codes of conduct
+
+	Code scanning
+
+	Codespaces
+
+	Collaborators
+
+	Commits
+
+	Dependabot
+
+	Dependency Graph
+
+	Deployments
+
+	Emoji
+
 	Gists
 		Comments
 
@@ -177,6 +215,10 @@ Parts marked with an * are done.
 		References
 		Tags
 		Trees
+
+	Gitignore
+
+	Interactions
 
 	Integrations
 		Integrations
@@ -189,6 +231,10 @@ Parts marked with an * are done.
 		Labels
 		Milestones
 		Timeline
+
+	Licenses
+
+	Markdown
 
 	Migration
 		Migrations
@@ -207,14 +253,24 @@ Parts marked with an * are done.
 		Teams
 		Webhooks
 
+	Packages
+
+	Pages
+
+	Projects (classic)
+
 	Pull Requests
 		Review Comments
+
+	Rate limit
 
 	Reactions
 		Commit Comment
 		Issue
 		Issue Comment
 		Pull Request Review Comment
+
+	Releases
 
 	Repositories
 		Branches
@@ -243,6 +299,12 @@ Parts marked with an * are done.
 		Users
 		Legacy Search
 
+	Secret Scanning
+
+	Security advisories
+
+	Teams
+
 	Users  ( Ghojo/Users.pm )
 		* Emails
 		* Followers
@@ -250,15 +312,7 @@ Parts marked with an * are done.
 		* GPG Keys
 		Administration (Enterprise)
 
-	Enterprise
-		Admin Stats
-		LDAP
-		License
-		Management Console
-		Pre-receive Environments
-		Pre-receive Hooks
-		Search Indexing
-		Organization Administration
+	Repository webhooks
 
 
 =head2  General object thingys
@@ -267,14 +321,7 @@ Parts marked with an * are done.
 
 =item * new
 
-You can create a new object with providing a username/password pair
-or a previously created token.
-
-	# Use a login pair. This will create a token for you.
-	my $ghojo = Ghojo->new( {
-		username => ...,
-		password => ...,
-		});
+You can create a previously created token:
 
 	# pass the token as a string
 	my $ghojo = Ghojo->new( {
@@ -301,6 +348,9 @@ returned by C<token_file>.
 
 =cut
 
+# https://docs.github.com/en/rest/overview/api-versions?apiVersion=2022-11-28
+sub api_version ( $either ) { '2022-11-28' }
+
 sub new ( $class, $args = {} ) {
 	# We start off with the public interface. If an authorization works
 	# it will rebless the object for the authenticated class name.
@@ -318,11 +368,6 @@ sub new ( $class, $args = {} ) {
 			}
 		elsif( exists $args->{token_file} ) {
 			( 'saved token in named file <$args->{token_file}>', $self->read_token( $args->{token_file} ) );
-			}
-		elsif( exists $args->{username} and exists $args->{password} ) {
-			my $result = $self->login( $args );
-			$self->logger->debug( "Login was a " . $result->is_success ? 'success' : 'failure' );
-			( 'username and password', $result );
 			}
 		elsif( 0 && -e $self->token_file ) { # still not sure I like this.
 			my $message = 'Authenticating with token in default file';
@@ -405,77 +450,6 @@ sub test_authenticated ( $self ) {
 	return 0;
 	}
 
-=item * login
-
-Login to GitHub to access the parts of the API that require an
-authenticated user. You do not need to do this if you want to use the
-public parts of the API.
-
-	username  - (required) The GitHub username
-	password  - (required) The GitHub password
-	authorize - (optional) If true, create a personal access token.
-	            Default: true
-
-If the login was successful, it returns
-
-If you pass C<username> and C<password> to C<new>, Ghojo will
-do this step for you.
-
-=cut
-
-sub login ( $self, $args = {} ) {
-	$self->entered_sub;
-
-	$self->{$_} = $args->{$_} for ( qw(username password) );
-	my $tx = $self->ua->get(
-		$self->query_url( '/user' )
-			=> { 'Authorization' => $self->basic_auth_string }
-		);
-
-	unless( $tx->res->is_success ) {
-		$self->logger->debug( "Login failed" );
-
-		$self->logger->debug( sub { dump_request( $tx ) } );
-		my $err = $tx->error;
-
-		my @methods = qw( requires_one_time_password requires_authentication is_bad_credentials too_many_login_attempts );
-		foreach my $method ( @methods ) {
-			$self->logger->debug( "Trying $method" );
-			my $error = $self->$method( $tx );
-			return $error if defined $error;
-			}
-
-		# fallback.
-		$self->logger->debug( "Could not figure out the login error" );
-		return Ghojo::Result->error( {
-			description => 'Login failure',
-			message     => 'Undetermined error while logging in',
-			error_code  => LOGIN_FAILURE,
-			extras      => {
-				tx => $tx
-				},
-			}
-			);
-		}
-	$self->logger->debug( "Login succeeded" );
-
-	bless $self, $self->authenticated_user_class;
-
-	# now we should be ready to proceed
-	if( $args->{authorize} ) {
-		$self->logger->trace( "Trying to get a token" );
-		$tx = $self->ua->get( $self->api_base_url );
-		my $result = $self->create_authorization; #needs to call the method in the right class
-		return $result if $result->is_error;
-		delete $self->{password};
-		}
-	else {
-		$self->add_basic_auth_to_all_requests;
-		}
-
-	Ghojo::Result->success;
-	}
-
 sub requires_one_time_password ( $self, $tx ) {
 	# XXX What is the HTTP status code here?
 	my $otp_header = $tx->res->headers->header('x-github-otp') // '';
@@ -497,32 +471,6 @@ sub requires_authentication ( $self, $tx ) {
 		description => 'Login failure',
 		message     => "This resource requires authentication",
 		error_code  => REQUIRES_AUTHENTICATION,
-		extras      => {
-			tx => $tx
-			},
-		} );
-	}
-
-sub is_bad_credentials ( $self, $tx ) {
-	return unless 401 == $tx->res->code;
-	return unless $tx->res->json->{message} eq 'Bad credentials';
-	return Ghojo::Result->error( {
-		description => 'Login failure',
-		message     => "Bad username or password",
-		error_code  => BAD_CREDENTIALS,
-		extras      => {
-			tx => $tx
-			},
-		} );
-	}
-
-sub too_many_login_attempts( $self, $tx ) {
-	return unless 403 == $tx->res->code;
-	return unless $tx->res->json->{message} =~ m/\AMaximum number/;
-	return Ghojo::Result->error( {
-		description => 'Login failure',
-		message     => "Too many failed login attempts",
-		error_code  => TOO_MANY_LOGIN_ATTEMPTS,
 		extras      => {
 			tx => $tx
 			},
@@ -723,28 +671,12 @@ sub fatalif ( $self, $flag, $message ) { $flag ? $self->logger->logdie(  $messag
 
 =head2 Authenticating queries
 
-The GitHub API lets you authenticate through Basic (with username and password)
-or token authentication. These methods handle most of those details.
+The GitHub API lets you authenticate through token authentication.
+These methods handle most of those details.
 
 =over 4
 
 =cut
-
-=item * authenticated_user
-
-=item * username
-
-=item * has_username
-
-The C<username> and C<authenticated_user> are the same thing. I think the
-later is more clear, though.
-
-=item * password
-
-=item * has_password
-
-Note that after a switch to token authentication, the password might be
-deleted from the object.
 
 =item * token
 
@@ -755,70 +687,20 @@ log these! The program needs to keep the value around!
 
 =cut
 
-sub authenticated_user  ( $self ) {            $self->username   }
-sub username            ( $self ) {            $self->{username} }
-sub has_username        ( $self ) { !! defined $self->{username} }
-
-sub password            ( $self ) {            $self->{password} }
-sub has_password        ( $self ) { !! defined $self->{password} }
-
-sub has_basic           ( $self ) { $self->has_username && $self->has_password }
 sub token               ( $self ) {            $self->{token}    }
 sub has_token           ( $self ) { !! defined $self->{token}    }
 
-sub has_auth            ( $self ) { $self->has_token or $self->has_basic }
+sub has_auth            ( $self ) { $self->has_token }
 
 =item * auth_string
 
-Returns the C<Authorization> header value, whether it's the token or Basic
-authorization.
+Returns the C<Authorization> header value.
 
 =cut
 
 sub auth_string ( $self ) {
 	if( $self->has_token )         { $self->token_auth_string }
-	elsif( $self->has_basic_auth ) { $self->basic_auth_string }
-	}
 
-=item * has_basic_auth
-
-Checks that we know the username and password.
-
-=cut
-
-sub has_basic_auth ( $self ) {
-	$self->has_username && $self->has_password
-	}
-
-=item * add_basic_auth_to_all_requests
-
-=cut
-
-sub add_basic_auth_to_all_requests ( $self ) {
-	$self->entered_sub;
-	$self->ua->on( start => sub {
-		my( $ua, $tx ) = @_;
-		$tx->req->headers->authorization( $self->basic_auth_string );
-		} );
-	}
-
-=item * token_auth_string
-
-Returns the value for the C<Authorization> request header, using
-Basic authorization. This requires username and password values.
-If basic authentication is not setup, this return nothing.
-
-=cut
-
-sub basic_auth_string ( $self ) {
-	$self->warnif( ! $self->has_username, "Missing username for basic authorization!" );
-	$self->warnif( ! $self->has_password, "Missing password for basic authorization!" );
-
-	return Ghojo::Result->error unless $self->has_basic_auth;
-	'Basic ' . b64_encode(
-		join( ':', $self->username, $self->password ),
-		''
-		);
 	}
 
 =item * token_auth_string
@@ -1187,7 +1069,7 @@ sub single_resource_steps ( $self ) {
 
 sub single_resource ( $self, $verb, %args ) {
 	$self->entered_sub;
-	$self->logger->debug( sub { "Args are " . dumper( \%args ) } );
+	$self->logger->debug( sub { "single_resource: Args are " . dumper( \%args ) } );
 
 	my $stash = {
 		args          => \%args,
@@ -1195,12 +1077,12 @@ sub single_resource ( $self, $verb, %args ) {
         verb          => $verb,
 		};
 
-	$self->logger->debug( "About to it foreach" );
+	$self->logger->debug( "single_resource: About to enter foreach" );
 
 	# each step can modify the stash for the next step
 	my $result;
 	foreach my $step ( $self->single_resource_steps ) {
-		$self->logger->debug( "Processing single_resource step $step" );
+		$self->logger->debug( "single_resource: Processing single_resource step $step" );
 		$result = $self->$step( $stash );
 		last if $result->is_error;
 		}
@@ -1239,7 +1121,7 @@ sub _preprocess_request ( $self, $stash ) {
 
 	$stash->{url} = $url_result->values->first;
 
-	$self->logger->debug( "URL to single resource is <$stash->{url}>" );
+	$self->logger->debug( "_preprocess_request: URL to single resource is <$stash->{url}>" );
 
 	return Ghojo::Result->success;
 	}
@@ -1310,15 +1192,30 @@ sub _setup_request_headers ( $self, $stash ) {
 
 	# this is the base content-type for the API
 	$headers{'Accept'} = $stash->{args}{accepts} // 'application/vnd.github.v3+json';
-	$self->logger->debug( "Accept header is: $headers{'Accept'}" );
+	$self->logger->debug( "_setup_request_headers: Accept header is: $headers{'Accept'}" );
 
 	# XXX maybe check that this makes sense
 	$headers{'Content-type'}  = $stash->{args}{content_type}
 		if $stash->{args}{content_type};
 
+	$headers{'X-GitHub-Api-Version'} = $self->api_version;
+
 	$stash->{headers} = \%headers;
 
 	return Ghojo::Result->success;
+	}
+
+sub _dump_stash_without_keys ( $self, $stash, $keys = [qw(tx)] ) {
+	my %skip_keys = map { $_, 1 } $keys->@*;
+	my $caller = (caller(1))[3] =~ s/.*:://r;
+	my $dump_hash = ();
+
+	foreach my $key ( keys $stash->%* ) {
+		next if exists $skip_keys{$key};
+		$dump_hash->{$key} = $stash->{$key};
+		}
+
+	$self->logger->debug( sub { "$caller: stash is now:\n" . dumper( $dump_hash ) } );
 	}
 
 sub _check_rate_limiting ( $self, $stash ) {
@@ -1348,10 +1245,12 @@ sub _make_request ( $self, $stash ) {
 
 sub _pre_process_response ( $self, $stash ) {
 	$self->entered_sub;
-	$self->logger->debug( sub { "Request was:\n" . dump_request( $stash->{tx} ) } );
+	$self->logger->debug( sub { "_pre_process_response: Request was:\n" . dump_request( $stash->{tx} ) } );
+	$self->logger->debug( sub { "_pre_process_response: Response was:\n" . dump_response( $stash->{tx} ) } );
 	$stash->{query_count} = $self->increment_query_count;
 	$self->_update_rate_limit( $stash );
 	$self->_process_scopes( $stash );
+	$self->_dump_stash_without_keys($stash);
 	return Ghojo::Result->success;
 	}
 
@@ -1374,16 +1273,18 @@ sub _process_response ( $self, $stash ) {
 	my $status = $tx->res->code;
 
 	if( grep { $_ == $status } $stash->{args}{expected_http_status}->@* ) {
-		my $data = $stash->{args}{raw_content} ? $tx->res->body : $tx->res->json;
+		my $data = do {
+			if( $status == 204 ) {
+				[]
+				}
+			else {
+				$stash->{args}{raw_content} ? $tx->res->body : $tx->res->json
+				}
+			};
 
 		# Can't have raw_content and bless_into at the same time?
 		# message body and bless it into the right class
-		my $result = $self->_bless_into( $data, $stash );
-		return $result if $result->is_error;
-
-		return Ghojo::Result->success( {
-			values => [ $data ],
-			} )
+		return $self->_bless_into( $data, $stash );
 		}
 
 	$self->logger->debug( sub {
@@ -1398,15 +1299,18 @@ sub _process_response ( $self, $stash ) {
 
 sub _default_data_class ( $self ) { 'Ghojo::Data' }
 
-sub _bless_into ( $self, $ref, $stash ) {
+sub _bless_into ( $self, $data, $stash ) {
 	$self->entered_sub;
 
+	$self->_dump_stash_without_keys($stash);
+
 	unless( exists $stash->{args}{bless_into} and defined $stash->{args}{bless_into} ) {
-		$self->logger->warn( "Missing bless_into value. Using the default" );
+		$self->logger->warn( "_bless_into: Missing bless_into value. Using the default" );
 		$stash->{args}{bless_into} = $self->_default_data_class;
 		}
 
 	my $package = $stash->{args}{bless_into};
+	$self->logger->debug( "_bless_into: package is $package" );
 	unless( validate_package( $package ) ) {
 		return Ghojo::Result->error( {
 			description => "Fetching single resource",
@@ -1415,10 +1319,22 @@ sub _bless_into ( $self, $ref, $stash ) {
 			} );
 		}
 
-	eval "require $package";
-	bless $ref, $package;
+	$self->logger->debug( "_bless_into: data is " . Mojo::Util::dumper($data) );
+	my $rc = eval "require $package";
+	$self->logger->error( "Could not require $package" ) unless $rc;
 
-	return Ghojo::Result->success;
+	my $object = do {
+		if( $package->can('new') ) {
+			$package->new($data)
+			}
+		else {
+			bless $data, $package;
+			}
+		};
+
+	$self->logger->debug( "_bless_into: data is finally " . Mojo::Util::dumper($object) );
+
+	return Ghojo::Result->success( { values => [ $object ] } );
 	}
 
 =pod
@@ -1520,14 +1436,15 @@ sub paged_resource_steps ( $self ) {
 	qw(
 		_check_paged_args
 		_preprocess_request
-		_check_http_verb _check_scopes
+		_check_http_verb
+		_check_scopes
 		_setup_request_headers
 		_make_paged_request
 		);
 	}
 
 sub _check_paged_args ( $self, $stash ) {
-	state %defaults = (
+	my %defaults = (
 	    args => {
         	limit         => 1000,
         	'sleep'       => 3,
@@ -1543,7 +1460,7 @@ sub _check_paged_args ( $self, $stash ) {
 
 	$self->entered_sub;
 
-	$self->logger->debug( "_check_paged_args: stash before: " . dumper($stash) );
+	$self->_dump_stash_without_keys($stash);
 	$self->logger->debug( "_check_paged_args: args before: " . dumper(\%defaults) );
 
 	my @queue = [ $stash, \%defaults ];
@@ -1570,7 +1487,7 @@ sub _check_paged_args ( $self, $stash ) {
 			});
 		}
 
-	$self->logger->debug( "_check_paged_args: stash after: " . dumper($stash) );
+	$self->_dump_stash_without_keys($stash);
 
 	return Ghojo::Result->success;
 	}
@@ -1579,17 +1496,28 @@ sub _make_paged_request ( $self, $stash ) {
 	state $success = Ghojo::Result->success;
 	$self->entered_sub;
 
-	$self->logger->debug( "_make_paged_request: stash " . dumper($stash) );
+	if( $stash->{first_time} ) {
+		$self->_turn_on_paging($stash);
+		$stash->{first_time} = 0;
+		}
+
+	$self->_dump_stash_without_keys($stash);
 
 	# We've either reached our limit or exhausted the results
-	if( $stash->{results}->@* >= $stash->{args}{limit} ) {
+	if( ! $self->_keep_paging($stash) or $stash->{results}->@* >= $stash->{args}{limit} ) {
 		$self->_turn_off_paging( $stash );
 		return $success;
 		}
 
-	$stash->{url} = $stash->{next} if $stash->{next};
-	$self->logger->trace( "Fetching URL $stash->{url}" );
-	$stash->{prev} = $stash->{next} = undef;
+	if( $stash->{next} ) {
+		$stash->{url} = $stash->{next};
+		$stash->{prev} = $stash->{next} = undef;
+		}
+	else {
+		$self->_turn_off_paging($stash);
+		}
+
+	$self->logger->trace( "_make_paged_request: Fetching URL $stash->{url}" );
 
 	$self->_make_request( $stash );
 	$self->_pre_process_paged_response( $stash );
@@ -1603,11 +1531,23 @@ sub _make_paged_request ( $self, $stash ) {
 	$self->_process_paged_response( $stash );
 	}
 
+{
+my $key = 'paging';
+
+sub _keep_paging ( $self, $stash ) { $stash->{$key} }
+
 sub _turn_off_paging ( $self, $stash ) {
 	$self->entered_sub;
-	$stash->{redo} = 0;
+	$stash->{$key} = 0;
 	return Ghojo::Result->success;
 	}
+
+sub _turn_on_paging ( $self, $stash ) {
+	$self->entered_sub;
+	$stash->{$key} = 1;
+	return Ghojo::Result->success;
+	}
+}
 
 sub _pre_process_paged_response ( $self, $stash ) {
 	$self->entered_sub;
@@ -1663,27 +1603,35 @@ sub _check_paged_body ( $self, $stash ) {
 	$self->entered_sub;
 
 	my $json = eval { $stash->{tx}->res->json };
-	$self->logger->debug( sprintf "Result JSON ref type is <%s>" , ref($json) );
-	$self->logger->debug( sprintf "result_key is <%s>", $stash->{args}{result_key} // '' );
+
+	$self->logger->debug( "_check_paged_body: res: " . $stash->{tx}->res->to_string );
+	$self->logger->debug( "_check_paged_body: JSON: " . dumper($json) );
+	$self->logger->debug( sprintf "_check_paged_body: Result JSON ref type is <%s>" , ref($json) );
+	$self->logger->debug( sprintf "_check_paged_body: result_key is <%s>", $stash->{args}{result_key} // '' );
 	if( ! $json ) {
-		my $message = "Did not get JSON back";
+		my $message = "_check_paged_body: Did not get JSON back";
 		$self->logger->error( $message );
 		return Ghojo::Result->error({
 			message     => $message,
 			description => $message
 			});
 		}
-	elsif( ref $json eq ref [] ) {
-		$stash->{unprocessed_results} = $json;
-		}
-	elsif( ref($json) eq ref({}) and exists $stash->{args}{result_key} ) {
+	elsif( ref $json eq ref {} and exists $stash->{args}{result_key} ) {
 		return Ghojo::Result->error({
-			description => "Error fetching paged resource",
-			message     => "The paged response is a hash but result_key is not set",
+			description => "_check_paged_body: Error fetching paged resource",
+			message     => "_check_paged_body: The paged response is a hash but result_key is not set",
 			}) unless exists $json->{ $stash->{args}{result_key} };
 
 		$stash->{unprocessed_results} = $json->{ $stash->{args}{result_key} };
 		}
+	elsif( ref $json eq ref {}  ) {
+		$stash->{unprocessed_results} = [ $json ];
+		}
+	elsif( ref $json ) {
+		$stash->{unprocessed_results} = $json;
+		}
+
+	$self->_dump_stash_without_keys($stash);
 
 	return $success;
 	}
@@ -1695,7 +1643,9 @@ sub get_paged_resources ( $self, %args ) {
 	$self->logger->debug( sub { "get_paged_resources args are " . dumper( \%args ) } );
 
 	my $stash = { args => \%args };
-	$self->logger->trace( sub { "get_paged_resources stash: " . dumper($stash) } );
+	$stash->{args}{sleep} //= 1;
+	$stash->{first_time} = 1;
+	$self->_dump_stash_without_keys($stash);
 
 	# each step can modify the stash for the next step
 	my $result;
@@ -1703,7 +1653,7 @@ sub get_paged_resources ( $self, %args ) {
 		$self->logger->trace( "Processing step <$step>" );
 		$result = $self->$step( $stash );
 		return $result if $result->is_error;
-		redo if $stash->{redo}
+		redo if $self->_keep_paging($stash);
 		}
 
 	Ghojo::Result->success({
@@ -1833,15 +1783,15 @@ sub paged_get                   ( $self, @ ) { $self->logdie( "paged_get is depr
 
 This module is in Github:
 
-	https://github.com/briandfoy/ghojo.git
+	https://github.com/briandfoy/ghojo
 
 =head1 AUTHOR
 
-brian d foy, C<< <bdfoy@cpan.org> >>
+brian d foy, C<< <briandfoy@pobox.com> >>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2016-2023, brian d foy <bdfoy@cpan.org>. All rights reserved.
+Copyright © 2016-2024, brian d foy <briandfoy@pobox.com>. All rights reserved.
 
 This program is free software; you can redistribute it and/or modify
 it under the Artistic License 2. A F<LICENSE> file should have accompanied
