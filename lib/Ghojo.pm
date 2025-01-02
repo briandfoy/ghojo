@@ -356,11 +356,17 @@ sub new ( $class, $args = {} ) {
 	# it will rebless the object for the authenticated class name.
 	my $self = bless {}, $class->public_user_class;
 
-	my $level = $args->{log_level} // uc($ENV{GHOJO_LOG_LEVEL} // 'OFF' );
+	if( ! exists $args->{logger} ) {
+		my $level = $args->{log_level} // uc($ENV{GHOJO_LOG_LEVEL} // 'OFF' );
 
-	$self->setup_logging(
-		( $args->{logging_conf} ? $args->{logging_conf} : $class->logging_conf($level) )
-		);
+		$self->setup_logging(
+			( $args->{logging_conf} ? $args->{logging_conf} : $class->logging_conf($level) )
+			);
+		}
+	else {
+		say STDERR "Setting up user logger";
+		$self->{logger} = $args->{logger};
+		}
 
 	my( $trace, $result ) = do {
 		if( exists $args->{token} ) {
@@ -1489,6 +1495,9 @@ sub _check_paged_args ( $self, $stash ) {
 
 	$self->_dump_stash_without_keys($stash);
 
+	$self->logger->debug( "_check_paged_args: stash after: " . dumper($stash) );
+say STDERR "STash is now " . dumper($stash);
+
 	return Ghojo::Result->success;
 	}
 
@@ -1548,6 +1557,8 @@ sub _turn_on_paging ( $self, $stash ) {
 	return Ghojo::Result->success;
 	}
 }
+	$stash->{redo} = 1;
+	}
 
 sub _pre_process_paged_response ( $self, $stash ) {
 	$self->entered_sub;
@@ -1641,17 +1652,18 @@ sub _check_paged_body ( $self, $stash ) {
 sub get_paged_resources ( $self, %args ) {
 	$self->entered_sub;
 	$self->logger->debug( sub { "get_paged_resources args are " . dumper( \%args ) } );
-
 	my $stash = { args => \%args };
-	$stash->{args}{sleep} //= 1;
-	$stash->{first_time} = 1;
-	$self->_dump_stash_without_keys($stash);
+	$self->_turn_on_paging($stash);
 
 	# each step can modify the stash for the next step
 	my $result;
 	foreach my $step ( $self->paged_resource_steps ) {
 		$self->logger->trace( "Processing step <$step>" );
 		$result = $self->$step( $stash );
+	#	say "================ BEFORE\n" . dumper($stash) . "\n=========================";
+		say STDERR "step $step had error: " . $result->message unless $result->is_success;
+	#	say "================ AFTER\n" . dumper($stash) . "\n=========================";
+	#	say "result is error. stopping" if $result->is_error;
 		return $result if $result->is_error;
 		redo if $self->_keep_paging($stash);
 		}

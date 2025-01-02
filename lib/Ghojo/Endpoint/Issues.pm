@@ -114,13 +114,13 @@ sub Ghojo::get_all_issues_profile ( $self ) {
 		};
 	}
 
-sub Ghojo::PublicUser::issues_on_repo ( $self, $owner, $repo, $callback = sub { $_[0] } , $args = { 'state' => 'open' } ) {
+sub Ghojo::PublicUser::issues_on_repo ( $self, $owner, $repo, $callback = sub { $_[0] }, $args = {} ) {
 	$self->entered_sub;
 
 	my $repo_check_result = $self->check_repo( $owner, $repo );
 	return $repo_check_result if $repo_check_result->is_error;
 
-	my $result = $self->validate_profile( $args, $self->get_repo_issues_profile );
+	my $result = $self->validate_profile( $args->{query_params}, $self->get_repo_issues_profile );
 	return $result if $result->is_error;
 
 	$self->get_paged_resources(
@@ -128,8 +128,9 @@ sub Ghojo::PublicUser::issues_on_repo ( $self, $owner, $repo, $callback = sub { 
 		endpoint_params => { owner => $owner, repo => $repo },
 		callback        => $callback,
 		bless_into      => 'Ghojo::Data::Issue',
-		query_params    => $args,
+		query_params    => { 'state' => 'all' },
 		query_profile   => $self->get_all_issues_profile,
+		%$args,
 		);
 	}
 
